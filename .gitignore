@@ -1,0 +1,22 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Dependencies and generated artifacts
+node_modules/
+dist/
+build/
+coverage/
+managed/
+*.zkir
+*.key
+
+# Local evidence and reference checkouts
+.references/
+docs/evidence/local/
+
+# Operating-system and editor files
+.DS_Store
+.idea/
+.vscode/
