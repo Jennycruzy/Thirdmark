@@ -22,11 +22,12 @@ The company registration number is resolved by a single Wave 1 registry and norm
 P         = hashToCurve(canonicalSubject)
 P_blind   = ecMul(P, r)
 P_issuer  = ecMul(P_blind, k)
-P_final   = ecMul(P_issuer, inverse(r))
-slotKey   = persistentHash([pad(32, "corroborate:slot:v1"), P_final])
+r_inverse = client-side modular inverse of r
+P_final   = ecMul(P_issuer, r_inverse)
+slotKey   = persistentHash([pad(32, "corroborate:slot:v1"), P_final.x, P_final.y])
 ```
 
-The client must prove or otherwise validate the group operation assumptions in a scratch circuit before this becomes product code. In particular, the inverse operation and the scalar representation must come from the verified Compact API; no signature will be guessed.
+Compact 0.31 exposes `ecMul` for `JubjubScalar` but does not expose arithmetic or `inv` for that type. The client must compute `r_inverse` with a source-backed Jubjub scalar modulus from the Midnight runtime, then pass the inverse scalar to an `ecMul`-based unblinding circuit. The scratch circuit must prove the two group multiplications and the resulting point equality before product code is written. No scalar modulus is hardcoded.
 
 The issuer receives only the blinded point and applies its secret. It can rate-limit or refuse service, but it must not receive the canonical identifier. An adversary who learns the exact slot key can still probe the public ledger; that count leak is the same problem as subject derivation because the ledger has no enumeration or prefix-scan API.
 

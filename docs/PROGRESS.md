@@ -13,11 +13,14 @@ Passed:
 - Cloned the five cited references and `example-counter` into the gitignored `.references/` directory. Reference commits are recorded in [`FINDINGS.md`](FINDINGS.md).
 - Read the complete MatchLock contract and Moonray slicer source. Verified witness, disclosure, ledger, nullifier, domain-separated hash, and time-gating patterns.
 - Read the maintained Compact standard-library API. Verified persistent hashing, persistent commitments, Jubjub point construction and arithmetic, `hashToCurve`, and block-time circuits.
+- Found and recorded an OPRF design correction: Compact 0.31 has no `JubjubScalar` inversion circuit. The inverse must be computed client-side from the runtime’s source-backed scalar modulus and used only as an input to an `ecMul` unblinding circuit.
+- An isolated scratch contract using the 0.31.1 compiler with `--skip-zk` compiled the `hashToCurve` plus three-`ecMul` shape and generated proof metadata. This is not a simulator run, proof, or deployment and does not clear the security blocker.
 - Installed the official Compact CLI. It reports compiler 0.31.1 and lists 0.34.0, 0.31.1, and earlier toolchains.
 
 Not passed:
 
 - The scratch OPRF circuit has not been compiled or run. It must not be run as a product gate using the known-vulnerable 0.31.1 compiler.
+- The supplied in-circuit inverse step is not available in the verified Compact API. The replacement client-side inverse plus in-circuit `ecMul` design needs a scratch proof under a safe compiler.
 - `example-counter` has not been compiled or deployed.
 - The proof server has not been started or health-checked.
 - No Preprod address, transaction, block, timing, screenshot, or URL exists.

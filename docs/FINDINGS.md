@@ -29,7 +29,17 @@ Verified against the maintained Compact source at `LFDT-Minokawa/compact`, commi
 - `hashToCurve<T>(value): JubjubPoint` exists and its documentation guarantees unknown discrete logarithm with respect to the base and other outputs: `exports.md:697-710`.
 - `blockTimeLt`, `blockTimeGte`, `blockTimeGt`, and `blockTimeLte` exist: `exports.md:1008-1038`.
 
-The OPRF primitive set in the design is therefore source-backed. A scratch OPRF round-trip still needs to compile and run through a local simulator before product code begins.
+The hash and curve primitives in the OPRF design are source-backed. A complete OPRF round-trip still needs to run through a local simulator before product code begins.
+
+## OPRF correction
+
+The supplied OPRF description assumes an in-circuit inverse for the Jubjub blinding scalar. The maintained API does not provide one. `inv` is documented only for `Secp256k1Scalar` and `Secp256k1Base` (`exports.md:684-695`), while the 0.31 changelog says that `JubjubScalar` has no arithmetic support (`CHANGELOG.md:547-564`) and that `ecMul` now requires a `JubjubScalar` instead of a `Field` (`CHANGELOG.md:647-652`).
+
+This is a source-over-spec correction, not a reason to remove the OPRF. The implementable shape is: compute the inverse of the non-zero blinding scalar client-side using the runtime’s exported Jubjub scalar modulus; use only `ecMul` inside the Compact circuits for blinding, issuer evaluation, and unblinding; and prove the resulting point relation in a scratch circuit. The modulus and scalar conversion rules must be imported from the actual runtime package, never copied as a literal. MatchLock’s current contract still passes a `Field` to `ecMul` (`contract/src/matchlock.compact:68-74`), so that older pattern cannot be copied without compiling it against the selected toolchain.
+
+The available 0.31.1 compiler confirms the version-specific shape: `JubjubScalar` is not a bound Compact identifier, while `Field` is accepted by the Jubjub `ecMul` calls used by the 0.31 language version. An isolated scratch contract using three `Field` witnesses, `hashToCurve<Bytes<32>>`, three `ecMul` calls, a disclosed equality predicate, and one public Boolean ledger cell compiled with `--skip-zk`; its generated `contract-info.json` marks the OPRF circuit as `proof: true`. This is syntax and circuit metadata evidence only, not a simulator run or deployment, and it was not used to clear the security gate.
+
+The maintained runtime source defines `JUBJUB_SCALAR_MODULUS` and `MAX_JUBJUB_SCALAR` in `runtime/src/constants.ts:33-39`. The eventual client inverse helper must import that runtime constant and test non-zero blinding scalars with property tests; it must not reproduce the modulus as a literal.
 
 ## Version and security correction
 

@@ -15,7 +15,7 @@ The differentiator is simple: every supplier knows the buyer does not pay, and n
 ## Planned Wave 1 architecture
 
 - Canonical company registration identifiers are resolved by registry lookup. Wave 1 uses one jurisdiction; free-text company names are not cryptographic inputs.
-- A single issuer provides a blind OPRF service. The issuer can rate-limit or censor requests, but cannot recover the company identifier from a blinded point, read filings, or force a reveal. Wave 2 distributes the OPRF key across issuers.
+- A single issuer provides a blind OPRF service. The issuer can rate-limit or censor requests, but cannot recover the company identifier from a blinded point, read filings, or force a reveal. Wave 2 distributes the OPRF key across issuers. The client computes the Jubjub scalar inverse using the source-backed runtime constant; Compact 0.31 does not expose arithmetic or inversion for `JubjubScalar`.
 - Slot keys and filer nullifiers use `persistentHash`. Filing-history commitments use `persistentCommit` with a fresh opening for every filing.
 - Report plaintext is encrypted in the client with AES-GCM. The Compact contract receives only a fixed-width opaque ciphertext.
 - The contract has no administrator, pause circuit, upgrade path, or operator reveal path.
