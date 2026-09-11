@@ -2,7 +2,7 @@
 
 ## Public and private sides
 
-Compact ledger state is public. Corroborate therefore stores no report plaintext or raw company identifier in ledger state. The contract state is designed as:
+Compact ledger state is public. Thirdmark therefore stores no report plaintext or raw company identifier in ledger state. The contract state is designed as:
 
 ```text
 filed       Set<Bytes<32>>            filer nullifiers
@@ -24,7 +24,7 @@ P_blind   = ecMul(P, r)
 P_issuer  = ecMul(P_blind, k)
 r_inverse = client-side modular inverse of r
 P_final   = ecMul(P_issuer, r_inverse)
-slotKey   = persistentHash([pad(32, "corroborate:slot:v1"), P_final.x, P_final.y])
+slotKey   = persistentHash([pad(32, "thirdmark:slot:v1"), P_final.x, P_final.y])
 ```
 
 Compact 0.31 exposes `ecMul` for `JubjubScalar` but does not expose arithmetic or `inv` for that type. The client must compute `r_inverse` with a source-backed Jubjub scalar modulus from the Midnight runtime, then pass the inverse scalar to an `ecMul`-based unblinding circuit. The scratch circuit must prove the two group multiplications and the resulting point equality before product code is written. No scalar modulus is hardcoded.
@@ -36,8 +36,8 @@ The issuer receives only the blinded point and applies its secret. It can rate-l
 For a filer secret `sk` and slot key `slotKey`:
 
 ```text
-filerNullifier = persistentHash([pad(32, "corroborate:nullifier:v1"), sk, slotKey])
-entryKey       = persistentHash([pad(32, "corroborate:entry:v1"), slotKey, index])
+filerNullifier = persistentHash([pad(32, "thirdmark:nullifier:v1"), sk, slotKey])
+entryKey       = persistentHash([pad(32, "thirdmark:entry:v1"), slotKey, index])
 historyCommit  = persistentCommit(privateFilingHistory, freshSalt)
 ```
 
@@ -51,4 +51,4 @@ Insertion order must not carry information. The three records are indexed by ano
 
 ## Dossier boundary
 
-AES-GCM is client-side because Compact has no in-circuit encryption primitive for this workflow. The ciphertext is the only report payload crossing into public state. After unlock, the three filers decrypt their chosen records locally and the app produces a signed JSON dossier. Independent verification checks the contract address, slot key, threshold state, entry keys, and on-chain filing dates without access to any Corroborate server.
+AES-GCM is client-side because Compact has no in-circuit encryption primitive for this workflow. The ciphertext is the only report payload crossing into public state. After unlock, the three filers decrypt their chosen records locally and the app produces a signed JSON dossier. Independent verification checks the contract address, slot key, threshold state, entry keys, and on-chain filing dates without access to any Thirdmark server.

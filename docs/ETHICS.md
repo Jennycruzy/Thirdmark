@@ -1,6 +1,6 @@
 # Ethics and safety
 
-Corroborate handles disclosures that can affect a company’s ability to trade and a supplier’s ability to recover money. The threshold is the safety property: a single supplier must never be exposed as the only filer, and a slot must never unlock below k=3.
+Thirdmark handles disclosures that can affect a company’s ability to trade and a supplier’s ability to recover money. The threshold is the safety property: a single supplier must never be exposed as the only filer, and a slot must never unlock below k=3.
 
 ## Product rules
 

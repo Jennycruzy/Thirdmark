@@ -6,12 +6,13 @@ This file records source verification that changes or constrains the build. The 
 
 ## Naming
 
-The requested unscoped npm/GitHub check was run before the first project commit.
+The requested unscoped npm/GitHub check was run before the rename commit.
 
 - `quorum` is occupied on npm by multiple public packages, including `@schady4/quorum` and `@balpal4495/quorum`.
 - `kth`, `corroborate`, and `nth` are also occupied as unscoped npm packages according to the npm registry response captured during verification.
-- `Jennycruzy/quorum`, `Jennycruzy/Kth`, `Jennycruzy/Corroborate`, and `Jennycruzy/Nth` returned HTTP 404 from the GitHub repository API at verification time.
-- Decision: use **Corroborate** for the product and repository. If a publishable npm package is needed later, it must use a confirmed scoped name rather than claiming the occupied unscoped name.
+- `Jennycruzy/quorum`, `Jennycruzy/Kth`, `Jennycruzy/Corroborate`, and `Jennycruzy/Nth` returned HTTP 404 from the GitHub repository API at the initial check.
+- The exact `thirdmark` npm registry lookup and `Jennycruzy/Thirdmark` GitHub repository lookup both returned HTTP 404 on 2026-09-11.
+- Decision: use **Thirdmark** for the product and repository. The earlier local fallback name `Corroborate` is superseded before product code begins.
 
 This contradicts the supplied statement that the three alternatives are unclaimed on npm. The registry is authoritative for npm availability.
 
@@ -49,7 +50,7 @@ The maintained Compact changelog contains later 0.31 development versions, inclu
 
 Compact 0.34.0 is available, but its published release notes target ledger v9. The project target is Preprod on the ledger-v8 line, so moving to 0.34.0 would change the deployment target rather than solve this gate. This is a blocking source conflict. No contract will be compiled for deployment or deployed with the known-vulnerable 0.31.1 compiler.
 
-The reference proof-server files use `midnightntwrk/proof-server:8.0.3`. The newer example-zkloan compatibility table uses `8.1.0`; this must be reconciled against the current Preprod compatibility matrix before writing Corroborate’s compose file. No image version is hardcoded in the product repository yet.
+The reference proof-server files use `midnightntwrk/proof-server:8.0.3`. The newer example-zkloan compatibility table uses `8.1.0`; this must be reconciled against the current Preprod compatibility matrix before writing Thirdmark’s compose file. No image version is hardcoded in the product repository yet.
 
 ## Reference repository observations
 

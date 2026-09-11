@@ -8,7 +8,7 @@ Status: **blocked**.
 
 Passed:
 
-- Chose the product/repository name `Corroborate` after checking the four requested names against npm and the `Jennycruzy` GitHub account. The npm alternatives in the supplied specification were occupied; the discrepancy is recorded in [`FINDINGS.md`](FINDINGS.md).
+- Chose the product/repository name `Thirdmark` after checking the exact unscoped npm name and `Jennycruzy/Thirdmark` GitHub repository; both returned 404. Earlier fallback naming and the discrepancy in the supplied alternatives are recorded in [`FINDINGS.md`](FINDINGS.md).
 - Initialized a fresh repository with Apache-2.0 licensing and the requested local git identity: `Jennycruzy <jennycruzy@users.noreply.github.com>`.
 - Cloned the five cited references and `example-counter` into the gitignored `.references/` directory. Reference commits are recorded in [`FINDINGS.md`](FINDINGS.md).
 - Read the complete MatchLock contract and Moonray slicer source. Verified witness, disclosure, ledger, nullifier, domain-separated hash, and time-gating patterns.

@@ -1,4 +1,4 @@
-# Corroborate interface direction
+# Thirdmark interface direction
 
 The interface should make corroboration feel like a threshold being reached, not like a dashboard full of exposed records. The emotional beat is “I was not the only one,” and the only dramatic transition is the unlock.
 
@@ -16,7 +16,7 @@ Display typography uses a restrained grotesk with a narrow, numeric-friendly fac
 
 ```text
 +----------------------------------------------------------------+
-| CORROBORATE          sealed by design        network / wallet   |
+| THIRDMARK            sealed by design        network / wallet   |
 +----------------------------------------------------------------+
 |                                                                |
 |  [step marker] Find the company                                |

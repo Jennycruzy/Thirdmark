@@ -1,8 +1,8 @@
-# Corroborate
+# Thirdmark
 
 Three suppliers can independently attest that the same company is 90+ days overdue. A single filing is sealed. Only the third independent filing unlocks the three records to those three filers and produces a co-signed dossier.
 
-Corroborate is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
+Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
 > Status: initial source verification is complete. Implementation is blocked until a patched Compact 0.31 toolchain is published for the ledger-v8 Preprod line. The available 0.31.1 compiler is covered by Midnight’s critical range-proof advisory and will not be used for a deployment.
 
@@ -50,9 +50,9 @@ The first runnable commands will be added only after the compiler and proof-serv
 
 ## Prior art and attribution
 
-Corroborate is built for Midnight and uses the Compact language and Midnight tooling. It is informed by the cited Midnight example and winner repositories listed in [`docs/FINDINGS.md`](docs/FINDINGS.md).
+Thirdmark is built for Midnight and uses the Compact language and Midnight tooling. It is informed by the cited Midnight example and winner repositories listed in [`docs/FINDINGS.md`](docs/FINDINGS.md).
 
-Callisto is prior art for threshold escrow in a different and more sensitive vertical. Callisto relies on trusted custodians who can decrypt; Corroborate’s intended issuer can rate-limit but cannot decrypt filings. Corroborate does not claim to invent threshold escrow.
+Callisto is prior art for threshold escrow in a different and more sensitive vertical. Callisto relies on trusted custodians who can decrypt; Thirdmark’s intended issuer can rate-limit but cannot decrypt filings. Thirdmark does not claim to invent threshold escrow.
 
 ## License
 
