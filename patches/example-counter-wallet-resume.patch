@@ -1,0 +1,142 @@
+--- a/counter-cli/src/api.ts
++++ b/counter-cli/src/api.ts
+@@ -40,0 +41,2 @@ import { WebSocket } from 'ws';
++import { chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
++import { dirname, join } from 'node:path';
+@@ -77,0 +80 @@ export interface WalletContext {
++  walletCheckpoint?: WalletCheckpoint;
+@@ -79,0 +83,96 @@ export interface WalletContext {
++type SerializedWalletState = {
++  shielded: string;
++  unshielded: string;
++  dust: string;
++};
++
++export type WalletCheckpoint = {
++  save: () => Promise<void>;
++  stop: () => Promise<void>;
++};
++
++const walletStateRoot = process.env.THIRDMARK_WALLET_STATE_DIR ?? join(process.cwd(), '.wallet-state');
++
++const isSerializedWalletState = (value: unknown): value is SerializedWalletState => {
++  if (typeof value !== 'object' || value === null) return false;
++  const state = value as Record<string, unknown>;
++  return typeof state.shielded === 'string' && typeof state.unshielded === 'string' && typeof state.dust === 'string';
++};
++
++const getWalletStatePath = (unshieldedAddress: string): string =>
++  join(walletStateRoot, getNetworkId(), `${Buffer.from(unshieldedAddress).toString('hex')}.json`);
++
++const loadWalletState = async (statePath: string): Promise<SerializedWalletState | undefined> => {
++  try {
++    const serialized = await readFile(statePath, 'utf8');
++    const parsed: unknown = JSON.parse(serialized);
++    if (!isSerializedWalletState(parsed)) {
++      throw new Error('wallet checkpoint has an unexpected shape');
++    }
++    return parsed;
++  } catch (error) {
++    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
++    throw new Error(`Cannot restore wallet checkpoint at ${statePath}: ${String(error)}`);
++  }
++};
++
++const writeWalletState = async (statePath: string, state: SerializedWalletState): Promise<void> => {
++  await mkdir(dirname(statePath), { recursive: true, mode: 0o700 });
++  const temporaryPath = `${statePath}.${process.pid}.tmp`;
++  await writeFile(temporaryPath, JSON.stringify(state), { encoding: 'utf8', mode: 0o600 });
++  await chmod(temporaryPath, 0o600);
++  await rename(temporaryPath, statePath);
++};
++
++const formatSyncProgress = (progress: {
++  appliedIndex?: bigint;
++  highestRelevantWalletIndex?: bigint;
++  appliedId?: bigint;
++  highestTransactionId?: bigint;
++  isConnected: boolean;
++}): string => {
++  const applied = progress.appliedIndex ?? progress.appliedId ?? 0n;
++  const highest = progress.highestRelevantWalletIndex ?? progress.highestTransactionId ?? 0n;
++  return `${applied}/${highest}${progress.isConnected ? '' : ' (connecting)'}`;
++};
++
++const startWalletCheckpointing = (wallet: WalletFacade, statePath: string): WalletCheckpoint => {
++  let inFlight: Promise<void> | undefined;
++
++  const save = async (): Promise<void> => {
++    if (inFlight !== undefined) return inFlight;
++    inFlight = Promise.all([
++      wallet.shielded.serializeState(),
++      wallet.unshielded.serializeState(),
++      wallet.dust.serializeState(),
++    ])
++      .then(([shielded, unshielded, dust]) => writeWalletState(statePath, { shielded, unshielded, dust }))
++      .finally(() => {
++        inFlight = undefined;
++      });
++    return inFlight;
++  };
++
++  const checkpointTimer = setInterval(() => {
++    void save().catch((error: unknown) => logger.warn(`Wallet checkpoint failed: ${String(error)}`));
++  }, 5_000);
++  checkpointTimer.unref?.();
++
++  const progressSubscription = wallet.state().pipe(Rx.throttleTime(15_000)).subscribe((state) => {
++    console.log(
++      `\n  Sync checkpoint: shielded ${formatSyncProgress(state.shielded.progress)} | ` +
++        `dust ${formatSyncProgress(state.dust.progress)} | ` +
++        `unshielded ${formatSyncProgress(state.unshielded.progress)}`,
++    );
++  });
++
++  return {
++    save,
++    stop: async () => {
++      clearInterval(checkpointTimer);
++      progressSubscription.unsubscribe();
++      await save();
++    },
++  };
++};
++
+@@ -444 +543 @@ export const buildWalletAndWaitForFunds = async (config: Config, seed: string):
+-  const { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore } = await withStatus(
++  const { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore, walletCheckpoint } = await withStatus(
+@@ -450,0 +550,2 @@ export const buildWalletAndWaitForFunds = async (config: Config, seed: string):
++      const statePath = getWalletStatePath(unshieldedKeystore.getBech32Address().toString());
++      const serializedState = await loadWalletState(statePath);
+@@ -463,2 +564,8 @@ export const buildWalletAndWaitForFunds = async (config: Config, seed: string):
+-        shielded: (cfg) => ShieldedWallet(cfg).startWithSecretKeys(shieldedSecretKeys),
+-        unshielded: (cfg) => UnshieldedWallet(cfg).startWithPublicKey(PublicKey.fromKeyStore(unshieldedKeystore)),
++        shielded: (cfg) =>
++          serializedState === undefined
++            ? ShieldedWallet(cfg).startWithSecretKeys(shieldedSecretKeys)
++            : ShieldedWallet(cfg).restore(serializedState.shielded),
++        unshielded: (cfg) =>
++          serializedState === undefined
++            ? UnshieldedWallet(cfg).startWithPublicKey(PublicKey.fromKeyStore(unshieldedKeystore))
++            : UnshieldedWallet(cfg).restore(serializedState.unshielded),
+@@ -466 +573,3 @@ export const buildWalletAndWaitForFunds = async (config: Config, seed: string):
+-          DustWallet(cfg).startWithSecretKey(dustSecretKey, ledger.LedgerParameters.initialParameters().dust),
++          serializedState === undefined
++            ? DustWallet(cfg).startWithSecretKey(dustSecretKey, ledger.LedgerParameters.initialParameters().dust)
++            : DustWallet(cfg).restore(serializedState.dust),
+@@ -470 +579,7 @@ export const buildWalletAndWaitForFunds = async (config: Config, seed: string):
+-      return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
++      const walletCheckpoint = startWalletCheckpointing(wallet, statePath);
++      await walletCheckpoint.save();
++      if (serializedState !== undefined) {
++        console.log(`  Resuming wallet sync from ${statePath}`);
++      }
++
++      return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore, walletCheckpoint };
+@@ -505 +620 @@ ${DIV}
+-  return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
++  return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore, walletCheckpoint };
+--- a/counter-cli/src/cli.ts
++++ b/counter-cli/src/cli.ts
+@@ -309,0 +310 @@ export const run = async (config: Config, _logger: Logger, dockerEnv?: DockerCom
++        await walletCtx.walletCheckpoint?.stop();

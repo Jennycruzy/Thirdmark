@@ -54,7 +54,9 @@ The archived `example-counter` Preprod CLI currently has a wallet SDK collection
 npm run patch:reference-wallet
 ```
 
-The patch converts the ledger’s native `Map` iterator to an array before mapping pending shielded outputs. It does not alter keys, proofs, balances, transaction signing, or contract behavior; the script refuses to modify an unexpected SDK source.
+The patch converts the ledger’s native `Map` iterator to an array before mapping pending shielded outputs. It also adds progress reporting and five-second checkpoints for the three SDK wallet states. A fresh CLI otherwise replays the complete Preprod event history from cursor zero and presents only a spinner; after an interruption, the same public wallet resumes from its latest local checkpoint. Checkpoints contain SDK-serialized wallet state, not the seed or secret keys, and are written below the ignored reference checkout with `0700`/`0600` permissions. The script refuses to modify an unexpected SDK source.
+
+If the current CLI is already showing `Syncing with network`, stop it with `Ctrl-C`, apply the patch, and restart it. Do not fund a second address. The first run still has to catch up to the current Preprod indexer; subsequent interruptions do not discard the completed replay.
 
 Start the pinned Preprod proof server and check its health:
 
