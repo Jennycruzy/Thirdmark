@@ -5,6 +5,8 @@ jobs:
     docker:
       - image: cimg/node:24.11
     resource_class: medium
+    environment:
+      COMPACT_ARTIFACT_ROOT: /tmp/thirdmark-compact-artifacts
     steps:
       - checkout
 
@@ -28,6 +30,10 @@ jobs:
       - run:
           name: Compile reference and OPRF circuits with proving keys
           command: ./scripts/verify-compact.sh
+
+      - store_artifacts:
+          path: /tmp/thirdmark-compact-artifacts
+          destination: compact-artifacts
 
       - run:
           name: Install simulator dependencies

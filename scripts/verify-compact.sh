@@ -25,6 +25,15 @@ compact compile \
   verification/oprf-scratch.compact \
   "${compile_root}/oprf-managed"
 
+if [[ -n "${COMPACT_ARTIFACT_ROOT:-}" ]]; then
+  mkdir -p "${COMPACT_ARTIFACT_ROOT}/example-counter/contract/src/managed/counter"
+  cp -R "${compile_root}/counter-managed/." \
+    "${COMPACT_ARTIFACT_ROOT}/example-counter/contract/src/managed/counter/"
+  mkdir -p "${COMPACT_ARTIFACT_ROOT}/oprf-managed"
+  cp -R "${compile_root}/oprf-managed/." \
+    "${COMPACT_ARTIFACT_ROOT}/oprf-managed/"
+fi
+
 for contract_info in \
   "${compile_root}/counter-managed/compiler/contract-info.json" \
   "${compile_root}/oprf-managed/compiler/contract-info.json"; do
