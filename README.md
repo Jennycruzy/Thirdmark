@@ -4,7 +4,7 @@ Three suppliers can independently attest that the same company is 90+ days overd
 
 Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
-> Status: initial source verification is complete. Implementation is blocked until a patched Compact 0.31 toolchain is published for the ledger-v8 Preprod line. The available 0.31.1 compiler is covered by Midnight’s critical range-proof advisory and will not be used for a deployment.
+> Status: initial source verification is complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. Full proof-key generation is still pending on a supported runner: this development Mac exits with `SIGILL` from the bundled `zkir` binary for both the counter reference and the OPRF scratch circuit. No deployment is claimed until the full compile, simulator, and Preprod checks pass.
 
 ## Why Midnight
 
@@ -15,7 +15,7 @@ The differentiator is simple: every supplier knows the buyer does not pay, and n
 ## Planned Wave 1 architecture
 
 - Canonical company registration identifiers are resolved by registry lookup. Wave 1 uses one jurisdiction; free-text company names are not cryptographic inputs.
-- A single issuer provides a blind OPRF service. The issuer can rate-limit or censor requests, but cannot recover the company identifier from a blinded point, read filings, or force a reveal. Wave 2 distributes the OPRF key across issuers. The client computes the Jubjub scalar inverse using the source-backed runtime constant; Compact 0.31 does not expose arithmetic or inversion for `JubjubScalar`.
+- A single issuer provides a blind OPRF service. The issuer can rate-limit or censor requests, but cannot recover the company identifier from a blinded point, read filings, or force a reveal. Wave 2 distributes the OPRF key across issuers. The client computes the Jubjub scalar inverse using the source-backed runtime constant; the selected ledger-v8 Compact toolchain does not expose arithmetic or inversion for `JubjubScalar`.
 - Slot keys and filer nullifiers use `persistentHash`. Filing-history commitments use `persistentCommit` with a fresh opening for every filing.
 - Report plaintext is encrypted in the client with AES-GCM. The Compact contract receives only a fixed-width opaque ciphertext.
 - The contract has no administrator, pause circuit, upgrade path, or operator reveal path.
@@ -37,16 +37,16 @@ All progress, source findings, residual leaks, and public-comment drafts are mai
 
 ## Local setup
 
-The setup is intentionally incomplete until the Compact security blocker is resolved. The source references used during verification are kept outside version control in `.references/`.
+The setup is intentionally incomplete until full proof generation and the Compact compatibility checks are resolved. The source references used during verification are kept outside version control in `.references/`.
 
 Required before the first compile:
 
 - Node.js 22.x, matching the current Midnight examples.
-- The Compact toolchain selected from Midnight’s published compatibility matrix.
+- Compact 0.30.0, language 0.22.0, runtime 0.15.0, and the matching ledger-v8 JavaScript packages. The version decision and source evidence are in [`docs/FINDINGS.md`](docs/FINDINGS.md).
 - Docker and Docker Compose for the proof server.
 - A funded Preprod wallet supplied by the project owner at the deployment gate. Wallet keys and seed phrases never enter this repository or the chat.
 
-The first runnable commands will be added only after the compiler and proof-server versions are source-compatible and safe to deploy.
+The reproducible reference-counter and OPRF compile check is [`scripts/verify-compact.sh`](scripts/verify-compact.sh). It intentionally requires full proving-key generation; `--skip-zk` is not a passing build.
 
 ## Prior art and attribution
 

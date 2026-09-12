@@ -27,7 +27,7 @@ P_final   = ecMul(P_issuer, r_inverse)
 slotKey   = persistentHash([pad(32, "thirdmark:slot:v1"), P_final.x, P_final.y])
 ```
 
-Compact 0.31 exposes `ecMul` for `JubjubScalar` but does not expose arithmetic or `inv` for that type. The client must compute `r_inverse` with a source-backed Jubjub scalar modulus from the Midnight runtime, then pass the inverse scalar to an `ecMul`-based unblinding circuit. The scratch circuit must prove the two group multiplications and the resulting point equality before product code is written. No scalar modulus is hardcoded.
+The selected ledger-v8 Compact toolchain exposes `ecMul` for the Jubjub operation but does not expose arithmetic or `inv` for `JubjubScalar`. The client must compute `r_inverse` with a source-backed Jubjub scalar modulus from the Midnight runtime, then pass the inverse scalar to an `ecMul`-based unblinding circuit. The scratch circuit must prove the two group multiplications and the resulting point equality before product code is written. No scalar modulus is hardcoded.
 
 The issuer receives only the blinded point and applies its secret. It can rate-limit or refuse service, but it must not receive the canonical identifier. An adversary who learns the exact slot key can still probe the public ledger; that count leak is the same problem as subject derivation because the ledger has no enumeration or prefix-scan API.
 

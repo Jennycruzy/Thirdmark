@@ -1,6 +1,6 @@
 # Findings
 
-Updated 2026-09-11.
+Updated 2026-09-12.
 
 This file records source verification that changes or constrains the build. The local reference checkouts used for line-level inspection are gitignored under `.references/`; the commit IDs below make the evidence reproducible.
 
@@ -61,6 +61,23 @@ The reference proof-server files use `midnightntwrk/proof-server:8.0.3`. The new
 - Latch’s `contract/src/moat.compact:183-205` explicitly documents that circuit arguments remain private until disclosed and uses a recomputed spend-state commitment.
 - The archived `midnightntwrk/compact` repository now directs source development to `LFDT-Minokawa/compact`. The maintained repository is therefore used for language API verification, while Midnight’s archived release repository remains the release source.
 
+## Ledger-v8 recovery path
+
+The security finding does not make the project impossible. The official Compact 0.30.0 release notes state that the toolchain targets Midnight ledger version 8. The official security advisory identifies the specific `Uint<N>` range-proof defect as affecting versions `<= 0.31.1` and explicitly identifies 0.30.x as not affected by that regression. Sources: [Compact 0.30 release notes](https://github.com/midnightntwrk/compact/releases) and [GHSA-3p6x-5vpx-wwpj](https://github.com/LFDT-Minokawa/compact/security/advisories/GHSA-3p6x-5vpx-wwpj).
+
+The installed 0.30.0 compiler reports:
+
+- compiler: `0.30.0`
+- language: `0.22.0`
+- runtime: `0.15.0`
+- compiler ledger target: `ledger-8.0.2`
+
+The pinned `example-counter` reference at commit `273f083ab36a52407f16ec9a9796d902226e05d6` resolves the compatible application family in its lockfile: `@midnight-ntwrk/compact-runtime` `0.15.0`, `@midnight-ntwrk/ledger-v8` `8.0.3`, and Midnight.js `4.0.4`. This is the source-backed starting point for the project dependency pins; it is not yet deployment evidence.
+
+The 0.30.0 compiler accepts the OPRF scratch source with `--skip-zk` and produces proof metadata for the OPRF circuit. Full proving-key generation cannot be completed on the current Intel Mac: the bundled `zkir` exits with `SIGILL` (reported by `compactc` as exit `-4`) for both the official counter circuit and the OPRF scratch circuit. The same failure occurs with the installed 0.31.1 binary, so this is a local CPU/toolchain-execution limitation, not evidence that 0.30.0 is unsafe. The reproducible full compile has been moved to CI on a supported runner; until that result exists, W1-P0 remains blocked.
+
+This is a narrow advisory correction, not a blanket claim that every historical 0.30 compiler defect is absent. We will run the complete source, proof, simulator, and deployment checks before relying on the toolchain.
+
 ## Current gate status
 
-W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, and CLI installation are complete. The required scratch proof, canonical example-counter build/deploy, proof-server health check, and Preprod evidence cannot honestly be completed until the ledger-v8 compiler security issue has an installable patched release and the owner supplies the required external account and wallet information.
+W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, and skip-ZK syntax checks are complete. The required full scratch proof, canonical example-counter build/deploy, proof-server health check, and Preprod evidence cannot honestly be completed until the CI proof-key check passes and the owner supplies the required external account and wallet information.
