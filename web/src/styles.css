@@ -28,6 +28,13 @@ a { color: inherit; }
 .status-dot.connected { background: var(--confirmed); }
 .quiet-button, .primary-button { border: 1px solid var(--ink); background: transparent; cursor: pointer; font-weight: 700; transition: background .18s ease, color .18s ease, border-color .18s ease; }
 .quiet-button { padding: 8px 12px; margin-left: 6px; font-size: 12px; }
+.deployment-panel { margin: 34px 0 0; }
+.deployment-panel h2 { max-width: 620px; margin: 6px 0 10px; }
+.deployment-panel .primary-button { margin-top: 12px; }
+.deployment-receipt { display: grid; gap: 8px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--quiet); }
+.deployment-receipt div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; }
+.deployment-receipt dt { color: #566168; font-size: 12px; }
+.deployment-receipt dd { margin: 0; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .quiet-button:hover:not(:disabled), .quiet-button:focus-visible { background: var(--ink); color: var(--paper); }
 .primary-button { background: var(--ink); color: var(--paper); padding: 13px 18px; min-height: 48px; }
 .primary-button:hover:not(:disabled), .primary-button:focus-visible { background: var(--signal); border-color: var(--signal); }

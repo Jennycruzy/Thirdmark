@@ -86,6 +86,11 @@ passed gates.
 The wallet replay remains the only external deployment blocker. At the user’s
 direction, product implementation continued without claiming W1-P0 or W1-P1.
 
+The headless wallet path is no longer the only option. Thirdmark now has a real
+Lace-backed browser deployment action, so the laptop does not need to run the
+Node wallet’s multi-hour historical replay. The browser path still waits for
+Lace to be ready and does not bypass network or balance safety checks.
+
 Completed locally:
 
 - Added `contract/src/thirdmark.compact` with sealed issuer configuration, DLEQ-authenticated OPRF evaluation, persistent slot/nullifier/entry derivations, `Bytes<128>` opaque ciphertext storage, nullifier and ciphertext replay guards, a 32-entry evolving private filing-history commitment, fresh-salt uniqueness checks, and threshold-only unlock state.

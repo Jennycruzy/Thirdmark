@@ -294,3 +294,17 @@ locked dependency tree; staged the four `file` proving assets; passed the 52-tes
 root suite; and passed the browser typecheck and Vite build. This validates the
 repository’s managed build path. It remains separate from deployment evidence: no
 contract address, transaction hash, block, or Preprod filing was produced.
+
+## Browser deployment path — 2026-09-12
+
+The headless reference CLI is not the only deployment path. Thirdmark now exposes a
+real Lace-backed deployment action in the browser. It uses the same source-verified
+Midnight.js providers as filing: Lace supplies wallet configuration and shielded
+keys, the wallet balances and signs the transaction, and the wallet submits it to
+Preprod. This avoids running a second Node wallet that must replay the complete
+shielded and dust history on a laptop. It does not bypass wallet synchronization,
+transaction balancing, proof generation, or network confirmation.
+
+The deployment action is intentionally disabled until the public issuer key is
+configured and Lace is connected on Preprod. No secret issuer scalar or wallet
+material is placed in browser configuration.

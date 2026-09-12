@@ -1,6 +1,7 @@
 import { CompiledContract } from "@midnight-ntwrk/compact-js";
 import type { ContractAddress, JubjubPoint } from "@midnight-ntwrk/compact-runtime";
 import {
+  deployContract,
   findDeployedContract,
   type ContractProviders,
   type FoundContract,
@@ -45,6 +46,8 @@ import type { WalletSession } from "./wallet.js";
 import { encryptedPrivateStateProvider } from "./private-state.js";
 
 const PRIVATE_STATE_ID = "thirdmark-filer";
+const DEPLOYMENT_PRIVATE_STATE_ID = "thirdmark-deployment";
+const WAVE_ONE_THRESHOLD = 3n;
 const ARTIFACT_ROOT = "/";
 
 const balancedTxHex = new WeakMap<object, string>();
@@ -195,6 +198,41 @@ export type SlotSnapshot = {
   readonly unlocked: boolean;
   readonly threshold: number;
   readonly records?: readonly ReportAttestation[];
+};
+
+export type DeploymentReceipt = {
+  readonly contractAddress: string;
+  readonly txId: string;
+  readonly txHash: string;
+  readonly blockHeight: number | null;
+};
+
+/**
+ * Deploy through the connected Lace wallet. The browser wallet owns wallet
+ * synchronization, transaction balancing, signing, and submission; the
+ * application does not run a second headless wallet history replay.
+ */
+export const deployThirdmark = async (session: WalletSession): Promise<DeploymentReceipt> => {
+  if (publicAppConfig.contractAddress) {
+    throw new Error("A Thirdmark contract address is already configured for this deployment.");
+  }
+  const providers = await buildProviders(session);
+  const issuerKey = configuredIssuerPublicKey();
+  const deployed = await deployContract(providers, {
+    compiledContract: compiledContract(),
+    args: [issuerKey.x, issuerKey.y, WAVE_ONE_THRESHOLD],
+    privateStateId: DEPLOYMENT_PRIVATE_STATE_ID,
+    // The constructor has no witness reads. Filer state is initialized only
+    // when a browser joins the deployed address after an OPRF response.
+    initialPrivateState: {} as never,
+  } as never);
+  const publicData = deployed.deployTxData.public;
+  return {
+    contractAddress: publicData.contractAddress,
+    txId: publicData.txId,
+    txHash: publicData.txHash,
+    blockHeight: publicData.blockHeight === undefined ? null : Number(publicData.blockHeight),
+  };
 };
 
 export class ThirdmarkClient {

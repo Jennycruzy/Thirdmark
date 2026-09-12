@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { encryptReport, type ReportAttestation } from "../../client/crypto.js";
 import { hasContractConfiguration, hasIssuerConfiguration, publicAppConfig } from "./config.js";
 import { deriveCompanySlot } from "./issuer.js";
-import { connectThirdmark, type FilingReceipt, type SlotSnapshot } from "./midnight/contract.js";
+import { connectThirdmark, deployThirdmark, type DeploymentReceipt, type FilingReceipt, type SlotSnapshot } from "./midnight/contract.js";
 import { connectWallet, type WalletSession } from "./midnight/wallet.js";
 import { searchCompanies, type RegistrySearchResult } from "./registry.js";
 import "./styles.css";
@@ -47,6 +47,7 @@ function App() {
   const [working, setWorking] = useState(false);
   const [workingStage, setWorkingStage] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [deployment, setDeployment] = useState<DeploymentReceipt | null>(null);
 
   const publicState = useMemo(
     () => [
@@ -126,6 +127,31 @@ function App() {
     }
   };
 
+  const handleDeploy = async (): Promise<void> => {
+    if (!wallet) {
+      setNotice("Connect Lace on Midnight preprod before deploying.");
+      return;
+    }
+    if (!hasIssuerConfiguration()) {
+      setNotice("The public issuer key is not configured for this deployment.");
+      return;
+    }
+    setNotice(null);
+    setWorking(true);
+    setWorkingStage("Preparing the Lace deployment");
+    try {
+      setWorkingStage("Lace is balancing and signing the deployment");
+      const receipt = await deployThirdmark(wallet);
+      setDeployment(receipt);
+      setNotice("Deployment submitted through Lace. Keep this receipt for the Preprod record.");
+    } catch (error) {
+      setNotice(friendlyError(error));
+    } finally {
+      setWorking(false);
+      setWorkingStage(null);
+    }
+  };
+
   const selectCompany = (company: RegistrySearchResult): void => {
     setSelectedCompany(company);
     setStep("file");
@@ -163,6 +189,30 @@ function App() {
           <p><strong>Threshold 3</strong><br />No sub-threshold count is shown.</p>
         </div>
       </section>
+
+      {!hasContractConfiguration() && (
+        <section className="panel deployment-panel" aria-labelledby="deployment-title">
+          <p className="eyebrow">Preprod deployment</p>
+          <h2 id="deployment-title">Deploy through Lace, not the headless CLI.</h2>
+          <p className="muted">
+            The browser wallet keeps its own synchronized state. Approve the deployment in Lace;
+            no seed, wallet key, or local historical replay is used here.
+          </p>
+          <button className="primary-button" type="button" onClick={() => void handleDeploy()} disabled={working || !wallet || !hasIssuerConfiguration()}>
+            {working ? "Preparing deployment…" : "Deploy Thirdmark through Lace"}
+          </button>
+          {!wallet && <p className="field-note">Connect Lace on Preprod first.</p>}
+          {!hasIssuerConfiguration() && <p className="field-note">The deployment still needs the public issuer key configuration.</p>}
+          {deployment && (
+            <dl className="deployment-receipt">
+              <div><dt>Contract</dt><dd>{deployment.contractAddress}</dd></div>
+              <div><dt>Transaction</dt><dd>{deployment.txId}</dd></div>
+              <div><dt>Transaction hash</dt><dd>{deployment.txHash}</dd></div>
+              <div><dt>Block</dt><dd>{deployment.blockHeight ?? "pending indexer confirmation"}</dd></div>
+            </dl>
+          )}
+        </section>
+      )}
 
       <nav className="step-nav" aria-label="Filing progress">
         {steps.map((item, index) => {
