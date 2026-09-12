@@ -23,18 +23,20 @@ Passed:
 - Connected the repository to CircleCI and completed pipeline `#1` at commit `65624e3` (`717dbcfa-c2be-4fcd-9afb-0484ab68f99c`). The `compact-validation` workflow and job succeeded, running the full proving-key compile for the pinned `example-counter` reference and the OPRF scratch circuit, followed by exact compiler/language/runtime metadata checks.
 - Added the `OprfSimulator` using the verified in-process `CircuitContext` pattern. `npm run test:oprf` completed strict TypeScript checking and six simulator tests, including a non-trivial blind/issuer/unblind round-trip, incorrect-unblinding rejection, same/different subject checks, scalar vectors, and wrong-width input rejection. The dependency audit reports zero vulnerabilities after upgrading Vitest to `4.1.11`.
 - Latest CircleCI pipeline `#3` at commit `c5d11b5` (`758b3c19-e135-43fa-9d7c-f34ba4e4412b`) succeeded. Workflow `compact-validation` stopped successfully at `2026-09-12T11:51:14Z`; job `compact-validation` was job number `3` (`ca60dc5a-cfeb-4016-bed5-973ae3411b30`). This validates the full proving-key compile and the simulator/typecheck workflow on the managed runner.
+- CircleCI pipeline `#5` at commit `2206138` (`b2d7d191-4219-4132-ad5c-1c29b6934022`) succeeded. Job `compact-validation` number `5` (`ff14550d-4680-403e-878c-55885a7ff065`) published the full counter contract and proving assets as CircleCI artifacts. The reference counter package built successfully from those assets, and its Preprod CLI reached the wallet setup menu without creating or reading a wallet secret.
 
 Not passed:
 
 - The development Mac still cannot execute the local 0.30.0 `zkir` process; it exits with `SIGILL`. Managed CircleCI has now completed the full proving-key compile, so the local CPU issue is not blocking CI validation.
 - The supplied in-circuit inverse step is not available in the verified Compact API. The pinned runtime also does not export the Jubjub scalar modulus; the scratch harness uses the source-backed protocol constant explicitly, and product OPRF code must resolve this dependency choice before implementation.
 - `example-counter` has been compiled in CircleCI but has not been deployed.
+- The local full counter compile still exits with `zkir` `-4`/`SIGILL`; the managed compiled assets are available from pipeline `#5` and are installed only in the gitignored reference checkout.
 - No Preprod address, transaction, block, timing, screenshot, or URL exists.
 - No AKINDO comment is ready to post because the required W1-P0 gate is not complete. The non-postable draft in [`COMMENTS.md`](COMMENTS.md) now includes the CircleCI evidence.
 
 Why blocked:
 
-The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but that local limitation no longer blocks the reproducible CI check. The next action is to deploy the official example-counter.
+The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The next action is a user-controlled wallet create/restore and funding step, followed by deployment of the official example-counter.
 
 User inputs still required before the external gates:
 

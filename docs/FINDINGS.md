@@ -75,6 +75,8 @@ The first CircleCI run used `cimg/base:2026.09`. That image does not contain Nod
 
 The updated configuration passed in CircleCI pipeline `#3` at commit `c5d11b5` (pipeline UUID `758b3c19-e135-43fa-9d7c-f34ba4e4412b`). Workflow `compact-validation` succeeded; job number `3` (`ca60dc5a-cfeb-4016-bed5-973ae3411b30`) ran the full proving-key compile, installed the locked JavaScript dependencies, and passed the strict typecheck plus six-test OPRF simulator suite.
 
+Pipeline `#5` at commit `2206138` (pipeline UUID `b2d7d191-4219-4132-ad5c-1c29b6934022`) also succeeded; job number `5` (`ff14550d-4680-403e-878c-55885a7ff065`) published the managed counter artifacts. The artifact root is [CircleCI counter artifacts](https://output.circle-artifacts.com/output/job/ff14550d-4680-403e-878c-55885a7ff065/artifacts/0/compact-artifacts/example-counter/contract/src/managed/counter/). Those assets were downloaded into the gitignored reference checkout and the reference contract package built successfully. The Preprod CLI reached its wallet setup menu; it was exited before wallet creation or seed restoration.
+
 ## Reference repository observations
 
 - MatchLock’s `contract/src/matchlock.compact:11-95` confirms language pragma 0.23, client-side ciphertext as `Bytes<128>`, Jubjub ECDH, `persistentHash`, disclosed ledger keys, and nullifier protection.
@@ -103,4 +105,4 @@ This is a narrow advisory correction, not a blanket claim that every historical 
 
 ## Current gate status
 
-W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, skip-ZK syntax checks, repository metadata, proof-server health check, managed full proving-key compile, and scratch round-trip simulator run are complete. The canonical example-counter deployment and Preprod evidence remain outstanding; the owner must supply the required external account and wallet information without sharing any wallet secret.
+W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, skip-ZK syntax checks, repository metadata, proof-server health check, managed full proving-key compile, scratch round-trip simulator run, and managed counter artifact retrieval are complete. The canonical example-counter deployment and Preprod evidence remain outstanding. Wallet creation/restoration, funding, and signing must be performed by the owner without sharing any wallet secret.
