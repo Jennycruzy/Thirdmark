@@ -58,6 +58,7 @@ Completed locally:
 - Added `ThirdmarkSimulator` and 13 tests. The suite covers valid and invalid DLEQ proofs, same-subject/different-blind equality, different-subject separation, first/second/third threshold behavior, duplicate filer, stale private state, ciphertext replay, invalid proof mutation safety, wrong ciphertext width, and history-salt reuse.
 - Added the product contract to the full CircleCI proving-key compile and changed the CI simulator step to `npm test`. The managed result is pending.
 - Added the client-side AES-GCM report envelope in `client/crypto.ts`. It derives its key from the OPRF-derived Jubjub point, uses a random 12-byte IV, authenticates the report, and enforces the contract’s exact 128-byte ciphertext width. Seven tests cover round-trip recovery, randomized envelopes, wrong-key failure, width and length rejection, field validation, and capacity rejection.
+- Added `client/dossier.ts` for deterministic three-record dossier construction, canonical JSON serialization, three distinct Ed25519 signatures, independent verification, and strict parse validation. Six tests cover ordering, threshold cardinality, serialization round-trip, report/signature/schema tampering, and duplicate signer references. It accepts caller-supplied keys and indexer timestamps; wallet connector signing and on-chain retrieval remain pending.
 
 Source correction recorded: Compact 0.30.0 has no first-class `JubjubScalar` cast. A raw transient-hash challenge caused a runtime scalar decode failure, so the circuit now truncates the domain-separated field hash to 248 bits before the DLEQ equations. See [`FINDINGS.md`](FINDINGS.md).
 
@@ -65,6 +66,6 @@ Evidence:
 
 - `npm run test:thirdmark`: passed, 13 tests.
 - `compact compile --skip-zk contract/src/thirdmark.compact ...`: passed.
-- `npm test`: passed, 27 tests across the OPRF simulator, product simulator, and client crypto suite; strict TypeScript and both Compact `--skip-zk` compiles also passed.
+- `npm test`: passed, 33 tests across the OPRF simulator, product simulator, client crypto suite, and dossier suite; strict TypeScript and both Compact `--skip-zk` compiles also passed.
 
-Not passed: no proof-server-backed product transaction, contract address, block, timing, screenshot, or AKINDO comment. The wallet process must finish a complete sync before the deployment path can be exercised. The next local layer is dossier construction and registry canonicalization; neither is being represented as deployed functionality.
+Not passed: no proof-server-backed product transaction, contract address, block, timing, screenshot, or AKINDO comment. The wallet process must finish a complete sync before the deployment path can be exercised. The next local layer is registry canonicalization and contract client integration; neither is being represented as deployed functionality.

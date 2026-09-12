@@ -71,6 +71,14 @@ AES-GCM suite adds 7 tests, for 27 tests in the full local command. Full proving
 generation is added to the managed CircleCI check, but that CI result is not yet a
 deployment or W1-P0 completion claim.
 
+The client artifact layer adds a deterministic three-record dossier with explicit
+contract/slot/threshold metadata, indexer-supplied filing times, and three Ed25519
+signatures over canonical JSON. Its six tests cover ordering, record-count and
+duplicate rejection, round-trip serialization and verification, report/signature
+tampering, schema tampering, and duplicate signer references. The full local command
+now passes 33 tests. These are client-local tests; no wallet signature or Preprod
+record retrieval is being claimed.
+
 ## Product private-history bound
 
 The Compact sources inspected for the selected toolchain use `List` as a ledger ADT;

@@ -43,7 +43,7 @@ const reportBytes = (report: ReportAttestation): Uint8Array => {
   return textEncoder.encode(JSON.stringify(report));
 };
 
-const validateReport = (report: ReportAttestation): void => {
+export const validateReport = (report: ReportAttestation): void => {
   if (!/^\d+$/.test(report.amountOverdueMinorUnits)) {
     throw new Error("amount must be non-negative minor units");
   }

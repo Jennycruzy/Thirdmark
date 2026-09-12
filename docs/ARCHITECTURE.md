@@ -66,3 +66,11 @@ rejects a malformed length before attempting decryption. The report schema curre
 contains only non-negative minor units, at least 90 late days, and a bounded invoice
 reference. This fixed envelope is a product limit until a separately verified larger
 Compact byte width is selected.
+
+The dossier module accepts the three decrypted records plus filing times read from the
+public indexer. It sorts records by their public entry keys before producing canonical
+JSON, binds the contract address, slot key, and unlock metadata, and verifies three
+distinct Ed25519 signatures over those exact bytes. Signer references are chosen by the
+three filers; they may be pseudonymous, so the dossier does not invent a real-world
+identity. The current implementation accepts caller-supplied `CryptoKeyPair` values;
+Midnight wallet message signing and indexer retrieval remain separate integration work.
