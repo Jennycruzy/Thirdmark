@@ -130,7 +130,10 @@ describe("Thirdmark dossier", () => {
       ...signed,
       signatures: signed.signatures.map((signature, index) =>
         index === 0
-          ? { ...signature, signature: `${signature.signature.slice(0, -1)}A` }
+          ? {
+              ...signature,
+              signature: `${signature.signature[0] === "A" ? "B" : "A"}${signature.signature.slice(1)}`,
+            }
           : signature,
       ) as unknown as typeof signed.signatures,
     };
