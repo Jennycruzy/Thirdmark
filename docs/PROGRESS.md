@@ -153,8 +153,8 @@ Evidence: `npm run typecheck` passed and the product simulator passed all 14
 filing/OPRF tests using the extracted production witnesses. CircleCI pipeline
 [#16](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/16) also
 passed the preceding issuer/browser commit’s full proving-key compile, 52 root
-tests, browser typecheck, and browser build. This witness-only follow-up still
-needs its own hosted run.
+tests, browser typecheck, and browser build. The follow-up witness implementation
+was included in the successful browser transaction validation in pipeline [#18](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/18).
 
 ## Browser transaction boundary — 2026-09-12
 
@@ -191,6 +191,9 @@ Evidence:
   for commit `9e6dd8b` succeeded. Job `compact-validation` (`f4cc722b-6674-415d-b6c5-bfd155e9ceeb`)
   completed the full proving-key compile, staged all four browser `file` artifacts,
   ran the 52-test root suite, and passed browser typecheck and build.
+- CircleCI pipeline [#19](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/19)
+  for the evidence-only successor commit `10e5742` also succeeded; job
+  `compact-validation` was `995fd8df-b7b2-451b-9f27-80ff1a88f525`.
 - No Preprod transaction, contract address, block, dossier, live URL, or screenshot
   was claimed.
 
