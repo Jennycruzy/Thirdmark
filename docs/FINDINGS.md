@@ -226,3 +226,60 @@ autocomplete endpoint. With those values absent it shows an action-oriented
 configuration state instead of pretending that a filing reached Midnight. The
 registry adapter contract is Thirdmark-owned and documented; the official CAC
 public-search page remains a human lookup page rather than an invented API.
+
+## Browser Midnight.js provider boundary — 2026-09-12
+
+The browser transaction path now follows the source-backed Midnight.js 4.0.4
+pattern used by the checked-out Moonray and Hermes references. `web/src/midnight/contract.ts`
+uses `FetchZkConfigProvider` for same-origin `file` proving assets, obtains the
+wallet-delegated proving provider through `getProvingProvider`, creates the
+ledger-v8 wallet provider, balances an unsealed transaction through the connector,
+and submits the exact balanced transaction returned by the wallet. The browser
+never receives a wallet seed or signing key.
+
+The provider requires these four generated assets and refuses to treat missing files
+as a successful build: `keys/file.prover`, `keys/file.verifier`, `zkir/file.bzkir`,
+and `zkir/file.zkir`. [`scripts/prepare-browser-artifacts.sh`](../scripts/prepare-browser-artifacts.sh)
+copies those exact files from the full Compact output into the ignored browser
+public directories. No placeholder files are created. The managed job runs this
+step after the full compile and before the browser build.
+
+The Midnight.js 4.0.4 `midnight-js-utils` package imports
+`@midnight-ntwrk/wallet-sdk-address-format` at runtime without declaring that
+package in its own published dependency list. The installed `example-counter`
+reference contains address-format `3.1.0`, and the package declares ledger-v8
+compatibility for that line. Thirdmark pins `@midnight-ntwrk/wallet-sdk-address-format`
+`3.1.0` directly in `web/package.json` so a clean install does not depend on npm’s
+hoisting behavior. This is a dependency correction, not an API invention.
+
+Vite reports upstream bundle warnings for Node-only imports (`fs`, `path`, and
+`assert`) and for the `isomorphic-ws` named export while compiling the browser
+bundle. The provider passes the browser’s native `window.WebSocket` explicitly to
+the indexer adapter. The warnings remain recorded rather than hidden; the build
+completes and no deployment claim is based on them.
+
+## Browser private state and finalized-transaction recovery — 2026-09-12
+
+The browser private-state provider stores witness state as AES-GCM ciphertext in
+IndexedDB and keeps the non-extractable AES key in the same browser origin. This is
+not a hardware vault or a password vault: a compromised open page can use the state.
+It does prevent readable witness JSON, report plaintext, and slot secrets from being
+placed in localStorage, sent to a Thirdmark server, or written to the repository.
+
+The filing client stages fresh OPRF material and a history salt before proof
+generation, then advances the filing-history witness only after the wallet call
+returns a finalized transaction. If finalization fails, the prior state is restored.
+If finalization succeeds but a later public-indexer read fails, the advanced state is
+retained; restoring the old history after a committed filing would allow a retry to
+replay a consumed private opening. This recovery distinction is now covered by the
+transaction control flow and is intentionally not represented as a Preprod test.
+
+## Timestamp boundary correction — 2026-09-12
+
+The selected Compact API exposes block-time predicates but the current Thirdmark
+contract does not store a filing timestamp ledger value. The public indexer’s
+finalized transaction data includes block timestamps, so the dossier module accepts
+timestamps supplied by an indexer retrieval layer. The browser currently stops before
+dossier export until that retrieval path and wallet-backed signing are implemented;
+it does not invent dates from client input or claim that a local decrypted record is
+already a complete dossier.

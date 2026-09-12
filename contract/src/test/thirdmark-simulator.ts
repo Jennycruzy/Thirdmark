@@ -23,18 +23,16 @@ import {
 
 import {
   witnesses,
+  advancePrivateState,
+  emptyFilingHistory,
   type ThirdmarkPrivateState,
   type ThirdmarkWitnesses,
 } from "../witnesses.js";
 
-export { JUBJUB_SCALAR_MODULUS, modInverse, witnesses };
+export { JUBJUB_SCALAR_MODULUS, modInverse, witnesses, advancePrivateState };
 export type { ThirdmarkPrivateState, ThirdmarkWitnesses };
 
-export const emptyHistory = (): FilingHistory => ({
-  slots: Array.from({ length: 32 }, () => new Uint8Array(32)),
-  commitmentSalts: Array.from({ length: 32 }, () => new Uint8Array(32)),
-  length: 0n,
-});
+export const emptyHistory = emptyFilingHistory;
 
 const bytes32 = (value: number): Uint8Array => {
   const result = new Uint8Array(32);
@@ -151,18 +149,3 @@ export class ThirdmarkSimulator {
     return this.circuitContext.currentPrivateState;
   }
 }
-
-export const advancePrivateState = (
-  state: ThirdmarkPrivateState,
-  slotKey: Uint8Array,
-  nextHistorySalt: Uint8Array,
-): ThirdmarkPrivateState => ({
-  ...state,
-  history: pureCircuits.nextFilingHistory(
-    state.history,
-    slotKey,
-    nextHistorySalt,
-  ),
-  previousHistorySalt: state.nextHistorySalt,
-  nextHistorySalt,
-});

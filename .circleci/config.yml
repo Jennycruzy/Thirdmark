@@ -44,6 +44,10 @@ jobs:
           command: npm test
 
       - run:
+          name: Prepare browser proving artifacts
+          command: ./scripts/prepare-browser-artifacts.sh
+
+      - run:
           name: Typecheck browser interface
           command: npm run web:typecheck
 

@@ -58,6 +58,14 @@ historyCommit  = persistentCommit(privateFilingHistory, freshSalt)
 
 The nullifier is a public anti-replay guard. The private filing-history witness is the scored private-state feature: the circuit proves the new slot is not already in the history, appends it, and commits with a fresh salt. The private witness also retains prior commitment salts and proves that the next salt has not appeared in that history. Both guards remain because they protect against different failure modes. A stale history commitment must fail; a repeated salt must never be accepted as a construction detail. The stable `filerId` key needed to reopen the evolving commitment is itself a public pseudonym and can link that filer’s history entries; it is not an identity claim, but it is a residual leak.
 
+The browser provider stages the next private witness in AES-GCM encrypted IndexedDB
+storage before a proof is generated. It advances the private history only after the
+wallet returns a finalized transaction. A failed proof restores the previous state;
+an indexer read that fails after finalization does not restore it, because doing so
+would make a committed filing appear unused and enable a stale-history retry. The
+browser key is non-extractable same-origin storage, not a hardware vault; an active
+compromised page can still use the witness while it is open.
+
 ## Threshold transition
 
 The contract discloses only the boolean threshold predicate at the point it controls public state. It inserts the ciphertext and updates the aggregate count only after checking the nullifier and history opening. It adds the slot to `unlocked` only when the count reaches the product threshold. No circuit returns a below-threshold count or exposes a filer identity.
@@ -83,3 +91,5 @@ distinct Ed25519 signatures over those exact bytes. Signer references are chosen
 three filers; they may be pseudonymous, so the dossier does not invent a real-world
 identity. The current implementation accepts caller-supplied `CryptoKeyPair` values;
 Midnight wallet message signing and indexer retrieval remain separate integration work.
+The browser therefore does not label decrypted records as a completed dossier until
+it has the public indexer dates and three signer approvals required by this boundary.

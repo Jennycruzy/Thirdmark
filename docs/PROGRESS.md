@@ -155,3 +155,41 @@ filing/OPRF tests using the extracted production witnesses. CircleCI pipeline
 passed the preceding issuer/browser commit’s full proving-key compile, 52 root
 tests, browser typecheck, and browser build. This witness-only follow-up still
 needs its own hosted run.
+
+## Browser transaction boundary — 2026-09-12
+
+Completed locally:
+
+- Replaced the browser-only preparation path with a source-backed Midnight.js
+  4.0.4 contract client. It uses the wallet’s delegated proving provider, same-origin
+  Compact proving assets, ledger-v8 balance/submit calls, the public indexer state,
+  and the generated Thirdmark witnesses. It has no fallback contract address,
+  endpoint, issuer key, or local-only filing success path.
+- Added an encrypted IndexedDB `PrivateStateProvider` for the filer witness. The
+  provider encrypts serialized private state with AES-GCM and retains only a
+  non-extractable same-origin key. The client advances filing history only after
+  finalization and does not roll back a committed filing if a later indexer read
+  fails.
+- Added a fail-closed browser artifact staging script. It requires all four full
+  `file` proving assets and copies them from the managed Compact output; it cannot
+  create placeholders.
+- Updated the UI to show proving stages, finalized transaction metadata, the public
+  history commitment, and decrypted records only after the real threshold result is
+  returned. It still stops before dossier export because timestamp retrieval and
+  wallet-backed signing are not complete.
+
+Evidence:
+
+- `npm test`: passed, 8 files and 52 tests.
+- `npm run web:typecheck`: passed.
+- `npm run web:build`: passed; Vite transformed 1,258 modules and emitted the
+  Compact on-chain-runtime and ledger-v8 WASM assets. The build reports upstream
+  bundle warnings for Node-only imports and `isomorphic-ws`; these are recorded in
+  [`FINDINGS.md`](FINDINGS.md).
+- `bash -n scripts/prepare-browser-artifacts.sh`: passed.
+- No Preprod transaction, contract address, block, dossier, live URL, or screenshot
+  was claimed. The managed CircleCI run for this browser-artifact change is pending.
+
+The W1-P0 deployment gate and W1-P1 contract gate remain open. No AKINDO comment
+draft was added for this local layer; the existing W1-P0 draft remains explicitly
+not ready to post.

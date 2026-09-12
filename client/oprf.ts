@@ -32,6 +32,11 @@ export type CompletedOprf = {
   readonly slotSecret: JubjubPoint;
   /** The public ledger slot key derived by the Compact circuit. */
   readonly slotKey: Uint8Array;
+  /** Witness material retained locally for the subsequent filing call. */
+  readonly blindedOprfPoint: JubjubPoint;
+  readonly evaluatedOprfPoint: JubjubPoint;
+  readonly unblindingScalar: bigint;
+  readonly issuerDleqProof: DleqProof;
 };
 
 const assertSubjectBytes = (subject: Uint8Array): void => {
@@ -95,5 +100,9 @@ export const completeOprf = (
   return {
     slotSecret,
     slotKey: pureCircuits.slotKeyFromPoint(slotSecret),
+    blindedOprfPoint: session.blindedPoint,
+    evaluatedOprfPoint: evaluation.evaluatedPoint,
+    unblindingScalar: session.unblindingScalar,
+    issuerDleqProof: evaluation.proof,
   };
 };

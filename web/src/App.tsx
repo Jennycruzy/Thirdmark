@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { encryptReport, type ReportAttestation } from "../../client/crypto.js";
 import { hasContractConfiguration, hasIssuerConfiguration, publicAppConfig } from "./config.js";
 import { deriveCompanySlot } from "./issuer.js";
+import { connectThirdmark, type FilingReceipt, type SlotSnapshot } from "./midnight/contract.js";
 import { connectWallet, type WalletSession } from "./midnight/wallet.js";
 import { searchCompanies, type RegistrySearchResult } from "./registry.js";
 import "./styles.css";
@@ -16,8 +17,17 @@ const steps: readonly { id: Step; label: string }[] = [
   { id: "dossier", label: "Dossier" },
 ];
 
-const friendlyError = (error: unknown): string =>
-  error instanceof Error ? error.message : "The action could not be completed. Try again.";
+const friendlyError = (error: unknown): string => {
+  const message = error instanceof Error ? error.message : "";
+  if (message.includes("wallet") || message.includes("network")) {
+    return "The wallet is not ready. Connect Lace on Midnight preprod and try again.";
+  }
+  if (message.includes("issuer")) return "The issuer could not complete the blinded request. Try again later.";
+  if (message.includes("registry")) return "The company search is unavailable. Try again or contact the registry adapter operator.";
+  if (message.includes("contract")) return "The Thirdmark contract is not available on this network.";
+  if (message.includes("ciphertext") || message.includes("report")) return "Check the filing fields and try again.";
+  return "The protected filing could not be completed. Check the connection and try again.";
+};
 
 const shortValue = (value: string): string =>
   value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -31,8 +41,11 @@ function App() {
   const [daysLate, setDaysLate] = useState("90");
   const [invoiceReference, setInvoiceReference] = useState("");
   const [wallet, setWallet] = useState<WalletSession | null>(null);
+  const [fileReceipt, setFileReceipt] = useState<FilingReceipt | null>(null);
+  const [slotSnapshot, setSlotSnapshot] = useState<SlotSnapshot | null>(null);
   const [prepared, setPrepared] = useState(false);
   const [working, setWorking] = useState(false);
+  const [workingStage, setWorkingStage] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const publicState = useMemo(
@@ -70,10 +83,19 @@ function App() {
     }
   };
 
-  const handlePrepare = async (): Promise<void> => {
-    if (!selectedCompany) return;
+  const handleFile = async (): Promise<void> => {
+    if (!selectedCompany || !wallet) {
+      setNotice("Connect a Midnight wallet before filing.");
+      return;
+    }
+    if (!hasIssuerConfiguration() || !hasContractConfiguration()) {
+      setNotice("This deployment is not connected to the issuer and Thirdmark contract yet.");
+      return;
+    }
     setNotice(null);
     setWorking(true);
+    setWorkingStage("Deriving a blinded company slot");
+    let filingFinalized = false;
     try {
       const report: ReportAttestation = {
         amountOverdueMinorUnits: amount,
@@ -81,18 +103,26 @@ function App() {
         invoiceReference,
       };
       const completed = await deriveCompanySlot(selectedCompany.subject.registrationNumber);
-      await encryptReport(completed.slotSecret, report);
+      setWorkingStage("Encrypting the attestation in this browser");
+      const ciphertext = await encryptReport(completed.slotSecret, report);
+      setWorkingStage("Preparing the Midnight contract call");
+      const contract = await connectThirdmark(wallet, completed);
+      setWorkingStage("Proving and submitting the protected filing");
+      const receipt = await contract.file(completed, ciphertext);
+      filingFinalized = true;
+      setFileReceipt(receipt);
       setPrepared(true);
-      setNotice(
-        hasContractConfiguration()
-          ? "The encrypted filing is ready for the wallet transaction."
-          : "The encrypted filing is ready locally; this deployment has no contract address yet, so nothing was submitted.",
-      );
+      setWorkingStage("Reading the finalized public state");
+      const snapshot = await contract.readSlot(completed);
+      setSlotSnapshot(snapshot);
+      setStep(receipt.unlocked ? "unlocked" : "sealed");
+      setNotice(receipt.unlocked ? "The threshold bit is true. The three records are available only in this browser." : "Filing finalized. The record remains sealed until the threshold is met.");
     } catch (error) {
-      setPrepared(false);
+      if (!filingFinalized) setPrepared(false);
       setNotice(friendlyError(error));
     } finally {
       setWorking(false);
+      setWorkingStage(null);
     }
   };
 
@@ -213,28 +243,34 @@ function App() {
               </div>
               <h2>File a late payment</h2>
               <p className="muted">The report is encrypted in this browser. Only the fixed-width envelope crosses into the contract.</p>
-              <form className="filing-form" onSubmit={(event) => { event.preventDefault(); void handlePrepare(); }}>
+              <form className="filing-form" onSubmit={(event) => { event.preventDefault(); void handleFile(); }}>
                 <label htmlFor="amount">Amount overdue <span>minor units</span></label>
                 <input id="amount" inputMode="numeric" value={amount} onChange={(event) => setAmount(event.target.value.replace(/\D/gu, ""))} placeholder="e.g. 250000" required />
                 <label htmlFor="days-late">Days late</label>
                 <input id="days-late" type="number" min="90" value={daysLate} onChange={(event) => setDaysLate(event.target.value)} required />
                 <label htmlFor="invoice">Invoice reference</label>
                 <input id="invoice" value={invoiceReference} onChange={(event) => setInvoiceReference(event.target.value)} maxLength={256} placeholder="Your internal reference" required />
-                <button className="primary-button full-width" type="submit" disabled={working || !hasIssuerConfiguration()}>
-                  {working ? "Preparing protected filing" : "Prepare protected filing"}
+                <button className="primary-button full-width" type="submit" disabled={working || !hasIssuerConfiguration() || !hasContractConfiguration() || !wallet}>
+                  {working ? (workingStage ?? "Working") : "File protected record"}
                 </button>
                 {!hasIssuerConfiguration() && <p className="field-note">The issuer endpoint and sealed public key are not configured for this deployment.</p>}
+                {!hasContractConfiguration() && <p className="field-note">The Preprod contract address is not configured; no local-only button is offered.</p>}
+                {!wallet && <p className="field-note">Connect the Midnight wallet before submitting a filing.</p>}
               </form>
-              {prepared && <div className="prepared-note"><strong>Prepared in memory.</strong><span>No report, slot secret, or plaintext has been persisted.</span></div>}
+              {prepared && fileReceipt && <div className="prepared-note">
+                <strong>{fileReceipt.unlocked ? "Threshold met." : "Filing finalized."}</strong>
+                <span>Transaction {shortValue(fileReceipt.txId)} · block {fileReceipt.blockHeight}</span>
+                <span>Only the opaque envelope, nullifier, and history commitment crossed the boundary.</span>
+              </div>}
             </section>
           )}
 
-          {step === "sealed" && <StatePanel step="sealed" onBack={() => setStep("file")} />}
-          {step === "unlocked" && <StatePanel step="unlocked" onBack={() => setStep("sealed")} />}
-          {step === "dossier" && <StatePanel step="dossier" onBack={() => setStep("unlocked")} />}
+          {step === "sealed" && <StatePanel step="sealed" receipt={fileReceipt} snapshot={slotSnapshot} onBack={() => setStep("file")} />}
+          {step === "unlocked" && <StatePanel step="unlocked" receipt={fileReceipt} snapshot={slotSnapshot} onBack={() => setStep("sealed")} />}
+          {step === "dossier" && <StatePanel step="dossier" receipt={fileReceipt} snapshot={slotSnapshot} onBack={() => setStep("unlocked")} />}
         </div>
 
-        <PrivacyInspector publicState={publicState} prepared={prepared} />
+        <PrivacyInspector publicState={publicState} prepared={prepared} receipt={fileReceipt} />
       </section>
     </main>
   );
@@ -244,14 +280,14 @@ function Tally({ unlocked }: { readonly unlocked: boolean }) {
   return <div className={unlocked ? "tally confirmed" : "tally"} aria-label={unlocked ? "Threshold met" : "Threshold sealed"}><i /><i /><i /></div>;
 }
 
-function PrivacyInspector({ publicState, prepared }: { readonly publicState: readonly string[]; readonly prepared: boolean }) {
+function PrivacyInspector({ publicState, prepared, receipt }: { readonly publicState: readonly string[]; readonly prepared: boolean; readonly receipt: FilingReceipt | null }) {
   return (
     <aside className="panel inspector">
       <div className="inspector-heading"><span className="eyebrow">Privacy inspector</span><span className="live-mark">{prepared ? "ready" : "live"}</span></div>
       <h2>What crosses the boundary</h2>
       <div className="inspector-group public-group">
         <span className="inspector-label">Public state</span>
-        <ul>{publicState.map((item) => <li key={item}>{item}</li>)}</ul>
+        <ul>{publicState.map((item) => <li key={item}>{item}</li>)}{receipt && <li>history commitment {shortValue(Array.from(receipt.historyCommitment, (byte) => byte.toString(16).padStart(2, "0")).join(""))}</li>}</ul>
       </div>
       <div className="inspector-group private-group">
         <span className="inspector-label">Private witness</span>
@@ -262,13 +298,13 @@ function PrivacyInspector({ publicState, prepared }: { readonly publicState: rea
   );
 }
 
-function StatePanel({ step, onBack }: { readonly step: "sealed" | "unlocked" | "dossier"; readonly onBack: () => void }) {
+function StatePanel({ step, receipt, snapshot, onBack }: { readonly step: "sealed" | "unlocked" | "dossier"; readonly receipt: FilingReceipt | null; readonly snapshot: SlotSnapshot | null; readonly onBack: () => void }) {
   const copy = {
     sealed: { eyebrow: "Step 03", title: "Filed. Now quiet.", body: "Nothing is visible until two independent suppliers file against the same subject. Thirdmark never shows a sub-threshold count." },
     unlocked: { eyebrow: "Step 04", title: "The third mark changed the state.", body: "Only the three authorized filers can decrypt their records locally. No operator receives the plaintext." },
-    dossier: { eyebrow: "Step 05", title: "The dossier is the settlement.", body: "The signed JSON artifact binds the three attestations to the contract, slot, threshold, entry keys, and indexer filing times." },
+    dossier: { eyebrow: "Step 05", title: "The dossier is the settlement.", body: "Dossier export follows the timestamped entry read path. This build does not invent filing dates that the current contract has not recorded." },
   }[step];
-  return <section className="panel state-panel"><p className="eyebrow">{copy.eyebrow}</p><h2>{copy.title}</h2><p className="muted">{copy.body}</p><div className="state-placeholder"><Tally unlocked={step !== "sealed"} /><span>{step === "sealed" ? "Waiting for independent corroboration" : "Unlock state requires a real Preprod transaction"}</span></div><button className="quiet-button" type="button" onClick={onBack}>Back</button></section>;
+  return <section className="panel state-panel"><p className="eyebrow">{copy.eyebrow}</p><h2>{copy.title}</h2><p className="muted">{copy.body}</p><div className="state-placeholder"><Tally unlocked={step !== "sealed"} /><span>{step === "sealed" ? (receipt ? `Transaction ${shortValue(receipt.txId)} is sealed at the threshold.` : "Waiting for an actual filing transaction") : snapshot?.unlocked ? `${snapshot.records?.length ?? 0} decrypted attestations are held in this browser.` : "Unlock requires a finalized threshold transaction."}</span></div>{step === "unlocked" && snapshot?.records && <div className="record-list" aria-label="Decrypted attestations">{snapshot.records.map((record, index) => <article className="record-card" key={`${record.invoiceReference}-${index}`}><span className="label">Attestation {index + 1}</span><strong>{record.amountOverdueMinorUnits} minor units overdue</strong><span>{record.daysLate} days late · {record.invoiceReference}</span></article>)}</div>}<button className="quiet-button" type="button" onClick={onBack}>Back</button></section>;
 }
 
 export default App;

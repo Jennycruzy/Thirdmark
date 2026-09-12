@@ -98,6 +98,10 @@ input::placeholder { color: #8a8e8b; }
 .state-panel { min-height: 430px; }
 .state-placeholder { min-height: 170px; border-top: 1px solid var(--quiet); border-bottom: 1px solid var(--quiet); margin: 32px 0 24px; display: flex; align-items: center; gap: 26px; }
 .state-placeholder .tally { margin: 0; flex: 0 0 auto; }
+.record-list { display: grid; gap: 10px; margin: 24px 0; }
+.record-card { border-top: 1px solid var(--quiet); padding: 15px 0 4px; display: grid; gap: 5px; color: #59666b; font-size: 13px; line-height: 1.45; }
+.record-card strong { color: var(--ink); font-size: 15px; }
+.record-card .label { color: var(--signal); font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 
 @media (max-width: 800px) {
   .app-shell { width: min(100% - 28px, 680px); }
