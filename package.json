@@ -5,6 +5,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
+    "patch:reference-wallet": "bash scripts/patch-example-counter-wallet.sh",
     "compact:oprf": "compact compile --skip-zk verification/oprf-scratch.compact verification/managed/oprf",
     "typecheck:oprf": "npm run compact:oprf && tsc --noEmit",
     "test:oprf": "npm run typecheck:oprf && vitest run verification/oprf.test.ts"

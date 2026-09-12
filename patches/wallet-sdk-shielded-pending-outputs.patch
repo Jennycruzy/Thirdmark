@@ -1,0 +1,9 @@
+--- a/dist/v1/CoreWallet.js
++++ b/dist/v1/CoreWallet.js
+@@ -25,7 +25,7 @@
+     },
+     pickAllCoins(state) {
+-        return [...state.coins, ...state.pendingOutputs.values().map(([coin]) => coin)];
++        return [...state.coins, ...Array.from(state.pendingOutputs.values(), ([coin]) => coin)];
+     },
+     assertValid(map, state) {

@@ -48,6 +48,14 @@ Required before the first compile:
 
 The reproducible reference-counter and OPRF compile check is [`scripts/verify-compact.sh`](scripts/verify-compact.sh). It intentionally requires full proving-key generation; `--skip-zk` is not a passing build.
 
+The archived `example-counter` Preprod CLI currently has a wallet SDK collection-shape defect during sync. After installing its dependencies, apply the narrow, source-checked compatibility patch before running the CLI:
+
+```sh
+npm run patch:reference-wallet
+```
+
+The patch converts the ledger’s native `Map` iterator to an array before mapping pending shielded outputs. It does not alter keys, proofs, balances, transaction signing, or contract behavior; the script refuses to modify an unexpected SDK source.
+
 Start the pinned Preprod proof server and check its health:
 
 ```sh
