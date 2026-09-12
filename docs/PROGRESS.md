@@ -187,8 +187,12 @@ Evidence:
   bundle warnings for Node-only imports and `isomorphic-ws`; these are recorded in
   [`FINDINGS.md`](FINDINGS.md).
 - `bash -n scripts/prepare-browser-artifacts.sh`: passed.
+- CircleCI pipeline [#18](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/18)
+  for commit `9e6dd8b` succeeded. Job `compact-validation` (`f4cc722b-6674-415d-b6c5-bfd155e9ceeb`)
+  completed the full proving-key compile, staged all four browser `file` artifacts,
+  ran the 52-test root suite, and passed browser typecheck and build.
 - No Preprod transaction, contract address, block, dossier, live URL, or screenshot
-  was claimed. The managed CircleCI run for this browser-artifact change is pending.
+  was claimed.
 
 The W1-P0 deployment gate and W1-P1 contract gate remain open. No AKINDO comment
 draft was added for this local layer; the existing W1-P0 draft remains explicitly

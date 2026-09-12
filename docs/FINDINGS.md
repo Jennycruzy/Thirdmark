@@ -283,3 +283,14 @@ timestamps supplied by an indexer retrieval layer. The browser currently stops b
 dossier export until that retrieval path and wallet-backed signing are implemented;
 it does not invent dates from client input or claim that a local decrypted record is
 already a complete dossier.
+
+## Managed browser validation — 2026-09-12
+
+CircleCI pipeline [#18](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/18)
+for commit `9e6dd8b` succeeded. Job `compact-validation` with ID
+`f4cc722b-6674-415d-b6c5-bfd155e9ceeb` ran the full Compact proving-key compile for
+the reference counter, OPRF scratch circuit, and Thirdmark contract; installed the
+locked dependency tree; staged the four `file` proving assets; passed the 52-test
+root suite; and passed the browser typecheck and Vite build. This validates the
+repository’s managed build path. It remains separate from deployment evidence: no
+contract address, transaction hash, block, or Preprod filing was produced.
