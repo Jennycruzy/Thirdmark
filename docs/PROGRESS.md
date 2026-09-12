@@ -20,19 +20,20 @@ Passed:
 - Added a reproducible full-proof compile check for the official example-counter commit and the OPRF scratch contract. It is configured for CircleCI because the current Intel Mac cannot execute the bundled `zkir` binary.
 - Verified that the GitHub repository is public, GitHub detects Apache-2.0, and the required `compact`, `midnight`, `midnightntwrk`, and `zero-knowledge` topics are present.
 - Added the source-backed `midnightntwrk/proof-server:8.0.3` compose service and started it on port 6300. Its parameters and keys verified, its Actix service started, and the root endpoint returned HTTP 200 with `{"status":"ok"}`.
+- Connected the repository to CircleCI and completed pipeline `#1` at commit `65624e3` (`717dbcfa-c2be-4fcd-9afb-0484ab68f99c`). The `compact-validation` workflow and job succeeded, running the full proving-key compile for the pinned `example-counter` reference and the OPRF scratch circuit, followed by exact compiler/language/runtime metadata checks.
 
 Not passed:
 
-- The scratch OPRF circuit has not completed full proving-key generation. The local 0.30.0 `zkir` process exits with `SIGILL`; `--skip-zk` output is not a passing proof gate.
+- The development Mac still cannot execute the local 0.30.0 `zkir` process; it exits with `SIGILL`. Managed CircleCI has now completed the full proving-key compile, so the local CPU issue is not blocking CI validation.
 - The supplied in-circuit inverse step is not available in the verified Compact API. The replacement client-side inverse plus in-circuit `ecMul` design needs a scratch proof under a safe compiler.
-- `example-counter` has not been compiled or deployed.
-- CircleCI has not discovered `Jennycruzy/Thirdmark`; its public project endpoint returned `404 Project not found`. The repository must be connected through the owner’s CircleCI account before the managed Linux proof-key run can start.
+- The OPRF scratch circuit has full proving-key compile evidence, but it has not yet been executed through a simulator with test witnesses.
+- `example-counter` has been compiled in CircleCI but has not been deployed.
 - No Preprod address, transaction, block, timing, screenshot, or URL exists.
-- No AKINDO comment is ready to post because the required W1-P0 gate is not complete. A non-postable draft is kept in [`COMMENTS.md`](COMMENTS.md) for continuity.
+- No AKINDO comment is ready to post because the required W1-P0 gate is not complete. The non-postable draft in [`COMMENTS.md`](COMMENTS.md) now includes the CircleCI evidence.
 
 Why blocked:
 
-The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed and compiles the scratch source without proof generation, but this Mac’s CPU cannot execute the bundled `zkir`; the same failure occurs inside the CircleCI Linux image when run on this host. The next action is to connect the repository in CircleCI and pass the full compile on a managed runner, then deploy the official example-counter.
+The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. This development Mac’s CPU still cannot execute the bundled `zkir`, but that local limitation no longer blocks the reproducible CI check. The next actions are to execute the scratch round-trip through a simulator and deploy the official example-counter.
 
 User inputs still required before the external gates:
 

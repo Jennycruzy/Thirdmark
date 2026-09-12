@@ -4,7 +4,7 @@ Three suppliers can independently attest that the same company is 90+ days overd
 
 Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
-> Status: initial source verification is complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. Full proof-key generation is still pending on a supported runner: this development Mac exits with `SIGILL` from the bundled `zkir` binary for both the counter reference and the OPRF scratch circuit. No deployment is claimed until the full compile, simulator, and Preprod checks pass.
+> Status: initial source verification is complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. CircleCI pipeline #1 passed full proving-key compilation for the pinned counter reference and OPRF scratch circuit. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until simulator and Preprod checks pass.
 
 ## Why Midnight
 
@@ -37,7 +37,7 @@ All progress, source findings, residual leaks, and public-comment drafts are mai
 
 ## Local setup
 
-The setup is intentionally incomplete until full proof generation and the Compact compatibility checks are resolved. The source references used during verification are kept outside version control in `.references/`.
+The local setup is intentionally limited by the development Mac’s `zkir` CPU requirement; the authoritative full-proof compile runs in CircleCI. The source references used during verification are kept outside version control in `.references/`.
 
 Required before the first compile:
 

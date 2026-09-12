@@ -65,6 +65,12 @@ Observed locally on 2026-09-12:
 
 The proof-server health requirement is therefore satisfied. This is not evidence that a Compact circuit has generated proving keys or that a Preprod transaction exists.
 
+## Managed proving-key validation
+
+The repository was connected to CircleCI on 2026-09-12. Pipeline `#1` at commit `65624e3` completed successfully; pipeline UUID `717dbcfa-c2be-4fcd-9afb-0484ab68f99c`, workflow and job `compact-validation`. The job ran [`scripts/verify-compact.sh`](../scripts/verify-compact.sh) on the managed runner. That script installs Compact 0.30.0, compiles the pinned `example-counter` commit and `verification/oprf-scratch.compact` without `--skip-zk`, and verifies compiler `0.30.0`, language `0.22.0`, and runtime `0.15.0` in both generated contract-info files.
+
+This closes the managed full-proving-key compile check for the selected ledger-v8 candidate. It does not constitute simulator execution, a deployed contract, a transaction, or evidence that the Preprod network accepts the application dependency set. The development Mac’s local `zkir` `SIGILL` remains a local execution limitation only; it is not being worked around by weakening the CI check.
+
 ## Reference repository observations
 
 - MatchLock’s `contract/src/matchlock.compact:11-95` confirms language pragma 0.23, client-side ciphertext as `Bytes<128>`, Jubjub ECDH, `persistentHash`, disclosed ledger keys, and nullifier protection.
@@ -87,10 +93,10 @@ The installed 0.30.0 compiler reports:
 
 The pinned `example-counter` reference at commit `273f083ab36a52407f16ec9a9796d902226e05d6` resolves the compatible application family in its lockfile: `@midnight-ntwrk/compact-runtime` `0.15.0`, `@midnight-ntwrk/ledger-v8` `8.0.3`, and Midnight.js `4.0.4`. This is the source-backed starting point for the project dependency pins; it is not yet deployment evidence.
 
-The 0.30.0 compiler accepts the OPRF scratch source with `--skip-zk` and produces proof metadata for the OPRF circuit. Full proving-key generation cannot be completed on the current Intel Mac: the bundled `zkir` exits with `SIGILL` (reported by `compactc` as exit `-4`) for both the official counter circuit and the OPRF scratch circuit. The same failure occurs with the installed 0.31.1 binary. Running the CircleCI `cimg/base:2026.09` Linux image locally on the same physical machine reproduces the exit, confirming that changing the operating-system image does not bypass the host CPU limitation. The reproducible full compile is configured in CircleCI on a managed runner; until that result exists, W1-P0 remains blocked.
+The 0.30.0 compiler accepts the OPRF scratch source with `--skip-zk` and produces proof metadata for the OPRF circuit. Full proving-key generation cannot be completed on the current Intel Mac: the bundled `zkir` exits with `SIGILL` (reported by `compactc` as exit `-4`) for both the official counter circuit and the OPRF scratch circuit. The same failure occurs with the installed 0.31.1 binary. Running the CircleCI `cimg/base:2026.09` Linux image locally on the same physical machine reproduces the exit, confirming that changing the operating-system image does not bypass the host CPU limitation. The managed CircleCI run now supplies the full proving-key compile evidence; simulator execution and deployment remain separate checks.
 
 This is a narrow advisory correction, not a blanket claim that every historical 0.30 compiler defect is absent. We will run the complete source, proof, simulator, and deployment checks before relying on the toolchain.
 
 ## Current gate status
 
-W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, skip-ZK syntax checks, repository metadata, and proof-server health check are complete. The required full scratch proof, canonical example-counter build/deploy, and Preprod evidence cannot honestly be completed until the CircleCI proof-key check passes and the owner supplies the required external account and wallet information.
+W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, skip-ZK syntax checks, repository metadata, proof-server health check, and managed full proving-key compile are complete. The required scratch round-trip simulator run, canonical example-counter deployment, and Preprod evidence remain outstanding; the owner must supply the required external account and wallet information without sharing any wallet secret.
