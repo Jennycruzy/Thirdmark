@@ -1,0 +1,19 @@
+{
+  "name": "thirdmark",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "compact:oprf": "compact compile --skip-zk verification/oprf-scratch.compact verification/managed/oprf",
+    "typecheck:oprf": "npm run compact:oprf && tsc --noEmit",
+    "test:oprf": "npm run typecheck:oprf && vitest run verification/oprf.test.ts"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.15.0"
+  },
+  "devDependencies": {
+    "typescript": "6.0.2",
+    "vitest": "4.1.11"
+  }
+}

@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   compact-validation:
     docker:
-      - image: cimg/base:2026.09
+      - image: cimg/node:24.11
     resource_class: medium
     steps:
       - checkout
@@ -28,6 +28,14 @@ jobs:
       - run:
           name: Compile reference and OPRF circuits with proving keys
           command: ./scripts/verify-compact.sh
+
+      - run:
+          name: Install simulator dependencies
+          command: npm ci --legacy-peer-deps
+
+      - run:
+          name: Run OPRF simulator tests
+          command: npm run test:oprf
 
 workflows:
   compact-validation:

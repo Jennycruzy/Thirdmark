@@ -4,7 +4,8 @@ import CompactStandardLibrary;
 
 // This circuit checks the group relation used by the client-side blinded OPRF.
 // The inverse scalar is supplied by the client after deriving it from the
-// runtime's source-backed Jubjub modulus; it is never computed in Compact.
+// source-backed Jubjub modulus; it is never computed in Compact. The pinned
+// runtime's missing modulus export is recorded in docs/FINDINGS.md.
 export ledger roundTripAccepted: Boolean;
 
 witness blindingScalar(): Field;
@@ -21,7 +22,13 @@ export circuit oprfRoundTrip(subject: Bytes<32>): Boolean {
   const issuerOutput = ecMul(blinded, issuerScalar());
   const unblinded = ecMul(issuerOutput, unblindingScalar());
   const expected = ecMul(point, issuerScalar());
-  const accepted = disclose(unblinded == expected);
+  // Compare coordinates explicitly. The generated runtime represents a
+  // JubjubPoint as an x/y value, so object identity is not a curve equality
+  // check across separate ecMul calls.
+  const accepted = disclose(
+    jubjubPointX(unblinded) == jubjubPointX(expected) &&
+    jubjubPointY(unblinded) == jubjubPointY(expected)
+  );
   roundTripAccepted = accepted;
   return accepted;
 }

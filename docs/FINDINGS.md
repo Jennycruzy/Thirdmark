@@ -30,17 +30,17 @@ Verified against the maintained Compact source at `LFDT-Minokawa/compact`, commi
 - `hashToCurve<T>(value): JubjubPoint` exists and its documentation guarantees unknown discrete logarithm with respect to the base and other outputs: `exports.md:697-710`.
 - `blockTimeLt`, `blockTimeGte`, `blockTimeGt`, and `blockTimeLte` exist: `exports.md:1008-1038`.
 
-The hash and curve primitives in the OPRF design are source-backed. A complete OPRF round-trip still needs to run through a local simulator before product code begins.
+The hash and curve primitives in the OPRF design are source-backed. The scratch OPRF round-trip now runs through an in-process simulator; it is kept separate from product code until the remaining toolchain decisions are closed.
 
 ## OPRF correction
 
 The supplied OPRF description assumes an in-circuit inverse for the Jubjub blinding scalar. The maintained API does not provide one. `inv` is documented only for `Secp256k1Scalar` and `Secp256k1Base` (`exports.md:684-695`), while the 0.31 changelog says that `JubjubScalar` has no arithmetic support (`CHANGELOG.md:547-564`) and that `ecMul` now requires a `JubjubScalar` instead of a `Field` (`CHANGELOG.md:647-652`).
 
-This is a source-over-spec correction, not a reason to remove the OPRF. The implementable shape is: compute the inverse of the non-zero blinding scalar client-side using the runtime’s exported Jubjub scalar modulus; use only `ecMul` inside the Compact circuits for blinding, issuer evaluation, and unblinding; and prove the resulting point relation in a scratch circuit. The modulus and scalar conversion rules must be imported from the actual runtime package, never copied as a literal. MatchLock’s current contract still passes a `Field` to `ecMul` (`contract/src/matchlock.compact:68-74`), so that older pattern cannot be copied without compiling it against the selected toolchain.
+This is a source-over-spec correction, not a reason to remove the OPRF. The implementable shape is: compute the inverse of the non-zero blinding scalar client-side; use only `ecMul` inside the Compact circuits for blinding, issuer evaluation, and unblinding; and prove the resulting point relation in a scratch circuit. The pinned Compact runtime `0.15.0` does not export `JUBJUB_SCALAR_MODULUS`; its published export surface was inspected directly. The maintained Compact source at `c47230c` defines the protocol modulus in `runtime/src/constants.ts:33-39`, so the scratch harness uses that source-backed value and records the version mismatch here. No product inverse helper will silently assume an unverified runtime export. MatchLock’s current contract still passes a `Field` to `ecMul` (`contract/src/matchlock.compact:68-74`), so that older pattern cannot be copied without compiling it against the selected toolchain.
 
 The available 0.31.1 compiler confirms the version-specific shape: `JubjubScalar` is not a bound Compact identifier, while `Field` is accepted by the Jubjub `ecMul` calls used by the 0.31 language version. An isolated scratch contract using three `Field` witnesses, `hashToCurve<Bytes<32>>`, three `ecMul` calls, a disclosed equality predicate, and one public Boolean ledger cell compiled with `--skip-zk`; its generated `contract-info.json` marks the OPRF circuit as `proof: true`. This is syntax and circuit metadata evidence only, not a simulator run or deployment, and it was not used to clear the security gate.
 
-The maintained runtime source defines `JUBJUB_SCALAR_MODULUS` and `MAX_JUBJUB_SCALAR` in `runtime/src/constants.ts:33-39`. The eventual client inverse helper must import that runtime constant and test non-zero blinding scalars with property tests; it must not reproduce the modulus as a literal.
+The maintained source defines `JUBJUB_SCALAR_MODULUS` and `MAX_JUBJUB_SCALAR` in `runtime/src/constants.ts:33-39`, but the pinned `@midnight-ntwrk/compact-runtime@0.15.0` package does not export them. The scratch simulator’s source reference is explicit in `verification/oprf-simulator.ts`; before product OPRF code, the dependency choice must either expose the constant through a compatible runtime package or document and independently verify the protocol-constant import. Non-zero scalar inversion remains covered by the simulator tests.
 
 ## Version and security correction
 
@@ -71,6 +71,8 @@ The repository was connected to CircleCI on 2026-09-12. Pipeline `#1` at commit 
 
 This closes the managed full-proving-key compile check for the selected ledger-v8 candidate. It does not constitute simulator execution, a deployed contract, a transaction, or evidence that the Preprod network accepts the application dependency set. The development Mac’s local `zkir` `SIGILL` remains a local execution limitation only; it is not being worked around by weakening the CI check.
 
+The first CircleCI run used `cimg/base:2026.09`. That image does not contain Node or npm, so the simulator workflow now uses the verified `cimg/node:24.11` image. The reference `example-counter` checkout declares Node `24.11.1` in `.nvmrc`; the CircleCI tag was checked against the public image manifest before changing the configuration.
+
 ## Reference repository observations
 
 - MatchLock’s `contract/src/matchlock.compact:11-95` confirms language pragma 0.23, client-side ciphertext as `Bytes<128>`, Jubjub ECDH, `persistentHash`, disclosed ledger keys, and nullifier protection.
@@ -93,7 +95,7 @@ The installed 0.30.0 compiler reports:
 
 The pinned `example-counter` reference at commit `273f083ab36a52407f16ec9a9796d902226e05d6` resolves the compatible application family in its lockfile: `@midnight-ntwrk/compact-runtime` `0.15.0`, `@midnight-ntwrk/ledger-v8` `8.0.3`, and Midnight.js `4.0.4`. This is the source-backed starting point for the project dependency pins; it is not yet deployment evidence.
 
-The 0.30.0 compiler accepts the OPRF scratch source with `--skip-zk` and produces proof metadata for the OPRF circuit. Full proving-key generation cannot be completed on the current Intel Mac: the bundled `zkir` exits with `SIGILL` (reported by `compactc` as exit `-4`) for both the official counter circuit and the OPRF scratch circuit. The same failure occurs with the installed 0.31.1 binary. Running the CircleCI `cimg/base:2026.09` Linux image locally on the same physical machine reproduces the exit, confirming that changing the operating-system image does not bypass the host CPU limitation. The managed CircleCI run now supplies the full proving-key compile evidence; simulator execution and deployment remain separate checks.
+The 0.30.0 compiler accepts the OPRF scratch source with `--skip-zk` and produces proof metadata for the OPRF circuit. Full proving-key generation cannot be completed on the current Intel Mac: the bundled `zkir` exits with `SIGILL` (reported by `compactc` as exit `-4`) for both the official counter circuit and the OPRF scratch circuit. The same failure occurs with the installed 0.31.1 binary. Running the CircleCI `cimg/base:2026.09` Linux image locally on the same physical machine reproduces the exit, confirming that changing the operating-system image does not bypass the host CPU limitation. The managed CircleCI run now supplies the full proving-key compile evidence; the simulator suite separately executes the generated circuit code without a proof server.
 
 This is a narrow advisory correction, not a blanket claim that every historical 0.30 compiler defect is absent. We will run the complete source, proof, simulator, and deployment checks before relying on the toolchain.
 

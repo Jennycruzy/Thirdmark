@@ -4,7 +4,7 @@ Three suppliers can independently attest that the same company is 90+ days overd
 
 Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
-> Status: initial source verification is complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. CircleCI pipeline #1 passed full proving-key compilation for the pinned counter reference and OPRF scratch circuit. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until simulator and Preprod checks pass.
+> Status: initial source verification is complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. CircleCI pipeline #1 passed full proving-key compilation for the pinned counter reference and OPRF scratch circuit, and the local `OprfSimulator` passes its six-test suite. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until the updated CI run and Preprod checks pass.
 
 ## Why Midnight
 
@@ -41,7 +41,7 @@ The local setup is intentionally limited by the development Mac’s `zkir` CPU r
 
 Required before the first compile:
 
-- Node.js 22.x, matching the current Midnight examples.
+- Node.js 24.11.1, matching the pinned `example-counter` reference; the CircleCI job uses the verified `cimg/node:24.11` image.
 - Compact 0.30.0, language 0.22.0, runtime 0.15.0, and the matching ledger-v8 JavaScript packages. The version decision and source evidence are in [`docs/FINDINGS.md`](docs/FINDINGS.md).
 - Docker and Docker Compose for the proof server.
 - A funded Preprod wallet supplied by the project owner at the deployment gate. Wallet keys and seed phrases never enter this repository or the chat.
