@@ -20,7 +20,13 @@ The differentiator is simple: every supplier knows the buyer does not pay, and n
 - The Compact contract authenticates the issuer’s OPRF evaluation with an in-circuit DLEQ proof. It derives the slot key only from the verified evaluated point and the private unblinding scalar; the caller cannot submit an arbitrary slot key.
 - Report plaintext is encrypted in the client with AES-GCM. The Compact contract receives only a fixed-width opaque ciphertext.
 - The contract has no administrator, pause circuit, upgrade path, or operator reveal path.
-- The public ledger has no enumeration circuit. An observer who can derive an exact slot key can learn that slot’s aggregate count; the OPRF is therefore part of the count-privacy boundary.
+- Compact circuits have no enumeration operation. However, the generated public-state
+  query wrapper exposes `size()` and iterators for ledger maps and sets, so a chain
+  observer can enumerate opaque occupied keys and aggregate counts. The OPRF is
+  therefore mandatory: those keys are not company identifiers, and an observer without
+  the issuer-derived slot secret cannot map them to a registry subject. This is a
+  broader residual leak than the original no-enumeration assumption; it is recorded in
+  [`docs/FINDINGS.md`](docs/FINDINGS.md) and must be shown honestly in the privacy UI.
 
 The detailed threat model is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The safety and demo rules are in [`docs/ETHICS.md`](docs/ETHICS.md).
 

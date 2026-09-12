@@ -35,7 +35,15 @@ The selected ledger-v8 Compact toolchain exposes `ecMul` for the Jubjub operatio
 
 The issuer receives only the blinded point and applies its secret. It can rate-limit or refuse service, but it must not receive the canonical identifier. The filing circuit verifies a Chaum–Pedersen/DLEQ proof that the evaluated point was produced with the sealed issuer key. This prevents a caller from inventing a slot key without issuer participation. The proof challenge is a domain-separated transient hash truncated to 248 bits inside the 0.30.0 circuit so it is always a valid Jubjub scalar; later toolchains expose a first-class `JubjubScalar` cast, but the selected safe ledger-v8 candidate does not.
 
-An adversary who learns the exact slot key can still probe the public ledger; that count leak is the same problem as subject derivation because the ledger has no enumeration or prefix-scan API.
+The Compact circuit surface has no enumeration operation, but the compiler-generated
+public-state query wrapper exposes `size()` and iterators for `Map` and `Set` values.
+Consequently, a chain observer can enumerate opaque occupied keys and counts outside
+the circuit. The keys are not company identifiers, and the OPRF prevents an observer
+without the issuer-derived slot secret from mapping them to a registry subject. Anyone
+who can derive an exact slot key can still probe that slot’s count. This is a residual
+global occupancy/count leak and is stronger than the original no-enumeration
+assumption; the privacy inspector must show it rather than imply that public state is
+unqueryable.
 
 ## Filing and history
 

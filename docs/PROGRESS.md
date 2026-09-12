@@ -2,6 +2,12 @@
 
 Updated 2026-09-12.
 
+Source correction recorded during local contract inspection: Compact circuits do not
+enumerate ledger state, but the generated public-state query wrapper exposes map/set
+sizes and iterators. The architecture and privacy claims now describe the resulting
+opaque-key occupancy/count leak explicitly; no no-enumeration claim is being carried
+forward.
+
 ## W1-P0 — source verification and registration
 
 Status: **blocked**.
