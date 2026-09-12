@@ -77,7 +77,9 @@ The next local layer is now complete: [`client/oprf.ts`](../client/oprf.ts) perf
 the client blind, generated DLEQ verification, unblind, and Compact slot-key
 derivation. The client OPRF tests cover forged issuer evaluations, different
 blinding values for the same subject, different subjects, and equivalent CAC RC
-display forms. `npm test` now passes 45 tests. Issuer transport, wallet witness
+display forms. The issuer core in [`issuer/oprf.ts`](../issuer/oprf.ts) now produces
+the evaluated point and DLEQ proof without receiving a subject or report. `npm test`
+now covers 49 tests. Issuer transport, wallet witness
 submission, and Preprod execution remain unimplemented and are not represented as
 passed gates.
 
