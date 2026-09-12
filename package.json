@@ -7,8 +7,12 @@
   "scripts": {
     "patch:reference-wallet": "bash scripts/patch-example-counter-wallet.sh",
     "compact:oprf": "compact compile --skip-zk verification/oprf-scratch.compact verification/managed/oprf",
+    "compact:thirdmark": "compact compile --skip-zk contract/src/thirdmark.compact contract/managed/thirdmark",
+    "typecheck": "npm run compact:oprf && npm run compact:thirdmark && tsc --noEmit",
+    "test": "npm run typecheck && vitest run verification/oprf.test.ts contract/src/test/thirdmark.test.ts",
     "typecheck:oprf": "npm run compact:oprf && tsc --noEmit",
-    "test:oprf": "npm run typecheck:oprf && vitest run verification/oprf.test.ts"
+    "test:oprf": "npm run typecheck:oprf && vitest run verification/oprf.test.ts",
+    "test:thirdmark": "npm run typecheck && vitest run contract/src/test/thirdmark.test.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "0.15.0"

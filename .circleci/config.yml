@@ -40,8 +40,8 @@ jobs:
           command: npm ci --legacy-peer-deps
 
       - run:
-          name: Run OPRF simulator tests
-          command: npm run test:oprf
+          name: Run contract simulator tests
+          command: npm test
 
 workflows:
   compact-validation:

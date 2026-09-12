@@ -46,3 +46,23 @@ User inputs still required before the external gates:
 - AKINDO account confirmation and Discord handle.
 - A funded Preprod wallet at W1-P2; the wallet seed or key must never be shared.
 - A Vercel or Netlify account and optional domain at W1-P5.
+
+## Parallel local implementation — 2026-09-12
+
+The wallet replay remains the only external deployment blocker. At the user’s
+direction, product implementation continued without claiming W1-P0 or W1-P1.
+
+Completed locally:
+
+- Added `contract/src/thirdmark.compact` with sealed issuer configuration, DLEQ-authenticated OPRF evaluation, persistent slot/nullifier/entry derivations, `Bytes<128>` opaque ciphertext storage, nullifier and ciphertext replay guards, a 32-entry evolving private filing-history commitment, fresh-salt uniqueness checks, and threshold-only unlock state.
+- Added `ThirdmarkSimulator` and 13 tests. The suite covers valid and invalid DLEQ proofs, same-subject/different-blind equality, different-subject separation, first/second/third threshold behavior, duplicate filer, stale private state, ciphertext replay, invalid proof mutation safety, wrong ciphertext width, and history-salt reuse.
+- Added the product contract to the full CircleCI proving-key compile and changed the CI simulator step to `npm test`. The managed result is pending.
+
+Source correction recorded: Compact 0.30.0 has no first-class `JubjubScalar` cast. A raw transient-hash challenge caused a runtime scalar decode failure, so the circuit now truncates the domain-separated field hash to 248 bits before the DLEQ equations. See [`FINDINGS.md`](FINDINGS.md).
+
+Evidence:
+
+- `npm run test:thirdmark`: passed, 13 tests.
+- `compact compile --skip-zk contract/src/thirdmark.compact ...`: passed.
+
+Not passed: no proof-server-backed product transaction, contract address, block, timing, screenshot, or AKINDO comment. The wallet process must finish a complete sync before the deployment path can be exercised. The next local layer is client AES-GCM and dossier construction after the contract test evidence is committed.

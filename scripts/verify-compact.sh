@@ -25,6 +25,10 @@ compact compile \
   verification/oprf-scratch.compact \
   "${compile_root}/oprf-managed"
 
+compact compile \
+  contract/src/thirdmark.compact \
+  "${compile_root}/thirdmark-managed"
+
 if [[ -n "${COMPACT_ARTIFACT_ROOT:-}" ]]; then
   mkdir -p "${COMPACT_ARTIFACT_ROOT}/example-counter/contract/src/managed/counter"
   cp -R "${compile_root}/counter-managed/." \
@@ -32,14 +36,18 @@ if [[ -n "${COMPACT_ARTIFACT_ROOT:-}" ]]; then
   mkdir -p "${COMPACT_ARTIFACT_ROOT}/oprf-managed"
   cp -R "${compile_root}/oprf-managed/." \
     "${COMPACT_ARTIFACT_ROOT}/oprf-managed/"
+  mkdir -p "${COMPACT_ARTIFACT_ROOT}/thirdmark-managed"
+  cp -R "${compile_root}/thirdmark-managed/." \
+    "${COMPACT_ARTIFACT_ROOT}/thirdmark-managed/"
 fi
 
 for contract_info in \
   "${compile_root}/counter-managed/compiler/contract-info.json" \
-  "${compile_root}/oprf-managed/compiler/contract-info.json"; do
+  "${compile_root}/oprf-managed/compiler/contract-info.json" \
+  "${compile_root}/thirdmark-managed/compiler/contract-info.json"; do
   rg -q '"compiler-version": "0\.30\.0"' "${contract_info}"
   rg -q '"language-version": "0\.22\.0"' "${contract_info}"
   rg -q '"runtime-version": "0\.15\.0"' "${contract_info}"
 done
 
-printf 'Compact %s full proving-key compile passed for example-counter and OPRF scratch.\n' "${compact_version}"
+printf 'Compact %s full proving-key compile passed for example-counter, OPRF scratch, and Thirdmark.\n' "${compact_version}"

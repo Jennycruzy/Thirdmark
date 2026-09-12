@@ -12,7 +12,11 @@ unlocked    Set<Bytes<32>>             slot keys whose threshold predicate is tr
 history     Map<Bytes<32>, Bytes<32>>  filer id -> latest history commitment
 ```
 
-The final widths and the exact Compact types must be fixed from the compiler and runtime source before contract code is written. `Bytes<N>` must match the client AES-GCM envelope exactly.
+The Wave 1 contract fixes `Bytes<128>` for the AES-GCM envelope, matching the
+source-backed MatchLock boundary. `FilingHistory` is a private witness struct with
+32 slots and 32 commitment salts. Compact 0.30.0 exposes `List` as a ledger ADT, not
+as a private witness collection; the bound is therefore explicit in the circuit and
+is surfaced as a product limit rather than hidden behind a fake unbounded list.
 
 ## Key derivation
 
@@ -29,7 +33,9 @@ slotKey   = persistentHash([pad(32, "thirdmark:slot:v1"), P_final.x, P_final.y])
 
 The selected ledger-v8 Compact toolchain exposes `ecMul` for the Jubjub operation but does not expose arithmetic or `inv` for `JubjubScalar`. The client must compute `r_inverse` with a source-backed Jubjub scalar modulus from the Midnight runtime, then pass the inverse scalar to an `ecMul`-based unblinding circuit. The scratch circuit must prove the two group multiplications and the resulting point equality before product code is written. No scalar modulus is hardcoded.
 
-The issuer receives only the blinded point and applies its secret. It can rate-limit or refuse service, but it must not receive the canonical identifier. An adversary who learns the exact slot key can still probe the public ledger; that count leak is the same problem as subject derivation because the ledger has no enumeration or prefix-scan API.
+The issuer receives only the blinded point and applies its secret. It can rate-limit or refuse service, but it must not receive the canonical identifier. The filing circuit verifies a Chaum–Pedersen/DLEQ proof that the evaluated point was produced with the sealed issuer key. This prevents a caller from inventing a slot key without issuer participation. The proof challenge is a domain-separated transient hash truncated to 248 bits inside the 0.30.0 circuit so it is always a valid Jubjub scalar; later toolchains expose a first-class `JubjubScalar` cast, but the selected safe ledger-v8 candidate does not.
+
+An adversary who learns the exact slot key can still probe the public ledger; that count leak is the same problem as subject derivation because the ledger has no enumeration or prefix-scan API.
 
 ## Filing and history
 
@@ -41,13 +47,13 @@ entryKey       = persistentHash([pad(32, "thirdmark:entry:v1"), slotKey, index])
 historyCommit  = persistentCommit(privateFilingHistory, freshSalt)
 ```
 
-The nullifier is a public anti-replay guard. The private filing-history witness is the scored private-state feature: the circuit proves the new slot is not already in the history, appends it, and commits with a fresh salt. Both guards remain because they protect against different failure modes. A stale history commitment must fail; a repeated salt must never be accepted as a construction detail.
+The nullifier is a public anti-replay guard. The private filing-history witness is the scored private-state feature: the circuit proves the new slot is not already in the history, appends it, and commits with a fresh salt. The private witness also retains prior commitment salts and proves that the next salt has not appeared in that history. Both guards remain because they protect against different failure modes. A stale history commitment must fail; a repeated salt must never be accepted as a construction detail. The stable `filerId` key needed to reopen the evolving commitment is itself a public pseudonym and can link that filer’s history entries; it is not an identity claim, but it is a residual leak.
 
 ## Threshold transition
 
 The contract discloses only the boolean threshold predicate at the point it controls public state. It inserts the ciphertext and updates the aggregate count only after checking the nullifier and history opening. It adds the slot to `unlocked` only when the count reaches the product threshold. No circuit returns a below-threshold count or exposes a filer identity.
 
-Insertion order must not carry information. The three records are indexed by anonymous entry keys and are retrieved by the authorized filers after unlock; the contract does not publish an identity-to-entry mapping.
+Insertion order must not carry information. The three records are indexed by anonymous entry keys and are retrieved by the authorized filers after unlock; the contract does not publish an identity-to-entry mapping. Compact 0.30.0 exposes block-time predicates but no block timestamp value circuit, so the contract does not self-report a filing date. The dossier obtains the transaction/block date from the public indexer and must label that source explicitly.
 
 ## Dossier boundary
 

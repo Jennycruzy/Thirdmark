@@ -42,6 +42,43 @@ The available 0.31.1 compiler confirms the version-specific shape: `JubjubScalar
 
 The maintained source defines `JUBJUB_SCALAR_MODULUS` and `MAX_JUBJUB_SCALAR` in `runtime/src/constants.ts:33-39`, but the pinned `@midnight-ntwrk/compact-runtime@0.15.0` package does not export them. The scratch simulator’s source reference is explicit in `verification/oprf-simulator.ts`; before product OPRF code, the dependency choice must either expose the constant through a compatible runtime package or document and independently verify the protocol-constant import. Non-zero scalar inversion remains covered by the simulator tests.
 
+## Product OPRF authentication and Compact 0.30 scalar handling
+
+The product circuit cannot accept a caller-supplied `slotKey` as an authority claim:
+that would make the mandatory forged-slot adversarial test fail. The source-backed
+ledger-v8 primitive set provides `ecAdd`, `ecMul`, `ecMulGenerator`, and
+`hashToCurve`; it does not provide the later standard-library Schnorr verifier in the
+selected 0.30.0 toolchain. The contract therefore verifies a Chaum–Pedersen/DLEQ proof
+for the issuer’s OPRF evaluation. The proof checks that one hidden issuer scalar maps
+the embedded generator to the sealed issuer public key and the blinded subject point
+to the evaluated point.
+
+The maintained Compact release notes date the first-class `JubjubScalar` type and its
+field-to-scalar reduction cast to toolchain 0.33 (`.references/compact-active/doc/release-notes/toolchain-0.33.0.md:129-139`). The installed 0.30.0 release notes document the renamed `JubjubPoint` API but not that scalar type (`/Users/user/.compact/versions/0.30.0/x86_64-apple-darwin/toolchain-0.30.0.md:100-114`). A raw transient hash therefore cannot be passed safely to the runtime’s scalar operation: the simulator initially reproduced `failed to decode for built-in type EmbeddedFr`.
+
+The implemented correction is source-backed byte casting: the circuit computes a
+domain-separated `transientHash`, takes its first 31 bytes with the standard
+`slice<N>` circuit, and casts those 248 bits back to `Field` before the Jubjub
+multiplications. The challenge has 248 bits of entropy and is always below the
+Jubjub scalar modulus. The off-chain simulator uses the same exported Compact pure
+circuit for the challenge, so proof generation and verification cannot silently drift.
+This is a design correction to the supplied specification and must be revisited if
+the deployment toolchain moves to a release with a different scalar API.
+
+The product contract compiles with Compact 0.30.0 `--skip-zk`; its local simulator
+now passes 13 tests. Full proving-key generation is added to the managed CircleCI
+check, but that CI result is not yet a deployment or W1-P0 completion claim.
+
+## Product private-history bound
+
+The Compact sources inspected for the selected toolchain use `List` as a ledger ADT;
+no reference contract supplies an unbounded private witness list. Thirdmark’s first
+contract therefore represents the private filing history as a 32-entry witness
+vector with a private length and private per-entry commitment salts. The circuit
+rejects a full history instead of silently dropping an entry. This preserves the
+history-commitment property and makes the limit visible to the product layer; an
+unbounded private collection requires a separately verified Compact representation.
+
 ## Version and security correction
 
 The supplied specification pins Compact 0.31.1, language 0.23.0, runtime 0.16.0, ledger v8.1.0, Midnight JS 4.1.1, and proof server 8.0.3. The reference repositories corroborate the application dependency family, including Moonray commit `c10697a`, MatchLock `0738181`, NightPool `0e17c97`, Hermes `12f388e`, and Latch `5153e6b`.

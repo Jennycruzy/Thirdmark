@@ -4,7 +4,7 @@ Three suppliers can independently attest that the same company is 90+ days overd
 
 Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
-> Status: initial source verification is complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. CircleCI pipeline #3 passed full proving-key compilation, strict typechecking, and the six-test `OprfSimulator` suite. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until the Preprod checks pass.
+> Status: initial source verification and the first local contract layer are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local `ThirdmarkSimulator` runs 13 adversarial and threshold tests, and CircleCI is configured to run the product contract through the full proving-key check and simulator suite. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until the Preprod checks pass.
 
 ## Why Midnight
 
@@ -17,11 +17,29 @@ The differentiator is simple: every supplier knows the buyer does not pay, and n
 - Canonical company registration identifiers are resolved by registry lookup. Wave 1 uses one jurisdiction; free-text company names are not cryptographic inputs.
 - A single issuer provides a blind OPRF service. The issuer can rate-limit or censor requests, but cannot recover the company identifier from a blinded point, read filings, or force a reveal. Wave 2 distributes the OPRF key across issuers. The client computes the Jubjub scalar inverse using the source-backed runtime constant; the selected ledger-v8 Compact toolchain does not expose arithmetic or inversion for `JubjubScalar`.
 - Slot keys and filer nullifiers use `persistentHash`. Filing-history commitments use `persistentCommit` with a fresh opening for every filing.
+- The Compact contract authenticates the issuer’s OPRF evaluation with an in-circuit DLEQ proof. It derives the slot key only from the verified evaluated point and the private unblinding scalar; the caller cannot submit an arbitrary slot key.
 - Report plaintext is encrypted in the client with AES-GCM. The Compact contract receives only a fixed-width opaque ciphertext.
 - The contract has no administrator, pause circuit, upgrade path, or operator reveal path.
 - The public ledger has no enumeration circuit. An observer who can derive an exact slot key can learn that slot’s aggregate count; the OPRF is therefore part of the count-privacy boundary.
 
 The detailed threat model is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The safety and demo rules are in [`docs/ETHICS.md`](docs/ETHICS.md).
+
+## Local contract and simulator
+
+The first product contract is [`contract/src/thirdmark.compact`](contract/src/thirdmark.compact).
+It contains the sealed issuer configuration, DLEQ-authenticated OPRF slot derivation,
+nullifier and ciphertext replay guards, evolving private filing-history commitment,
+opaque `Bytes<128>` storage, and threshold-only unlock state. The in-process
+[`ThirdmarkSimulator`](contract/src/test/thirdmark-simulator.ts) runs without a proof
+server or wallet. Run the local checks with:
+
+```sh
+npm test
+```
+
+The local command intentionally uses `--skip-zk` because this Intel Mac cannot execute
+the bundled `zkir`; CircleCI performs the full proving-key compile. This is test/build
+evidence only, not Preprod deployment evidence.
 
 ## Three-wave roadmap
 
