@@ -20,10 +20,11 @@ is surfaced as a product limit rather than hidden behind a fake unbounded list.
 
 ## Key derivation
 
-The company registration number is resolved by a single Wave 1 registry and normalized to one canonical representation. A free-text company name is never hashed directly. The slot derivation is:
+The company registration number is resolved by Nigeria's Corporate Affairs Commission (CAC) public company search and normalized to one canonical `NG:CAC:company:RC:<digits>` representation. A free-text company name is never hashed directly. The current lookup boundary and exact normalization rules are in [`REGISTRY.md`](REGISTRY.md). The slot derivation is:
 
 ```text
-P         = hashToCurve(canonicalSubject)
+subject32 = SHA-256("thirdmark:subject:v1\\0" || canonicalSubject)
+P         = hashToCurve(subject32)
 P_blind   = ecMul(P, r)
 P_issuer  = ecMul(P_blind, k)
 r_inverse = client-side modular inverse of r

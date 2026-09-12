@@ -56,6 +56,17 @@ User inputs still required before the external gates:
 
 ## Parallel local implementation — 2026-09-12
 
+### Registry decision
+
+Wave 1 jurisdiction is now **Nigeria**, using the Corporate Affairs Commission
+(CAC) company `RC Number` as the sole subject identifier. The official iCRP public
+search exposes `RC Number`, `AV Code`, and `Approved Name`; Thirdmark intentionally
+restricts the first release to company RC numbers. The canonicalization and the
+fixed-width OPRF input are implemented and tested in [`client/registry.ts`](../client/registry.ts).
+The official public page does not publish a stable unauthenticated autocomplete
+API, so no undocumented endpoint or credentialed VAS integration is being claimed.
+See [`docs/REGISTRY.md`](REGISTRY.md) for the source boundary and residual work.
+
 The wallet replay remains the only external deployment blocker. At the user’s
 direction, product implementation continued without claiming W1-P0 or W1-P1.
 

@@ -14,7 +14,7 @@ The differentiator is simple: every supplier knows the buyer does not pay, and n
 
 ## Planned Wave 1 architecture
 
-- Canonical company registration identifiers are resolved by registry lookup. Wave 1 uses one jurisdiction; free-text company names are not cryptographic inputs.
+- Canonical company registration identifiers are resolved by registry lookup. Wave 1 uses Nigeria's Corporate Affairs Commission (CAC) company `RC Number`; free-text company names are not cryptographic inputs. The canonicalization rules and current public-search boundary are documented in [`docs/REGISTRY.md`](docs/REGISTRY.md).
 - A single issuer provides a blind OPRF service. The issuer can rate-limit or censor requests, but cannot recover the company identifier from a blinded point, read filings, or force a reveal. Wave 2 distributes the OPRF key across issuers. The client computes the Jubjub scalar inverse using the source-backed runtime constant; the selected ledger-v8 Compact toolchain does not expose arithmetic or inversion for `JubjubScalar`.
 - Slot keys and filer nullifiers use `persistentHash`. Filing-history commitments use `persistentCommit` with a fresh opening for every filing.
 - The Compact contract authenticates the issuer’s OPRF evaluation with an in-circuit DLEQ proof. It derives the slot key only from the verified evaluated point and the private unblinding scalar; the caller cannot submit an arbitrary slot key.

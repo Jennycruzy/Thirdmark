@@ -16,6 +16,15 @@ The requested unscoped npm/GitHub check was run before the rename commit.
 
 This contradicts the supplied statement that the three alternatives are unclaimed on npm. The registry is authoritative for npm availability.
 
+## Nigeria registry boundary
+
+Verified on 2026-09-12 against the official CAC sites:
+
+- The CAC public search at [`icrp.cac.gov.ng/public-search`](https://icrp.cac.gov.ng/public-search/) exposes the search categories `RC Number`, `AV Code`, and `Approved Name`.
+- The official CAC site describes the company-search service as a way to verify company information and registration status: [`cac.gov.ng/services/company-search`](https://www.cac.gov.ng/services/company-search).
+- CAC's separate [VAS API documentation](https://vas.cac.gov.ng/documentation-page) describes authenticated validation products, including lookup by RC number. Its published request examples require an API key, so it is not a client-side dependency and no credential is stored or requested.
+- Decision: Wave 1 uses CAC company RC numbers only. No undocumented public-search request path is treated as an API contract; the client currently implements only the deterministic canonicalization and fixed-width OPRF subject input in [`client/registry.ts`](../client/registry.ts).
+
 ## Compact language and cryptography
 
 Verified against the maintained Compact source at `LFDT-Minokawa/compact`, commit `c47230c`, and the public API material it contains:
