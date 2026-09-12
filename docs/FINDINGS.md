@@ -50,7 +50,20 @@ The maintained Compact changelog contains later 0.31 development versions, inclu
 
 Compact 0.34.0 is available, but its published release notes target ledger v9. The project target is Preprod on the ledger-v8 line, so moving to 0.34.0 would change the deployment target rather than solve this gate. This is a blocking source conflict. No contract will be compiled for deployment or deployed with the known-vulnerable 0.31.1 compiler.
 
-The reference proof-server files use `midnightntwrk/proof-server:8.0.3`. The newer example-zkloan compatibility table uses `8.1.0`; this must be reconciled against the current Preprod compatibility matrix before writing Thirdmark’s compose file. No image version is hardcoded in the product repository yet.
+The reference proof-server files use `midnightntwrk/proof-server:8.0.3`. The newer example-zkloan compatibility table uses `8.1.0`; because Thirdmark selected the older source-backed Compact 0.30.0 application family, the matching `example-counter` and Hermes `8.0.3` configuration is used and verified below.
+
+## Proof-server validation
+
+The pinned `example-counter` commit `273f083ab36a52407f16ec9a9796d902226e05d6` and Hermes commit `12f388ea7d23aa9fc1ee7959db1d22c38c550031` both configure `midnightntwrk/proof-server:8.0.3` on port 6300. Thirdmark now uses that exact source-backed image and the Hermes Preprod command in `docker-compose.yml`.
+
+Observed locally on 2026-09-12:
+
+- Docker resolved the image to `midnightntwrk/proof-server@sha256:8e6c36c3c175ef6e1b337952155b30470f252af79a20c3f65153a86a983e17ab`.
+- The server downloaded and verified its public parameters and Zswap/Dust key material.
+- The log reached `Actix runtime found; starting in Actix runtime` and listened on `0.0.0.0:6300` with four workers.
+- `GET http://127.0.0.1:6300/` returned HTTP 200 and `{"status":"ok","timestamp":"2026-09-12 05:24:45.099286667 +00:00:00"}`.
+
+The proof-server health requirement is therefore satisfied. This is not evidence that a Compact circuit has generated proving keys or that a Preprod transaction exists.
 
 ## Reference repository observations
 
@@ -74,10 +87,10 @@ The installed 0.30.0 compiler reports:
 
 The pinned `example-counter` reference at commit `273f083ab36a52407f16ec9a9796d902226e05d6` resolves the compatible application family in its lockfile: `@midnight-ntwrk/compact-runtime` `0.15.0`, `@midnight-ntwrk/ledger-v8` `8.0.3`, and Midnight.js `4.0.4`. This is the source-backed starting point for the project dependency pins; it is not yet deployment evidence.
 
-The 0.30.0 compiler accepts the OPRF scratch source with `--skip-zk` and produces proof metadata for the OPRF circuit. Full proving-key generation cannot be completed on the current Intel Mac: the bundled `zkir` exits with `SIGILL` (reported by `compactc` as exit `-4`) for both the official counter circuit and the OPRF scratch circuit. The same failure occurs with the installed 0.31.1 binary, so this is a local CPU/toolchain-execution limitation, not evidence that 0.30.0 is unsafe. The reproducible full compile is configured in CircleCI on a supported Linux runner; until that result exists, W1-P0 remains blocked.
+The 0.30.0 compiler accepts the OPRF scratch source with `--skip-zk` and produces proof metadata for the OPRF circuit. Full proving-key generation cannot be completed on the current Intel Mac: the bundled `zkir` exits with `SIGILL` (reported by `compactc` as exit `-4`) for both the official counter circuit and the OPRF scratch circuit. The same failure occurs with the installed 0.31.1 binary. Running the CircleCI `cimg/base:2026.09` Linux image locally on the same physical machine reproduces the exit, confirming that changing the operating-system image does not bypass the host CPU limitation. The reproducible full compile is configured in CircleCI on a managed runner; until that result exists, W1-P0 remains blocked.
 
 This is a narrow advisory correction, not a blanket claim that every historical 0.30 compiler defect is absent. We will run the complete source, proof, simulator, and deployment checks before relying on the toolchain.
 
 ## Current gate status
 
-W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, and skip-ZK syntax checks are complete. The required full scratch proof, canonical example-counter build/deploy, proof-server health check, and Preprod evidence cannot honestly be completed until the CI proof-key check passes and the owner supplies the required external account and wallet information.
+W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, skip-ZK syntax checks, repository metadata, and proof-server health check are complete. The required full scratch proof, canonical example-counter build/deploy, and Preprod evidence cannot honestly be completed until the CircleCI proof-key check passes and the owner supplies the required external account and wallet information.

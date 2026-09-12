@@ -48,6 +48,15 @@ Required before the first compile:
 
 The reproducible reference-counter and OPRF compile check is [`scripts/verify-compact.sh`](scripts/verify-compact.sh). It intentionally requires full proving-key generation; `--skip-zk` is not a passing build.
 
+Start the pinned Preprod proof server and check its health:
+
+```sh
+docker compose up -d
+curl http://127.0.0.1:6300/
+```
+
+A healthy server returns a JSON response with `"status":"ok"`. The compose configuration is pinned to the source-backed `midnightntwrk/proof-server:8.0.3` image.
+
 ## Prior art and attribution
 
 Thirdmark is built for Midnight and uses the Compact language and Midnight tooling. It is informed by the cited Midnight example and winner repositories listed in [`docs/FINDINGS.md`](docs/FINDINGS.md).
