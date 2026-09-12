@@ -67,6 +67,12 @@ The official public page does not publish a stable unauthenticated autocomplete
 API, so no undocumented endpoint or credentialed VAS integration is being claimed.
 See [`docs/REGISTRY.md`](REGISTRY.md) for the source boundary and residual work.
 
+Evidence: `npm test` passed with 39 tests on the development machine. CircleCI
+pipeline [#12](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/12)
+for commit `c881244` passed the full proving-key compile, strict typecheck, and
+the complete 39-test suite; workflow `compact-validation` stopped successfully at
+2026-09-12T18:31:24Z.
+
 The wallet replay remains the only external deployment blocker. At the user’s
 direction, product implementation continued without claiming W1-P0 or W1-P1.
 
