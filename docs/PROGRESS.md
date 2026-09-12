@@ -137,3 +137,21 @@ Not passed: no browser wallet transaction, registry adapter deployment, issuer
 hosting, contract address, Preprod filing, dossier from chain records, screenshot,
 or AKINDO gate comment. Comment drafts remain limited to the blocked W1-P0 entry;
 these local layers do not clear W1-P0 or W1-P1.
+
+## Production witness extraction — 2026-09-12
+
+The simulator’s witness implementation is now shared from
+[`contract/src/witnesses.ts`](../contract/src/witnesses.ts), rather than living
+only under the test harness. The generated witness shape is unchanged: each
+function returns the current private state and one private value. This gives the
+browser contract client one source of truth for filer secret, OPRF material,
+history opening, and fresh history salt. The client must persist the advanced
+history only after a successful transaction; failed proof generation cannot
+consume a private opening.
+
+Evidence: `npm run typecheck` passed and the product simulator passed all 14
+filing/OPRF tests using the extracted production witnesses. CircleCI pipeline
+[#16](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/16) also
+passed the preceding issuer/browser commit’s full proving-key compile, 52 root
+tests, browser typecheck, and browser build. This witness-only follow-up still
+needs its own hosted run.

@@ -8,71 +8,27 @@ import {
   sampleContractAddress,
   type CircuitContext,
   type JubjubPoint,
-  type WitnessContext,
 } from "@midnight-ntwrk/compact-runtime";
 import {
   Contract,
   ledger,
   pureCircuits,
-  type DleqProof,
   type FilingHistory,
   type Ledger,
-  type Witnesses,
 } from "../../managed/thirdmark/contract/index.js";
 import {
   JUBJUB_SCALAR_MODULUS,
   modInverse,
 } from "../../../client/scalars.js";
 
-export { JUBJUB_SCALAR_MODULUS, modInverse };
+import {
+  witnesses,
+  type ThirdmarkPrivateState,
+  type ThirdmarkWitnesses,
+} from "../witnesses.js";
 
-export type ThirdmarkPrivateState = {
-  readonly filerSecret: Uint8Array;
-  readonly history: FilingHistory;
-  readonly previousHistorySalt: Uint8Array;
-  readonly nextHistorySalt: Uint8Array;
-  readonly blindedOprfPoint: JubjubPoint;
-  readonly evaluatedOprfPoint: JubjubPoint;
-  readonly unblindingScalar: bigint;
-  readonly issuerDleqProof: DleqProof;
-};
-
-export type ThirdmarkWitnesses = Witnesses<ThirdmarkPrivateState>;
-
-export const witnesses: ThirdmarkWitnesses = {
-  filerSecret: ({ privateState }: WitnessContext<Ledger, ThirdmarkPrivateState>) => [
-    privateState,
-    privateState.filerSecret,
-  ],
-  filingHistory: ({ privateState }: WitnessContext<Ledger, ThirdmarkPrivateState>) => [
-    privateState,
-    privateState.history,
-  ],
-  previousHistorySalt: ({ privateState }: WitnessContext<Ledger, ThirdmarkPrivateState>) => [
-    privateState,
-    privateState.previousHistorySalt,
-  ],
-  nextHistorySalt: ({ privateState }: WitnessContext<Ledger, ThirdmarkPrivateState>) => [
-    privateState,
-    privateState.nextHistorySalt,
-  ],
-  blindedOprfPoint: ({ privateState }: WitnessContext<Ledger, ThirdmarkPrivateState>) => [
-    privateState,
-    privateState.blindedOprfPoint,
-  ],
-  evaluatedOprfPoint: ({ privateState }: WitnessContext<Ledger, ThirdmarkPrivateState>) => [
-    privateState,
-    privateState.evaluatedOprfPoint,
-  ],
-  unblindingScalar: ({ privateState }: WitnessContext<Ledger, ThirdmarkPrivateState>) => [
-    privateState,
-    privateState.unblindingScalar,
-  ],
-  issuerDleqProof: ({ privateState }: WitnessContext<Ledger, ThirdmarkPrivateState>) => [
-    privateState,
-    privateState.issuerDleqProof,
-  ],
-};
+export { JUBJUB_SCALAR_MODULUS, modInverse, witnesses };
+export type { ThirdmarkPrivateState, ThirdmarkWitnesses };
 
 export const emptyHistory = (): FilingHistory => ({
   slots: Array.from({ length: 32 }, () => new Uint8Array(32)),

@@ -37,7 +37,9 @@ It contains the sealed issuer configuration, DLEQ-authenticated OPRF slot deriva
 nullifier and ciphertext replay guards, evolving private filing-history commitment,
 opaque `Bytes<128>` storage, and threshold-only unlock state. The in-process
 [`ThirdmarkSimulator`](contract/src/test/thirdmark-simulator.ts) runs without a proof
-server or wallet. Run the local checks with:
+server or wallet and uses the same production witness implementation from
+[`contract/src/witnesses.ts`](contract/src/witnesses.ts). State is advanced only after
+the transaction succeeds. Run the local checks with:
 
 ```sh
 npm test
