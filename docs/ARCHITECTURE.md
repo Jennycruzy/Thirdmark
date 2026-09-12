@@ -58,3 +58,11 @@ Insertion order must not carry information. The three records are indexed by ano
 ## Dossier boundary
 
 AES-GCM is client-side because Compact has no in-circuit encryption primitive for this workflow. The ciphertext is the only report payload crossing into public state. After unlock, the three filers decrypt their chosen records locally and the app produces a signed JSON dossier. Independent verification checks the contract address, slot key, threshold state, entry keys, and on-chain filing dates without access to any Thirdmark server.
+
+The current Wave 1 envelope is exactly 128 bytes: 12 random IV bytes, the AES-GCM
+ciphertext and 16-byte authentication tag, zero padding, and a final one-byte encrypted
+length. The client rejects a report that cannot fit before submitting a transaction and
+rejects a malformed length before attempting decryption. The report schema currently
+contains only non-negative minor units, at least 90 late days, and a bounded invoice
+reference. This fixed envelope is a product limit until a separately verified larger
+Compact byte width is selected.

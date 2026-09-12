@@ -9,5 +9,5 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["verification/**/*.ts", "contract/**/*.ts"]
+  "include": ["verification/**/*.ts", "contract/**/*.ts", "client/**/*.ts"]
 }

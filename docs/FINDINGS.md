@@ -66,8 +66,10 @@ This is a design correction to the supplied specification and must be revisited 
 the deployment toolchain moves to a release with a different scalar API.
 
 The product contract compiles with Compact 0.30.0 `--skip-zk`; its local simulator
-now passes 13 tests. Full proving-key generation is added to the managed CircleCI
-check, but that CI result is not yet a deployment or W1-P0 completion claim.
+now passes 14 product tests, while the OPRF simulator passes 6 tests. The client
+AES-GCM suite adds 7 tests, for 27 tests in the full local command. Full proving-key
+generation is added to the managed CircleCI check, but that CI result is not yet a
+deployment or W1-P0 completion claim.
 
 ## Product private-history bound
 

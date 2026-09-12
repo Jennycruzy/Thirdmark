@@ -4,7 +4,7 @@ Three suppliers can independently attest that the same company is 90+ days overd
 
 Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
-> Status: initial source verification and the first local contract layer are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local `ThirdmarkSimulator` runs 13 adversarial and threshold tests, and CircleCI is configured to run the product contract through the full proving-key check and simulator suite. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until the Preprod checks pass.
+> Status: initial source verification, the local contract layer, and the client AES-GCM envelope are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local `ThirdmarkSimulator` and OPRF suite pass 20 contract/OPRF tests, and the client crypto suite brings the full local run to 27 tests. CircleCI is configured to run the product contract through the full proving-key check and simulator suite. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until the Preprod checks pass.
 
 ## Why Midnight
 
@@ -40,6 +40,12 @@ npm test
 The local command intentionally uses `--skip-zk` because this Intel Mac cannot execute
 the bundled `zkir`; CircleCI performs the full proving-key compile. This is test/build
 evidence only, not Preprod deployment evidence.
+
+Client report encryption lives in [`client/crypto.ts`](client/crypto.ts). It derives an
+AES-GCM key from the OPRF-derived Jubjub point, places a random IV and authentication
+tag in a fixed `Bytes<128>` envelope, and rejects malformed widths or report fields
+before a contract call. Plaintext and slot secrets stay in the client process; the
+contract receives only the opaque envelope.
 
 ## Three-wave roadmap
 
