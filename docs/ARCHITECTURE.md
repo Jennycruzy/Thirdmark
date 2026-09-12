@@ -32,7 +32,7 @@ P_final   = ecMul(P_issuer, r_inverse)
 slotKey   = persistentHash([pad(32, "thirdmark:slot:v1"), P_final.x, P_final.y])
 ```
 
-The selected ledger-v8 Compact toolchain exposes `ecMul` for the Jubjub operation but does not expose arithmetic or `inv` for `JubjubScalar`. The client must compute `r_inverse` with a source-backed Jubjub scalar modulus from the Midnight runtime, then pass the inverse scalar to an `ecMul`-based unblinding circuit. The scratch circuit must prove the two group multiplications and the resulting point equality before product code is written. No scalar modulus is hardcoded.
+The selected ledger-v8 Compact toolchain exposes `ecMul` for the Jubjub operation but does not expose arithmetic or `inv` for `JubjubScalar`. [`client/oprf.ts`](../client/oprf.ts) computes `r_inverse` in client memory with the source-backed Jubjub scalar modulus, then uses the same `ecMul`-based unblinding relation that the filing circuit uses. The scratch circuit and client OPRF suite prove the two group multiplications and the resulting point equality. No scalar modulus is invented; its source discrepancy is recorded in [`FINDINGS.md`](FINDINGS.md).
 
 The issuer receives only the blinded point and applies its secret. It can rate-limit or refuse service, but it must not receive the canonical identifier. The filing circuit verifies a Chaum–Pedersen/DLEQ proof that the evaluated point was produced with the sealed issuer key. This prevents a caller from inventing a slot key without issuer participation. The proof challenge is a domain-separated transient hash truncated to 248 bits inside the 0.30.0 circuit so it is always a valid Jubjub scalar; later toolchains expose a first-class `JubjubScalar` cast, but the selected safe ledger-v8 candidate does not.
 

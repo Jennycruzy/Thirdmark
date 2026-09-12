@@ -49,7 +49,15 @@ This is a source-over-spec correction, not a reason to remove the OPRF. The impl
 
 The available 0.31.1 compiler confirms the version-specific shape: `JubjubScalar` is not a bound Compact identifier, while `Field` is accepted by the Jubjub `ecMul` calls used by the 0.31 language version. An isolated scratch contract using three `Field` witnesses, `hashToCurve<Bytes<32>>`, three `ecMul` calls, a disclosed equality predicate, and one public Boolean ledger cell compiled with `--skip-zk`; its generated `contract-info.json` marks the OPRF circuit as `proof: true`. This is syntax and circuit metadata evidence only, not a simulator run or deployment, and it was not used to clear the security gate.
 
-The maintained source defines `JUBJUB_SCALAR_MODULUS` and `MAX_JUBJUB_SCALAR` in `runtime/src/constants.ts:33-39`, but the pinned `@midnight-ntwrk/compact-runtime@0.15.0` package does not export them. The scratch simulator’s source reference is explicit in `verification/oprf-simulator.ts`; before product OPRF code, the dependency choice must either expose the constant through a compatible runtime package or document and independently verify the protocol-constant import. Non-zero scalar inversion remains covered by the simulator tests.
+The maintained source defines `JUBJUB_SCALAR_MODULUS` and `MAX_JUBJUB_SCALAR` in `runtime/src/constants.ts:33-39`, but the pinned `@midnight-ntwrk/compact-runtime@0.15.0` package does not export them. The product and scratch simulators use the explicit source reference in `client/scalars.ts`; non-zero scalar inversion remains covered by the simulator tests. Any future runtime upgrade must re-verify this constant before changing the client implementation.
+
+The client-side OPRF session is now implemented in [`client/oprf.ts`](../client/oprf.ts).
+It uses the generated Compact `verifyDleq` pure circuit for the issuer response,
+keeps the inverse scalar in client memory, and derives the slot key through the
+generated `slotKeyFromPoint` circuit. The client suite covers forged evaluations,
+same-subject different-blind equality, different-subject separation, and CAC RC
+display normalization. This is local protocol evidence only; no issuer endpoint,
+wallet witness provider, or Preprod transaction is being claimed.
 
 ## Product OPRF authentication and Compact 0.30 scalar handling
 

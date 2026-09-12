@@ -73,6 +73,14 @@ for commit `c881244` passed the full proving-key compile, strict typecheck, and
 the complete 39-test suite; workflow `compact-validation` stopped successfully at
 2026-09-12T18:31:24Z.
 
+The next local layer is now complete: [`client/oprf.ts`](../client/oprf.ts) performs
+the client blind, generated DLEQ verification, unblind, and Compact slot-key
+derivation. The client OPRF tests cover forged issuer evaluations, different
+blinding values for the same subject, different subjects, and equivalent CAC RC
+display forms. `npm test` now passes 45 tests. Issuer transport, wallet witness
+submission, and Preprod execution remain unimplemented and are not represented as
+passed gates.
+
 The wallet replay remains the only external deployment blocker. At the user’s
 direction, product implementation continued without claiming W1-P0 or W1-P1.
 

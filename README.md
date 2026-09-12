@@ -4,7 +4,7 @@ Three suppliers can independently attest that the same company is 90+ days overd
 
 Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
-> Status: initial source verification, the local contract layer, client AES-GCM envelope, deterministic dossier artifact, and Nigeria CAC subject canonicalization are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local `ThirdmarkSimulator` and OPRF suite pass 20 contract/OPRF tests, and the client crypto, dossier, and registry suites bring the full local run to 39 tests. CircleCI pipeline [#12](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/12) passed the full proving-key compile and the 39-test suite at commit `c881244`. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until the Preprod checks pass.
+> Status: initial source verification, the local contract layer, client AES-GCM envelope, client OPRF session, deterministic dossier artifact, and Nigeria CAC subject canonicalization are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local `ThirdmarkSimulator` and OPRF suite pass 20 contract/OPRF tests, and the client crypto, OPRF, dossier, and registry suites bring the full local run to 45 tests. CircleCI pipeline [#12](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/12) passed the full proving-key compile and the earlier 39-test suite at commit `c881244`; the current OPRF client commit is awaiting its hosted run. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until the Preprod checks pass.
 
 ## Why Midnight
 
@@ -52,6 +52,12 @@ AES-GCM key from the OPRF-derived Jubjub point, places a random IV and authentic
 tag in a fixed `Bytes<128>` envelope, and rejects malformed widths or report fields
 before a contract call. Plaintext and slot secrets stay in the client process; the
 contract receives only the opaque envelope.
+
+The client-side 2HashDH session is [`client/oprf.ts`](client/oprf.ts). It blinds the
+fixed-width registry subject, verifies the issuer's DLEQ evaluation with the generated
+Compact pure circuit, unblinds the point, and derives the same slot key that the filing
+circuit derives. The issuer-facing transport and wallet witness submission are not
+represented as deployed functionality yet.
 
 The local dossier implementation is [`client/dossier.ts`](client/dossier.ts). It sorts
 the three unlocked records by entry key, binds the contract address, slot key,
