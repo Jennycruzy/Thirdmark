@@ -4,21 +4,27 @@
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
+  "workspaces": ["web"],
   "scripts": {
     "patch:reference-wallet": "bash scripts/patch-example-counter-wallet.sh",
     "compact:oprf": "compact compile --skip-zk verification/oprf-scratch.compact verification/managed/oprf",
     "compact:thirdmark": "compact compile --skip-zk contract/src/thirdmark.compact contract/managed/thirdmark",
     "typecheck": "npm run compact:oprf && npm run compact:thirdmark && tsc --noEmit",
-    "test": "npm run typecheck && vitest run verification/oprf.test.ts contract/src/test/thirdmark.test.ts client/crypto.test.ts client/dossier.test.ts client/registry.test.ts client/oprf.test.ts issuer/oprf.test.ts",
+    "test": "npm run typecheck && vitest run verification/oprf.test.ts contract/src/test/thirdmark.test.ts client/crypto.test.ts client/dossier.test.ts client/registry.test.ts client/oprf.test.ts issuer/oprf.test.ts issuer/transport.test.ts",
     "typecheck:oprf": "npm run compact:oprf && tsc --noEmit",
     "test:oprf": "npm run typecheck:oprf && vitest run verification/oprf.test.ts",
-    "test:thirdmark": "npm run typecheck && vitest run contract/src/test/thirdmark.test.ts"
+    "test:thirdmark": "npm run typecheck && vitest run contract/src/test/thirdmark.test.ts",
+    "issuer:start": "tsx issuer/server.ts",
+    "web:typecheck": "npm run typecheck --workspace @thirdmark/web",
+    "web:build": "npm run build --workspace @thirdmark/web"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "0.15.0"
   },
   "devDependencies": {
+    "@types/node": "25.5.0",
     "typescript": "6.0.2",
+    "tsx": "4.20.5",
     "vitest": "4.1.11"
   }
 }

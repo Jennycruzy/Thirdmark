@@ -43,6 +43,14 @@ jobs:
           name: Run contract simulator tests
           command: npm test
 
+      - run:
+          name: Typecheck browser interface
+          command: npm run web:typecheck
+
+      - run:
+          name: Build browser interface
+          command: npm run web:build
+
 workflows:
   compact-validation:
     jobs:

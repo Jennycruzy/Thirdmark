@@ -4,7 +4,7 @@ Three suppliers can independently attest that the same company is 90+ days overd
 
 Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
-> Status: initial source verification, the local contract layer, client AES-GCM envelope, client and issuer OPRF cores, deterministic dossier artifact, and Nigeria CAC subject canonicalization are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local `ThirdmarkSimulator` and OPRF suite pass 20 contract/OPRF tests, and the client crypto, OPRF, dossier, registry, and issuer suites bring the full local run to 49 tests. CircleCI pipeline [#14](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/14) passed the full proving-key compile and the 45-test client suite at commit `067f66a`; the issuer-core commit is awaiting its hosted run. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment is claimed until the Preprod checks pass.
+> Status: initial source verification, the local contract layer, client AES-GCM envelope, client and issuer OPRF cores, subject-blind issuer transport, browser shell, deterministic dossier artifact, and Nigeria CAC subject canonicalization are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local `ThirdmarkSimulator` and OPRF suite pass 20 contract/OPRF tests, and the client crypto, OPRF, dossier, registry, issuer, and transport suites pass locally. The web typecheck and Vite/WASM production build also pass. CircleCI is configured to run the full proving-key compile, all root tests, the web typecheck, and the web build. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. No deployment or end-to-end contract filing is claimed until the Preprod checks pass.
 
 ## Why Midnight
 
@@ -56,8 +56,14 @@ contract receives only the opaque envelope.
 The client-side 2HashDH session is [`client/oprf.ts`](client/oprf.ts). It blinds the
 fixed-width registry subject, verifies the issuer's DLEQ evaluation with the generated
 Compact pure circuit, unblinds the point, and derives the same slot key that the filing
-circuit derives. The issuer-facing transport and wallet witness submission are not
-represented as deployed functionality yet.
+circuit derives. The subject-blind issuer HTTP boundary is documented in
+[`docs/ISSUER.md`](docs/ISSUER.md). It is a real request handler and local transport
+test, but it is not a hosted issuer and does not contain an operator scalar.
+
+The browser shell lives in [`web/`](web/). It connects to a real Midnight wallet when
+one is installed, refuses to accept a raw RC number, renders the five-step product
+flow and privacy inspector, and blocks registry or contract actions until explicit
+public deployment configuration exists. It does not fake a filing transaction.
 
 The local dossier implementation is [`client/dossier.ts`](client/dossier.ts). It sorts
 the three unlocked records by entry key, binds the contract address, slot key,

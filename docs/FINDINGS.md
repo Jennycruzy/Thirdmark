@@ -205,3 +205,24 @@ This is a narrow advisory correction, not a blanket claim that every historical 
 ## Current gate status
 
 W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, skip-ZK syntax checks, repository metadata, proof-server health check, managed full proving-key compile, scratch round-trip simulator run, and managed counter artifact retrieval are complete. The canonical example-counter deployment and Preprod evidence remain outstanding. Wallet creation/restoration, funding, and signing must be performed by the owner without sharing any wallet secret.
+
+## Subject-blind issuer transport and browser boundary
+
+The issuer transport is deliberately separate from the Compact contract and the
+browser wallet. `issuer/transport.ts` serializes Jubjub coordinates, proof
+responses, and public keys as decimal strings; `issuer/server.ts` accepts only a
+blinded point on its evaluation route. Its runtime scalar is required through an
+operator environment variable and is never present in repository configuration.
+The transport suite exercises the request shape, DLEQ round trip, origin check,
+body limit path, and health response without binding a local socket; the managed
+CI runner will run the same strict tests.
+
+The browser build imports the source-backed `@midnight-ntwrk/dapp-connector-api`
+4.0.1 pattern from Moonray/Hermes and connects only to an explicitly selected
+`preprod` network. Compact runtime includes a WebAssembly module; the Vite build
+therefore needs the same `vite-plugin-wasm` boundary used by the reference UI.
+The UI has no fallback contract address, issuer URL, issuer public key, or CAC
+autocomplete endpoint. With those values absent it shows an action-oriented
+configuration state instead of pretending that a filing reached Midnight. The
+registry adapter contract is Thirdmark-owned and documented; the official CAC
+public-search page remains a human lookup page rather than an invented API.

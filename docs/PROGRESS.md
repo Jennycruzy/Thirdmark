@@ -103,3 +103,37 @@ Evidence:
 - `npm test`: passed, 33 tests across the OPRF simulator, product simulator, client crypto suite, and dossier suite; strict TypeScript and both Compact `--skip-zk` compiles also passed.
 
 Not passed: no proof-server-backed product transaction, contract address, block, timing, screenshot, or AKINDO comment. The wallet process must finish a complete sync before the deployment path can be exercised. The next local layer is registry canonicalization and contract client integration; neither is being represented as deployed functionality.
+
+## Parallel local implementation — issuer and browser boundary — 2026-09-12
+
+Completed locally:
+
+- Added a subject-blind issuer HTTP boundary with strict decimal Jubjub wire
+  serialization, health and public-key routes, bounded request bodies, explicit
+  origin checks, and fail-closed runtime configuration. The issuer process never
+  receives a company identifier or report payload.
+- Added transport tests for the wire round trip, invalid request shapes, DLEQ
+  verification after parsing, health response, and origin rejection. The tests
+  use an in-memory request/response harness because this development sandbox does
+  not permit binding a local TCP socket.
+- Added the browser shell in [`web/`](../web/): the five-step flow, sealed tally,
+  privacy inspector, wallet connector boundary, configured registry-adapter
+  boundary, and real client-side OPRF/encryption preparation path. The UI refuses
+  to accept a raw RC number and refuses to claim a chain filing when public
+  deployment configuration is absent.
+- Added the public browser configuration keys to `.env.example`; no issuer scalar,
+  wallet key, seed, or API credential is included.
+
+Evidence:
+
+- `npm run typecheck`: passed with the Compact 0.30.0 skip-ZK local limitation.
+- `npx vitest run issuer/oprf.test.ts issuer/transport.test.ts`: 7 tests passed.
+- `npm run web:typecheck`: passed.
+- `npm run web:build`: passed; Vite transformed 62 modules and emitted the
+  `compact-runtime` WebAssembly asset. This is a local build artifact, not a live
+  deployment.
+
+Not passed: no browser wallet transaction, registry adapter deployment, issuer
+hosting, contract address, Preprod filing, dossier from chain records, screenshot,
+or AKINDO gate comment. Comment drafts remain limited to the blocked W1-P0 entry;
+these local layers do not clear W1-P0 or W1-P1.
