@@ -37,3 +37,24 @@ User inputs still required before the external gates:
 - AKINDO account confirmation and Discord handle.
 - A funded Preprod wallet at W1-P2; the wallet seed or key must never be shared.
 - A Vercel or Netlify account and optional domain at W1-P5.
+
+## Handoff — 2026-09-12
+
+This work session stopped after moving validation from GitHub Actions to CircleCI at the project owner’s direction. The GitHub Actions job failed before executing any steps and exposed no usable log; no conclusion about the Compact build was drawn from that failure.
+
+Evidence and changes:
+
+- `44f96c7` records the safe Compact 0.30.0 ledger-v8 recovery path.
+- `ef7a683` replaces the GitHub Actions workflow with [`../.circleci/config.yml`](../.circleci/config.yml).
+- [`../scripts/verify-compact.sh`](../scripts/verify-compact.sh) performs a full proving-key compile of the pinned `example-counter` commit and [`../verification/oprf-scratch.compact`](../verification/oprf-scratch.compact).
+- Local syntax-only checks pass with Compact 0.30.0. Full key generation still exits `SIGILL` on this Intel Mac, so no gate has been cleared.
+- The working tree was clean and both commits were pushed to `origin/main` before stopping.
+
+Next session:
+
+1. Connect or confirm CircleCI for `Jennycruzy/Thirdmark` and run the `compact-validation` workflow.
+2. Record the full-compile result. If it passes, run and health-check the source-backed proof server.
+3. Ask for the owner’s funded Preprod wallet only when deployment begins; never request or handle its seed.
+4. Compile and deploy the official `example-counter` first. Do not begin Thirdmark contract implementation or claim W1-P0 complete until that deployment has an address, transaction hash, and block evidence.
+
+Do not use Compact 0.31.1 for deployment, do not substitute Compact 0.34.0 for the ledger-v8 Preprod target, and do not post the W1-P0 AKINDO draft yet.
