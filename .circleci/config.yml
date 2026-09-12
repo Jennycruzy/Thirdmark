@@ -1,0 +1,35 @@
+version: 2.1
+
+jobs:
+  compact-validation:
+    docker:
+      - image: cimg/base:2026.09
+    resource_class: medium
+    steps:
+      - checkout
+
+      - run:
+          name: Install validation dependencies
+          command: |
+            sudo apt-get update
+            sudo apt-get install --no-install-recommends -y ca-certificates ripgrep
+
+      - run:
+          name: Install Compact CLI
+          command: |
+            curl --proto '=https' --tlsv1.2 -LsSf \
+              https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+
+      - run:
+          name: Install pinned Compact toolchain
+          command: compact update 0.30.0
+
+      - run:
+          name: Compile reference and OPRF circuits with proving keys
+          command: ./scripts/verify-compact.sh
+
+workflows:
+  compact-validation:
+    jobs:
+      - compact-validation
