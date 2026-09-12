@@ -22,6 +22,7 @@ Passed:
 - Added the source-backed `midnightntwrk/proof-server:8.0.3` compose service and started it on port 6300. Its parameters and keys verified, its Actix service started, and the root endpoint returned HTTP 200 with `{"status":"ok"}`.
 - Connected the repository to CircleCI and completed pipeline `#1` at commit `65624e3` (`717dbcfa-c2be-4fcd-9afb-0484ab68f99c`). The `compact-validation` workflow and job succeeded, running the full proving-key compile for the pinned `example-counter` reference and the OPRF scratch circuit, followed by exact compiler/language/runtime metadata checks.
 - Added the `OprfSimulator` using the verified in-process `CircuitContext` pattern. `npm run test:oprf` completed strict TypeScript checking and six simulator tests, including a non-trivial blind/issuer/unblind round-trip, incorrect-unblinding rejection, same/different subject checks, scalar vectors, and wrong-width input rejection. The dependency audit reports zero vulnerabilities after upgrading Vitest to `4.1.11`.
+- Latest CircleCI pipeline `#3` at commit `c5d11b5` (`758b3c19-e135-43fa-9d7c-f34ba4e4412b`) succeeded. Workflow `compact-validation` stopped successfully at `2026-09-12T11:51:14Z`; job `compact-validation` was job number `3` (`ca60dc5a-cfeb-4016-bed5-973ae3411b30`). This validates the full proving-key compile and the simulator/typecheck workflow on the managed runner.
 
 Not passed:
 
@@ -33,7 +34,7 @@ Not passed:
 
 Why blocked:
 
-The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally. This development Mac’s CPU still cannot execute the bundled `zkir`, but that local limitation no longer blocks the reproducible CI check. The next action is to deploy the official example-counter after the updated CircleCI run validates the simulator workflow.
+The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but that local limitation no longer blocks the reproducible CI check. The next action is to deploy the official example-counter.
 
 User inputs still required before the external gates:
 

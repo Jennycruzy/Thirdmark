@@ -73,6 +73,8 @@ This closes the managed full-proving-key compile check for the selected ledger-v
 
 The first CircleCI run used `cimg/base:2026.09`. That image does not contain Node or npm, so the simulator workflow now uses the verified `cimg/node:24.11` image. The reference `example-counter` checkout declares Node `24.11.1` in `.nvmrc`; the CircleCI tag was checked against the public image manifest before changing the configuration.
 
+The updated configuration passed in CircleCI pipeline `#3` at commit `c5d11b5` (pipeline UUID `758b3c19-e135-43fa-9d7c-f34ba4e4412b`). Workflow `compact-validation` succeeded; job number `3` (`ca60dc5a-cfeb-4016-bed5-973ae3411b30`) ran the full proving-key compile, installed the locked JavaScript dependencies, and passed the strict typecheck plus six-test OPRF simulator suite.
+
 ## Reference repository observations
 
 - MatchLock’s `contract/src/matchlock.compact:11-95` confirms language pragma 0.23, client-side ciphertext as `Bytes<128>`, Jubjub ECDH, `persistentHash`, disclosed ledger keys, and nullifier protection.
@@ -101,4 +103,4 @@ This is a narrow advisory correction, not a blanket claim that every historical 
 
 ## Current gate status
 
-W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, skip-ZK syntax checks, repository metadata, proof-server health check, and managed full proving-key compile are complete. The required scratch round-trip simulator run, canonical example-counter deployment, and Preprod evidence remain outstanding; the owner must supply the required external account and wallet information without sharing any wallet secret.
+W1-P0 is **blocked**, not passed. The name check, reference checkout, source API review, safe ledger-v8 candidate installation, skip-ZK syntax checks, repository metadata, proof-server health check, managed full proving-key compile, and scratch round-trip simulator run are complete. The canonical example-counter deployment and Preprod evidence remain outstanding; the owner must supply the required external account and wallet information without sharing any wallet secret.
