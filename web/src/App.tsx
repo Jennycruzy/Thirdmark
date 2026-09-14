@@ -21,6 +21,13 @@ type Operation = "company search" | "wallet connection" | "example-counter deplo
 
 const friendlyError = (error: unknown, operation: Operation = "protected filing"): string => {
   const message = error instanceof Error ? error.message : "";
+  const connectorCode = typeof error === "object" && error !== null && "code" in error
+    ? String((error as { readonly code?: unknown }).code)
+    : "";
+  if (connectorCode === "PermissionRejected") return "1AM denied this app's wallet permission. Reconnect Thirdmark in 1AM and try again.";
+  if (connectorCode === "Rejected") return "The wallet request was rejected. Approve the transaction in 1AM and try again.";
+  if (connectorCode === "InvalidRequest") return `The wallet rejected the ${operation} request as invalid. Reload Thirdmark and reconnect 1AM.`;
+  if (connectorCode === "Disconnected") return "The 1AM connection was lost. Reconnect the wallet and try again.";
   if (message.includes("wallet") || message.includes("network")) {
     return "The wallet is not ready. Connect a Midnight wallet on Preprod and try again.";
   }
@@ -172,14 +179,20 @@ function App() {
     }
     setNotice(null);
     setWorking(true);
-    setWorkingStage("Preparing the example-counter deployment");
+    let lastStage = "requesting wallet permissions";
     try {
-      setWorkingStage("The Midnight wallet is balancing and signing the example-counter");
-      const receipt = await deployExampleCounter(wallet);
+      setWorkingStage("Requesting wallet permissions for this deployment");
+      await wallet.api.hintUsage(["getProvingProvider", "balanceUnsealedTransaction", "submitTransaction"]);
+      setWorkingStage("Preparing the example-counter deployment");
+      lastStage = "preparing the example-counter deployment";
+      const receipt = await deployExampleCounter(wallet, (stage) => {
+        lastStage = stage.toLowerCase();
+        setWorkingStage(stage);
+      });
       setCounterDeployment(receipt);
       setNotice("The canonical example-counter deployment was submitted through the connected Midnight wallet.");
     } catch (error) {
-      setNotice(friendlyError(error, "example-counter deployment"));
+      setNotice(`${friendlyError(error, "example-counter deployment")} Last stage: ${lastStage}.`);
     } finally {
       setWorking(false);
       setWorkingStage(null);

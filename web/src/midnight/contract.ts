@@ -54,6 +54,7 @@ const WAVE_ONE_THRESHOLD = 3n;
 const ARTIFACT_ROOT = "/";
 
 const balancedTxHex = new WeakMap<object, string>();
+type ProgressReporter = (stage: string) => void;
 
 type ThirdmarkContract = Contract<ThirdmarkPrivateState, ThirdmarkWitnesses>;
 type ThirdmarkProviders = ContractProviders<ThirdmarkContract>;
@@ -123,18 +124,22 @@ const randomBytes32 = (): Uint8Array => crypto.getRandomValues(new Uint8Array(32
 const buildProviders = async (
   session: WalletSession,
   artifactRoot = ARTIFACT_ROOT,
+  reportProgress: ProgressReporter = () => undefined,
 ): Promise<ThirdmarkProviders> => {
   setNetworkId(publicAppConfig.networkId);
+  reportProgress("Checking the wallet's Preprod connection");
   const walletConfig = await session.api.getConfiguration();
   if (walletConfig.networkId !== publicAppConfig.networkId) {
     throw new Error(`The wallet is connected to ${walletConfig.networkId}, not ${publicAppConfig.networkId}.`);
   }
 
   const shielded = await session.api.getShieldedAddresses();
+  reportProgress("Loading browser proving assets");
   const zkConfigProvider = new FetchZkConfigProvider<"file">(
     new URL(artifactRoot, window.location.origin).toString(),
     fetch.bind(window),
   );
+  reportProgress("Requesting delegated proving from the wallet");
   const proofProvider = createProofProvider(
     await session.api.getProvingProvider(zkConfigProvider.asKeyMaterialProvider()),
   );
@@ -143,6 +148,7 @@ const buildProviders = async (
     getCoinPublicKey: () => shielded.shieldedCoinPublicKey,
     getEncryptionPublicKey: () => shielded.shieldedEncryptionPublicKey,
     async balanceTx(tx: UnboundTransaction, _ttl?: Date): Promise<FinalizedTransaction> {
+      reportProgress("Asking the wallet to balance the transaction");
       const balanced = await session.api.balanceUnsealedTransaction(toHex(tx.serialize()));
       const finalized = Transaction.deserialize<SignatureEnabled, Proof, Binding>(
         "signature",
@@ -157,6 +163,7 @@ const buildProviders = async (
 
   const midnightProvider: MidnightProvider = {
     async submitTx(tx: FinalizedTransaction): Promise<string> {
+      reportProgress("Waiting for the wallet transaction approval");
       await session.api.submitTransaction(balancedTxHex.get(tx as unknown as object) ?? toHex(tx.serialize()));
       return tx.identifiers()[0];
     },
@@ -231,8 +238,11 @@ export type CounterDeploymentReceipt = {
  * pre-product network smoke test: it proves the wallet, proving assets, fee
  * balancing, signing, and Preprod submission without the headless history scan.
  */
-export const deployExampleCounter = async (session: WalletSession): Promise<CounterDeploymentReceipt> => {
-  const providers = await buildProviders(session, "/counter/");
+export const deployExampleCounter = async (
+  session: WalletSession,
+  reportProgress?: ProgressReporter,
+): Promise<CounterDeploymentReceipt> => {
+  const providers = await buildProviders(session, "/counter/", reportProgress);
   const deployed = await deployContract(providers as never, {
     compiledContract: counterCompiledContract(),
     privateStateId: "example-counter-private-state",
