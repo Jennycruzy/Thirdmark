@@ -10,7 +10,7 @@ forward.
 
 ## W1-P0 — source verification and registration
 
-Status: **passed for source verification, CI validation, and the canonical Preprod wallet smoke test. Thirdmark deployment remains blocked on issuer configuration.**
+Status: **source verification, CI validation, canonical counter smoke test, and Thirdmark Preprod deployment passed. The filing and dossier gates remain open.**
 
 Passed:
 
@@ -40,7 +40,7 @@ Not passed:
 - The development Mac still cannot execute the local 0.30.0 `zkir` process; it exits with `SIGILL`. Managed CircleCI has now completed the full proving-key compile, so the local CPU issue is not blocking CI validation.
 - The supplied in-circuit inverse step is not available in the verified Compact API. The pinned runtime also does not export the Jubjub scalar modulus; the scratch harness uses the source-backed protocol constant explicitly, and product OPRF code must resolve this dependency choice before implementation.
 - The local full counter compile still exits with `zkir` `-4`/`SIGILL`; the managed compiled assets are available from pipeline `#5` and are installed only in the gitignored reference checkout.
-- Thirdmark has no Preprod address, transaction, block, timing, dossier, or live URL yet.
+- Thirdmark filing, dossier, proving-time, and live-URL evidence do not exist yet.
 - The canonical example-counter now has a wallet-backed Preprod receipt; its address, transaction ID, transaction hash, block, and screenshot are recorded below.
 
 Why blocked:
@@ -250,5 +250,21 @@ proving, wallet balancing, signing, submission, and indexer confirmation:
 
 The browser-side `Buffer` compatibility fix and deployment-stage diagnostics were
 validated with `npm run typecheck --workspace @thirdmark/web` and `git diff --check`.
-The next blocker is explicit in the UI: the issuer public key and issuer endpoint
-must be configured before the Thirdmark deployment button can be enabled.
+The issuer URL and public key are now configured in the ignored browser environment;
+the deployment receipt is recorded below.
+
+## Thirdmark Preprod deployment receipt — 2026-09-14
+
+The owner supplied a 1AM wallet receipt after the browser path deployed the actual
+Thirdmark contract with the single-issuer public key and threshold `3`:
+
+- Contract address: `22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4`
+- Transaction ID: `000513b756e248426c0fec067dd16d3b5b7e0c05d89b32d65cea2ffee19593089a`
+- Transaction hash: `792aa4578159921056df362d819be425675e644d3f81cd66e2d634df8cbdd0b2`
+- Block: `2550375`
+- Screenshot: `/Users/user/Pictures/Photos Library.photoslibrary/originals/8/81867582-D096-445A-A17B-A2BBBD596855.jpeg`
+
+The ignored `web/.env.local` now contains only the issuer URL, issuer public point,
+and this public contract address. It contains no issuer scalar or wallet material.
+The next gate is an end-to-end filing, beginning with a real CAC adapter result and
+one browser-held filer state.

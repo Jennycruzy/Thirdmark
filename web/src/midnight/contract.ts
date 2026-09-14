@@ -328,11 +328,17 @@ export const deployExampleCounter = async (
  * synchronization, transaction balancing, signing, and submission; the
  * application does not run a second headless wallet history replay.
  */
-export const deployThirdmark = async (session: WalletSession): Promise<DeploymentReceipt> => {
+export const deployThirdmark = async (
+  session: WalletSession,
+  reportProgress?: ProgressReporter,
+): Promise<DeploymentReceipt> => {
   if (publicAppConfig.contractAddress) {
     throw new Error("A Thirdmark contract address is already configured for this deployment.");
   }
-  const providers = await buildProviders(session);
+  const providers = await buildProviders(session, ARTIFACT_ROOT, reportProgress);
+  reportProgress?.("Checking the Thirdmark verifier asset");
+  await providers.zkConfigProvider.getVerifierKey("file");
+  reportProgress?.("Building the Thirdmark deployment transaction");
   const issuerKey = configuredIssuerPublicKey();
   const deployed = await deployContract(providers, {
     compiledContract: compiledContract(),

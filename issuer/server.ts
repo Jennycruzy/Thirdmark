@@ -58,7 +58,8 @@ const sendJson = (
 const requestOriginAllowed = (
   request: IncomingMessage,
   allowedOrigin: string | undefined,
-): boolean => !allowedOrigin || request.headers.origin === allowedOrigin;
+): boolean =>
+  !allowedOrigin || !request.headers.origin || request.headers.origin === allowedOrigin;
 
 export const handleIssuerRequest = async (
   request: IncomingMessage,

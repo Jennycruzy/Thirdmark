@@ -4,7 +4,7 @@ Three suppliers can independently attest that the same company is 90+ days overd
 
 Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
 
-> Status: source verification, the local contract layer, client AES-GCM envelope, client and issuer OPRF cores, subject-blind issuer transport, browser Midnight.js contract client, encrypted browser private-state provider, deterministic dossier artifact, Nigeria CAC subject canonicalization, and the canonical example-counter Preprod smoke test are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local command passes 8 test files and 52 tests, and the web typecheck and Vite/WASM production build pass. CircleCI compiles the full proving artifacts, stages them for the browser build, and runs the same checks. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. Thirdmark itself is not yet deployed: the remaining external dependency is the operator-run issuer endpoint and its sealed public key.
+> Status: source verification, the local contract layer, client AES-GCM envelope, client and issuer OPRF cores, subject-blind issuer transport, browser Midnight.js contract client, encrypted browser private-state provider, deterministic dossier artifact, Nigeria CAC subject canonicalization, the canonical example-counter Preprod smoke test, and the Thirdmark Preprod deployment are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local command passes 8 test files and 52 tests, and the web typecheck and Vite/WASM production build pass. CircleCI compiles the full proving artifacts, stages them for the browser build, and runs the same checks. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. The remaining Wave 1 work is the three-party filing cycle, timestamp-backed dossier, and public frontend deployment.
 
 ## Why Midnight
 
@@ -101,7 +101,22 @@ smoke test before Thirdmark deployment:
 
 The owner supplied the browser receipt screenshot at
 `/Users/user/Pictures/Photos Library.photoslibrary/originals/E/E62C02DF-B536-417E-9039-06402050A149.jpeg`.
-No Thirdmark deployment or filing is claimed yet.
+No Thirdmark filing or unlock is claimed yet.
+
+### Thirdmark Preprod deployment evidence
+
+Thirdmark was deployed through the connected 1AM wallet on 2026-09-14 with the
+Wave 1 threshold set to three:
+
+- Contract address: `22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4`
+- Transaction ID: `000513b756e248426c0fec067dd16d3b5b7e0c05d89b32d65cea2ffee19593089a`
+- Transaction hash: `792aa4578159921056df362d819be425675e644d3f81cd66e2d634df8cbdd0b2`
+- Block: `2550375`
+
+The owner supplied the browser receipt screenshot at
+`/Users/user/Pictures/Photos Library.photoslibrary/originals/8/81867582-D096-445A-A17B-A2BBBD596855.jpeg`.
+The local browser configuration points to this address and does not contain the
+issuer scalar.
 
 The local dossier implementation is [`client/dossier.ts`](client/dossier.ts). It sorts
 the three unlocked records by entry key, binds the contract address, slot key,

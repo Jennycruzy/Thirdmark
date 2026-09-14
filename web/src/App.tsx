@@ -207,14 +207,17 @@ function App() {
     }
     setNotice(null);
     setWorking(true);
-    setWorkingStage("Preparing the Midnight wallet deployment");
+    let lastStage = "preparing the Midnight wallet deployment";
     try {
-      setWorkingStage("The Midnight wallet is balancing and signing the deployment");
-      const receipt = await deployThirdmark(wallet);
+      const receipt = await deployThirdmark(wallet, (stage) => {
+        lastStage = stage.toLowerCase();
+        setWorkingStage(stage);
+      });
       setDeployment(receipt);
       setNotice("Deployment submitted through the connected Midnight wallet. Keep this receipt for the Preprod record.");
     } catch (error) {
-      setNotice(friendlyError(error, "Thirdmark deployment"));
+      const diagnostic = diagnosticMessage(error);
+      setNotice(`${friendlyError(error, "Thirdmark deployment")} Last stage: ${lastStage}.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
     } finally {
       setWorking(false);
       setWorkingStage(null);
