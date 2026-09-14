@@ -171,11 +171,12 @@ curl http://127.0.0.1:8788/health
 Create the ignored file `web/.env.local` with public deployment values. Never place the issuer scalar, wallet seed, private key, or CAC credential in it:
 
 ```dotenv
-VITE_ISSUER_URL=http://127.0.0.1:8787
+# Local Vite uses same-origin proxies for the issuer and registry boundaries.
+VITE_ISSUER_URL=/__thirdmark_issuer
 VITE_ISSUER_PUBLIC_KEY_X=<issuer-public-x>
 VITE_ISSUER_PUBLIC_KEY_Y=<issuer-public-y>
 VITE_CONTRACT_ADDRESS=22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4
-VITE_REGISTRY_ADAPTER_URL=http://127.0.0.1:8788/v1/cac/search
+VITE_REGISTRY_ADAPTER_URL=/__thirdmark_registry/v1/cac/search
 VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company — Synthetic Only
 VITE_SYNTHETIC_SUBJECT_RC=000000000
 ```

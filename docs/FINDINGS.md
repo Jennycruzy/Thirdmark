@@ -318,6 +318,23 @@ artifacts are staged under `/counter/`. This is a wallet/fee/proof/submission sm
 test only; it is not deployment evidence until the user approves it in Lace and the
 resulting address, transaction, and block are recorded.
 
+## Local browser OPRF transport — 2026-09-14
+
+The first browser filing attempt reached the OPRF stage but failed with a browser
+`TypeError: Failed to fetch`. The issuer itself was healthy: the local health
+endpoint returned HTTP 200, a blinded evaluation returned HTTP 200, and the client
+verified the returned DLEQ proof and derived a 32-byte slot key outside the browser.
+The failure was therefore at the browser loopback-origin boundary, before any wallet
+transaction or report ciphertext reached the contract.
+
+The local Vite configuration now proxies `/__thirdmark_issuer` to the explicitly
+configured local issuer and `/__thirdmark_registry` to the local registry adapter.
+The browser uses same-origin paths in local configuration; deployed builds continue
+to use an explicit issuer or registry URL. The full OPRF round-trip through the
+same-origin issuer proxy returned HTTP 200 and a verified proof after the frontend
+restart. No issuer scalar, company identifier, report, or wallet material crosses
+the Vite proxy configuration.
+
 The browser deployment panel now also deploys the pinned official example-counter
 contract before the Thirdmark action. Its generated binding is checked against the
 same Compact 0.30.0 output used by the managed full compile, and its four proving

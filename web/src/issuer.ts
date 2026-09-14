@@ -16,7 +16,11 @@ const issuerEndpoint = (path: string): URL => {
   if (!publicAppConfig.issuerUrl) {
     throw new Error("The issuer endpoint is not configured for this deployment.");
   }
-  return new URL(path, `${publicAppConfig.issuerUrl.replace(/\/$/u, "")}/`);
+  const base = publicAppConfig.issuerUrl.replace(/\/$/u, "");
+  if (base.startsWith("/")) {
+    return new URL(`${base}${path}`, globalThis.location.origin);
+  }
+  return new URL(path, `${base}/`);
 };
 
 export const configuredIssuerPublicKey = (): JubjubPoint => {

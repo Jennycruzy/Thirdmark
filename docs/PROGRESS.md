@@ -302,5 +302,19 @@ Completed:
   verified Preprod evidence, explain the product in one minute, state residual leaks,
   and distinguish completed artifacts from open filing/dossier gates.
 
-Validation for this presentation pass is pending the browser typecheck and production
-build. No new Preprod claim is made by this UI/documentation change.
+Validation for this presentation pass is complete: the browser typecheck and
+production build pass. No new Preprod claim is made by this UI/documentation change.
+
+## Browser OPRF transport correction — 2026-09-14
+
+The first filing attempt stopped before wallet interaction at the blinded-slot
+derivation step. The browser reported `TypeError: Failed to fetch`; the issuer
+health endpoint, blinded evaluation endpoint, and proof verification all passed
+from the local runtime. The local Vite app now uses same-origin proxy paths for the
+issuer and CAC adapter, avoiding the browser loopback-origin boundary while keeping
+the issuer subject-blind protocol unchanged.
+
+Validation: root suite 52 tests passed, browser typecheck passed, browser production
+build passed, and the OPRF round-trip through the restarted Vite proxy returned HTTP
+200 with a verified proof. No Preprod filing transaction is claimed from this
+attempt; the next evidence step is the user-approved browser filing.

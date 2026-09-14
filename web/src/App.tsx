@@ -171,10 +171,16 @@ function App() {
       setNotice("This workspace is not connected to the deployed privacy contract yet.");
       return;
     }
+    let filingFinalized = false;
+    let lastStage = "starting the protected filing";
+    const reportStage = (stage: string): void => {
+      lastStage = stage;
+      setWorkingStage(stage);
+    };
+
     setNotice(null);
     setWorking(true);
-    setWorkingStage("Deriving a blinded company slot");
-    let filingFinalized = false;
+    reportStage("Deriving a blinded company slot");
     try {
       const report: ReportAttestation = {
         amountOverdueMinorUnits: amount,
@@ -182,23 +188,24 @@ function App() {
         invoiceReference,
       };
       const completed = await deriveCompanySlot(selectedCompany.subject.registrationNumber);
-      setWorkingStage("Encrypting the attestation in this browser");
+      reportStage("Encrypting the attestation in this browser");
       const ciphertext = await encryptReport(completed.slotSecret, report);
-      setWorkingStage("Preparing the Midnight contract call");
+      reportStage("Preparing the Midnight contract call");
       const contract = await connectThirdmark(wallet, completed);
-      setWorkingStage("Proving and submitting the protected filing");
+      reportStage("Proving and submitting the protected filing");
       const receipt = await contract.file(completed, ciphertext);
       filingFinalized = true;
       setFileReceipt(receipt);
       setPrepared(true);
-      setWorkingStage("Reading the finalized public state");
+      reportStage("Reading the finalized public state");
       const snapshot = await contract.readSlot(completed);
       setSlotSnapshot(snapshot);
       setStep(receipt.unlocked ? "unlocked" : "sealed");
       setNotice(receipt.unlocked ? "The threshold bit is true. The three records are available only in this browser." : "Filing finalized. The record remains sealed until the threshold is met.");
     } catch (error) {
       if (!filingFinalized) setPrepared(false);
-      setNotice(friendlyError(error, "protected filing"));
+      const diagnostic = diagnosticMessage(error);
+      setNotice(`${friendlyError(error, "protected filing")} Last stage: ${lastStage}.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
     } finally {
       setWorking(false);
       setWorkingStage(null);
