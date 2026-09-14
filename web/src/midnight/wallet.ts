@@ -15,12 +15,16 @@ const isCompatibleWallet = (value: unknown): value is InitialAPI =>
   "apiVersion" in value &&
   String((value as InitialAPI).apiVersion).startsWith(COMPATIBLE_API_MAJOR);
 
+const isOneAmWallet = (wallet: InitialAPI): boolean =>
+  `${wallet.name} ${wallet.rdns}`.toLowerCase().includes("1am");
+
 export const detectWallet = (windowValue: Window = window): InitialAPI | null => {
   const injected = windowValue.midnight;
   if (!injected) return null;
-  const preferred = injected["1am"];
-  if (isCompatibleWallet(preferred)) return preferred;
-  return Object.values(injected).find(isCompatibleWallet) ?? null;
+  const candidates = Object.values(injected).filter(isCompatibleWallet);
+  const keyedOneAm = injected["1am"];
+  if (isCompatibleWallet(keyedOneAm)) return keyedOneAm;
+  return candidates.find(isOneAmWallet) ?? candidates[0] ?? null;
 };
 
 export const connectWallet = async (
@@ -40,6 +44,14 @@ export const connectWallet = async (
       `The wallet declined the connection. Set it to ${expectedNetworkId} and try again.`,
     );
   }
+
+  await api.hintUsage([
+    "getConfiguration",
+    "getShieldedAddresses",
+    "getProvingProvider",
+    "balanceUnsealedTransaction",
+    "submitTransaction",
+  ]);
 
   const configuration = await api.getConfiguration();
   if (configuration.networkId !== expectedNetworkId) {
