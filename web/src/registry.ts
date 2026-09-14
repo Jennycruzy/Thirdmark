@@ -41,10 +41,10 @@ const parseResults = (value: unknown): RegistrySearchResult[] => {
 };
 
 /**
- * Query Thirdmark's explicitly configured registry adapter. This is not a CAC
- * endpoint: the CAC public-search page has no published anonymous autocomplete
- * API. The adapter must be an authorized integration and return the documented
- * `{ results: [{ name, rcNumber, status }] }` shape.
+ * Query Thirdmark's explicitly configured registry adapter. The local adapter
+ * proxies CAC's source-backed public-search request and returns the narrow
+ * `{ results: [{ name, rcNumber, status }] }` shape used by the browser.
+ * Production deployments must replace it with an authorized CAC integration.
  */
 export const searchCompanies = async (query: string): Promise<RegistrySearchResult[]> => {
   const trimmed = query.trim();

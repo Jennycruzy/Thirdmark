@@ -15,6 +15,7 @@
     "test:oprf": "npm run typecheck:oprf && vitest run verification/oprf.test.ts",
     "test:thirdmark": "npm run typecheck && vitest run contract/src/test/thirdmark.test.ts",
     "issuer:start": "tsx issuer/server.ts",
+    "registry:start": "tsx registry/server.ts",
     "web:typecheck": "npm run typecheck --workspace @thirdmark/web",
     "web:build": "npm run build --workspace @thirdmark/web"
   },

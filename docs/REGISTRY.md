@@ -26,13 +26,37 @@ still sees only the blinded curve point.
 
 ## Lookup boundary
 
-The CAC public-search page is an official interactive lookup. CAC also publishes
-a separate VAS API site with authenticated validation products, including lookup
-by RC number. No stable, unauthenticated autocomplete API is published by the
-public-search page, and Thirdmark does not scrape undocumented endpoints or put a
-VAS credential in the client. A live autocomplete adapter must use an explicitly
-authorized CAC integration path; until that exists, the canonicalization layer is
-the only registry code represented as complete.
+The CAC public-search page is an official interactive lookup. Its source is an
+Angular application that issues `POST` requests to
+`https://authapp.cac.gov.ng/name_similarity_app/api/public_search/search` with
+`SearchType` and `searchTerm`. The adapter in [`registry/server.ts`](../registry/server.ts)
+uses that exact source-backed request, sends the official page origin and referrer,
+filters the response to `classificationName === "COMPANY"`, and returns only the
+approved name, RC number, and coarse status to the browser. It does not put a CAC
+credential in the client or store registry records.
+
+The upstream endpoint is rate-limited and is not presented by CAC as a versioned
+third-party API. That is a residual integration risk: the adapter is a narrow
+server-side boundary for the buildathon, not a claim of a commercial CAC VAS
+agreement. Production deployment should move to an authorized CAC VAS integration
+when one is available. The browser never calls the CAC endpoint directly because
+CAC's response allows the official iCRP origin, not arbitrary localhost origins.
+
+## Local adapter setup
+
+The adapter requires only public endpoint and binding configuration:
+
+```sh
+export THIRDMARK_CAC_PUBLIC_SEARCH_URL='https://authapp.cac.gov.ng/name_similarity_app/api/public_search/search'
+export THIRDMARK_REGISTRY_HOST=127.0.0.1
+export THIRDMARK_REGISTRY_PORT=8788
+export THIRDMARK_REGISTRY_ALLOWED_ORIGIN=http://localhost:5173
+npm run registry:start
+```
+
+The browser then uses `http://127.0.0.1:8788/v1/cac/search` as
+`VITE_REGISTRY_ADAPTER_URL`. The adapter does not accept an RC number directly
+from the user interface; it returns the RC number only after CAC name search.
 
 Synthetic demo subjects must remain clearly invalid and labelled synthetic. No
 real company's registration number is used in screenshots, tests, or recordings.

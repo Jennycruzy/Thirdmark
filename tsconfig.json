@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["verification/**/*.ts", "contract/**/*.ts", "client/**/*.ts", "issuer/**/*.ts"]
+  "include": ["verification/**/*.ts", "contract/**/*.ts", "client/**/*.ts", "issuer/**/*.ts", "registry/**/*.ts"]
 }

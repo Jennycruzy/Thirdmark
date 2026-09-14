@@ -143,10 +143,10 @@ Evidence:
   `compact-runtime` WebAssembly asset. This is a local build artifact, not a live
   deployment.
 
-Not passed: no browser wallet transaction, registry adapter deployment, issuer
-hosting, contract address, Preprod filing, dossier from chain records, screenshot,
-or AKINDO gate comment. Comment drafts remain limited to the blocked W1-P0 entry;
-these local layers do not clear W1-P0 or W1-P1.
+At the time of this 2026-09-12 snapshot, no browser wallet transaction, registry
+adapter deployment, issuer hosting, contract address, Preprod filing, dossier from
+chain records, screenshot, or AKINDO gate comment existed. The later 2026-09-14
+receipts and adapter evidence below supersede that snapshot.
 
 ## Production witness extraction — 2026-09-12
 
@@ -207,9 +207,8 @@ Evidence:
 - No Preprod transaction, contract address, block, dossier, live URL, or screenshot
   was claimed.
 
-The canonical example-counter portion of W1-P0 is complete. The Thirdmark deployment
-gate remains open until the issuer public key is configured and a Thirdmark Preprod
-receipt exists.
+This historical section predates the 2026-09-14 counter and Thirdmark receipts
+recorded below.
 
 ## Browser counter deployment batch — 2026-09-14
 
@@ -230,12 +229,11 @@ Evidence:
 - `npm test`: 8 files, 52 tests passed.
 - `npm run web:typecheck`: passed.
 - `npm run web:build`: passed; 1,259 modules transformed.
-- The example-counter transaction is now recorded below. Thirdmark remains pending
-  issuer configuration and a separate wallet-backed deployment.
+- The example-counter transaction is now recorded below; the later Thirdmark
+  deployment receipt is recorded in the following section.
 
-Comment draft status: the W1-P0 draft is updated and ready for the user to review and
-post. It reports only the verified example-counter receipt; it does not claim a
-Thirdmark deployment.
+Comment draft status: the W1-P0 and W1-P2 drafts are updated and ready for the user
+to review and post.
 
 ## Canonical example-counter Preprod receipt — 2026-09-14
 
@@ -268,3 +266,20 @@ The ignored `web/.env.local` now contains only the issuer URL, issuer public poi
 and this public contract address. It contains no issuer scalar or wallet material.
 The next gate is an end-to-end filing, beginning with a real CAC adapter result and
 one browser-held filer state.
+
+## CAC registry adapter — 2026-09-14
+
+The official iCRP frontend request was verified against the live CAC service. The
+local adapter uses the source-backed request and filters results to registered
+companies only:
+
+- Adapter process: `Thirdmark CAC adapter listening on 127.0.0.1:8788`.
+- Browser endpoint: `http://127.0.0.1:8788/v1/cac/search`.
+- Live response check: `curl` with `Origin: http://localhost:5173` returned the
+  documented `{ results: [{ name, rcNumber, status }] }` shape.
+- Validation: root and browser typechecks passed after adding `registry/server.ts`.
+
+The adapter forwards no credentials, stores no CAC records, and only sends the
+company name, RC number, and coarse status to the browser. It is a buildathon
+integration against CAC's public-search request path; production should migrate to
+an authorized CAC VAS integration when available.
