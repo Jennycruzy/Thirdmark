@@ -17,15 +17,27 @@ const steps: readonly { id: Step; label: string }[] = [
   { id: "dossier", label: "Dossier" },
 ];
 
-const friendlyError = (error: unknown): string => {
+type Operation = "company search" | "wallet connection" | "example-counter deployment" | "Thirdmark deployment" | "protected filing";
+
+const friendlyError = (error: unknown, operation: Operation = "protected filing"): string => {
   const message = error instanceof Error ? error.message : "";
   if (message.includes("wallet") || message.includes("network")) {
-    return "The wallet is not ready. Connect Lace on Midnight preprod and try again.";
+    return "The wallet is not ready. Connect a Midnight wallet on Preprod and try again.";
   }
   if (message.includes("issuer")) return "The issuer could not complete the blinded request. Try again later.";
   if (message.includes("registry")) return "The company search is unavailable. Try again or contact the registry adapter operator.";
   if (message.includes("contract")) return "The Thirdmark contract is not available on this network.";
+  if (message.includes("balance") || message.includes("fund") || message.includes("DUST")) {
+    return `The wallet could not balance the ${operation}. Confirm that 1AM is synced on Preprod and try again.`;
+  }
+  if (message.includes("prover") || message.includes("zk") || message.includes("key material") || message.includes("404")) {
+    return `The proving assets for the ${operation} are unavailable. Reload the app and try again.`;
+  }
   if (message.includes("ciphertext") || message.includes("report")) return "Check the filing fields and try again.";
+  if (operation === "company search") return "The company search is unavailable. Try again or contact the registry adapter operator.";
+  if (operation === "wallet connection") return "The wallet connection could not be completed. Unlock 1AM on Preprod and try again.";
+  if (operation === "example-counter deployment") return "The example-counter deployment could not be completed. Check the 1AM approval and try again.";
+  if (operation === "Thirdmark deployment") return "The Thirdmark deployment could not be completed. Check the wallet approval and try again.";
   return "The protected filing could not be completed. Check the connection and try again.";
 };
 
@@ -67,7 +79,7 @@ function App() {
       setSearchResults(await searchCompanies(query));
     } catch (error) {
       setSearchResults([]);
-      setNotice(friendlyError(error));
+      setNotice(friendlyError(error, "company search"));
     } finally {
       setWorking(false);
     }
@@ -79,7 +91,7 @@ function App() {
     try {
       setWallet(await connectWallet(publicAppConfig.networkId));
     } catch (error) {
-      setNotice(friendlyError(error));
+      setNotice(friendlyError(error, "wallet connection"));
     } finally {
       setWorking(false);
     }
@@ -121,7 +133,7 @@ function App() {
       setNotice(receipt.unlocked ? "The threshold bit is true. The three records are available only in this browser." : "Filing finalized. The record remains sealed until the threshold is met.");
     } catch (error) {
       if (!filingFinalized) setPrepared(false);
-      setNotice(friendlyError(error));
+      setNotice(friendlyError(error, "protected filing"));
     } finally {
       setWorking(false);
       setWorkingStage(null);
@@ -130,7 +142,7 @@ function App() {
 
   const handleDeploy = async (): Promise<void> => {
     if (!wallet) {
-      setNotice("Connect Lace on Midnight preprod before deploying.");
+      setNotice("Connect a Midnight wallet on Preprod before deploying.");
       return;
     }
     if (!hasIssuerConfiguration()) {
@@ -139,14 +151,14 @@ function App() {
     }
     setNotice(null);
     setWorking(true);
-    setWorkingStage("Preparing the Lace deployment");
+    setWorkingStage("Preparing the Midnight wallet deployment");
     try {
-      setWorkingStage("Lace is balancing and signing the deployment");
+      setWorkingStage("The Midnight wallet is balancing and signing the deployment");
       const receipt = await deployThirdmark(wallet);
       setDeployment(receipt);
-      setNotice("Deployment submitted through Lace. Keep this receipt for the Preprod record.");
+      setNotice("Deployment submitted through the connected Midnight wallet. Keep this receipt for the Preprod record.");
     } catch (error) {
-      setNotice(friendlyError(error));
+      setNotice(friendlyError(error, "Thirdmark deployment"));
     } finally {
       setWorking(false);
       setWorkingStage(null);
@@ -155,19 +167,19 @@ function App() {
 
   const handleCounterDeploy = async (): Promise<void> => {
     if (!wallet) {
-      setNotice("Connect Lace on Midnight preprod before deploying.");
+      setNotice("Connect a Midnight wallet on Preprod before deploying.");
       return;
     }
     setNotice(null);
     setWorking(true);
     setWorkingStage("Preparing the example-counter deployment");
     try {
-      setWorkingStage("Lace is balancing and signing the example-counter");
+      setWorkingStage("The Midnight wallet is balancing and signing the example-counter");
       const receipt = await deployExampleCounter(wallet);
       setCounterDeployment(receipt);
-      setNotice("The canonical example-counter deployment was submitted through Lace.");
+      setNotice("The canonical example-counter deployment was submitted through the connected Midnight wallet.");
     } catch (error) {
-      setNotice(friendlyError(error));
+      setNotice(friendlyError(error, "example-counter deployment"));
     } finally {
       setWorking(false);
       setWorkingStage(null);
@@ -215,9 +227,9 @@ function App() {
       {!hasContractConfiguration() && (
         <section className="panel deployment-panel" aria-labelledby="deployment-title">
           <p className="eyebrow">Preprod deployment</p>
-          <h2 id="deployment-title">Deploy through Lace, not the headless CLI.</h2>
+          <h2 id="deployment-title">Deploy through a Midnight wallet, not the headless CLI.</h2>
           <p className="muted">
-            The browser wallet keeps its own synchronized state. Approve the deployment in Lace;
+            The browser wallet keeps its own synchronized state. Approve the deployment in your connected wallet;
             no seed, wallet key, or local historical replay is used here.
           </p>
           <div className="deployment-actions">
@@ -235,9 +247,9 @@ function App() {
             </dl>
           )}
           <button className="primary-button" type="button" onClick={() => void handleDeploy()} disabled={working || !wallet || !hasIssuerConfiguration()}>
-            {working ? "Preparing deployment…" : "Deploy Thirdmark through Lace"}
+            {working ? "Preparing deployment…" : "Deploy Thirdmark through wallet"}
           </button>
-          {!wallet && <p className="field-note">Connect Lace on Preprod first.</p>}
+          {!wallet && <p className="field-note">Connect a Midnight wallet on Preprod first.</p>}
           {!hasIssuerConfiguration() && <p className="field-note">The deployment still needs the public issuer key configuration.</p>}
           {deployment && (
             <dl className="deployment-receipt">

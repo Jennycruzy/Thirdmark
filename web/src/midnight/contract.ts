@@ -227,7 +227,7 @@ export type CounterDeploymentReceipt = {
 };
 
 /**
- * Deploy the canonical Midnight example-counter through Lace. This is the
+ * Deploy the canonical Midnight example-counter through a connected wallet. This is the
  * pre-product network smoke test: it proves the wallet, proving assets, fee
  * balancing, signing, and Preprod submission without the headless history scan.
  */
@@ -248,7 +248,7 @@ export const deployExampleCounter = async (session: WalletSession): Promise<Coun
 };
 
 /**
- * Deploy through the connected Lace wallet. The browser wallet owns wallet
+ * Deploy through the connected Midnight wallet. The browser wallet owns wallet
  * synchronization, transaction balancing, signing, and submission; the
  * application does not run a second headless wallet history replay.
  */
