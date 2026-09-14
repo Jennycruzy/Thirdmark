@@ -19,15 +19,39 @@ const steps: readonly { id: Step; label: string }[] = [
 
 type Operation = "company search" | "wallet connection" | "example-counter deployment" | "Thirdmark deployment" | "protected filing";
 
+type ConnectorFailure = {
+  readonly code?: string;
+  readonly reason?: string;
+};
+
+const connectorFailure = (error: unknown): ConnectorFailure => {
+  let candidate: unknown = error;
+  for (let depth = 0; depth < 4 && candidate && typeof candidate === "object"; depth += 1) {
+    const value = candidate as { readonly code?: unknown; readonly reason?: unknown; readonly cause?: unknown; readonly failure?: unknown };
+    if (typeof value.code === "string" || typeof value.reason === "string") {
+      return {
+        code: typeof value.code === "string" ? value.code : undefined,
+        reason: typeof value.reason === "string" ? value.reason : undefined,
+      };
+    }
+    candidate = value.cause ?? value.failure;
+  }
+  return {};
+};
+
 const friendlyError = (error: unknown, operation: Operation = "protected filing"): string => {
   const message = error instanceof Error ? error.message : "";
-  const connectorCode = typeof error === "object" && error !== null && "code" in error
-    ? String((error as { readonly code?: unknown }).code)
-    : "";
+  const connector = connectorFailure(error);
+  const connectorCode = connector.code ?? "";
   if (connectorCode === "PermissionRejected") return "1AM denied this app's wallet permission. Reconnect Thirdmark in 1AM and try again.";
   if (connectorCode === "Rejected") return "The wallet request was rejected. Approve the transaction in 1AM and try again.";
   if (connectorCode === "InvalidRequest") return `The wallet rejected the ${operation} request as invalid. Reload Thirdmark and reconnect 1AM.`;
   if (connectorCode === "Disconnected") return "The 1AM connection was lost. Reconnect the wallet and try again.";
+  if (connectorCode === "InternalError") return "1AM could not start delegated proving. Keep 1AM open, reload Thirdmark, reconnect, and try again.";
+  const reason = `${connector.reason ?? ""} ${message}`.toLowerCase();
+  if (reason.includes("proving") || reason.includes("prover")) {
+    return "1AM could not start delegated proving. Keep 1AM open, reload Thirdmark, reconnect, and try again.";
+  }
   if (message.includes("wallet") || message.includes("network")) {
     return "The wallet is not ready. Connect a Midnight wallet on Preprod and try again.";
   }

@@ -121,6 +121,48 @@ const patchPublicDataProvider = (base: ReturnType<typeof indexerPublicDataProvid
 
 const randomBytes32 = (): Uint8Array => crypto.getRandomValues(new Uint8Array(32));
 
+const artifactBaseUrl = (artifactRoot: string): string =>
+  new URL(artifactRoot, window.location.origin).toString().replace(/\/+$/u, "");
+
+const keyMaterialProviderFor = (
+  provider: {
+    asKeyMaterialProvider: () => {
+      getZKIR(circuitKeyLocation: string): Promise<Uint8Array>;
+      getProverKey(circuitKeyLocation: string): Promise<Uint8Array>;
+      getVerifierKey(circuitKeyLocation: string): Promise<Uint8Array>;
+    };
+  },
+  reportProgress: ProgressReporter,
+) => {
+  const material = provider.asKeyMaterialProvider();
+  return {
+    async getZKIR(circuitKeyLocation: string): Promise<Uint8Array> {
+      reportProgress(`Loading ${circuitKeyLocation} proving representation`);
+      try {
+        return await material.getZKIR(circuitKeyLocation);
+      } catch {
+        throw new Error(`The browser could not load the ${circuitKeyLocation} proving representation.`);
+      }
+    },
+    async getProverKey(circuitKeyLocation: string): Promise<Uint8Array> {
+      reportProgress(`Loading ${circuitKeyLocation} proving key`);
+      try {
+        return await material.getProverKey(circuitKeyLocation);
+      } catch {
+        throw new Error(`The browser could not load the ${circuitKeyLocation} proving key.`);
+      }
+    },
+    async getVerifierKey(circuitKeyLocation: string): Promise<Uint8Array> {
+      reportProgress(`Loading ${circuitKeyLocation} verifier key`);
+      try {
+        return await material.getVerifierKey(circuitKeyLocation);
+      } catch {
+        throw new Error(`The browser could not load the ${circuitKeyLocation} verifier key.`);
+      }
+    },
+  };
+};
+
 const buildProviders = async (
   session: WalletSession,
   artifactRoot = ARTIFACT_ROOT,
@@ -136,13 +178,22 @@ const buildProviders = async (
   const shielded = await session.api.getShieldedAddresses();
   reportProgress("Loading browser proving assets");
   const zkConfigProvider = new FetchZkConfigProvider<"file">(
-    new URL(artifactRoot, window.location.origin).toString(),
+    artifactBaseUrl(artifactRoot),
     fetch.bind(window),
   );
   reportProgress("Requesting delegated proving from the wallet");
-  const proofProvider = createProofProvider(
-    await session.api.getProvingProvider(zkConfigProvider.asKeyMaterialProvider()),
-  );
+  let provingProvider: Awaited<ReturnType<WalletSession["api"]["getProvingProvider"]>>;
+  try {
+    provingProvider = await session.api.getProvingProvider(
+      keyMaterialProviderFor(zkConfigProvider, reportProgress),
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("The browser could not load")) {
+      throw error;
+    }
+    throw new Error("The wallet could not start delegated proving for this contract.");
+  }
+  const proofProvider = createProofProvider(provingProvider);
 
   const walletProvider: WalletProvider = {
     getCoinPublicKey: () => shielded.shieldedCoinPublicKey,
