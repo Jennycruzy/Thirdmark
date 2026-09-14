@@ -12,6 +12,7 @@ import { setNetworkId } from "@midnight-ntwrk/midnight-js-network-id";
 import {
   createProofProvider,
   type MidnightProvider,
+  type ProofProvider,
   type UnboundTransaction,
   type WalletProvider,
 } from "@midnight-ntwrk/midnight-js-types";
@@ -193,7 +194,14 @@ const buildProviders = async (
     }
     throw new Error("The wallet could not start delegated proving for this contract.");
   }
-  const proofProvider = createProofProvider(provingProvider);
+  reportProgress("Delegated proving provider ready");
+  const delegatedProofProvider = createProofProvider(provingProvider);
+  const proofProvider: ProofProvider = {
+    async proveTx(tx, config) {
+      reportProgress("Requesting proof-service approval in 1AM");
+      return delegatedProofProvider.proveTx(tx, config);
+    },
+  };
 
   const walletProvider: WalletProvider = {
     getCoinPublicKey: () => shielded.shieldedCoinPublicKey,
@@ -220,7 +228,9 @@ const buildProviders = async (
     },
   };
 
+  reportProgress("Preparing the Preprod indexer provider");
   const basePublic = indexerPublicDataProvider(walletConfig.indexerUri, walletConfig.indexerWsUri, window.WebSocket);
+  reportProgress("Preprod providers ready");
   return {
     privateStateProvider: encryptedPrivateStateProvider(),
     publicDataProvider: patchPublicDataProvider(basePublic, walletConfig.indexerUri),
@@ -294,6 +304,11 @@ export const deployExampleCounter = async (
   reportProgress?: ProgressReporter,
 ): Promise<CounterDeploymentReceipt> => {
   const providers = await buildProviders(session, "/counter/", reportProgress);
+  reportProgress?.("Checking the example-counter verifier asset");
+  await (providers.zkConfigProvider as unknown as {
+    getVerifierKey(circuitId: string): Promise<unknown>;
+  }).getVerifierKey("increment");
+  reportProgress?.("Building the example-counter deployment transaction");
   const deployed = await deployContract(providers as never, {
     compiledContract: counterCompiledContract(),
     privateStateId: "example-counter-private-state",

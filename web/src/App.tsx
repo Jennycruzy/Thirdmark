@@ -39,6 +39,31 @@ const connectorFailure = (error: unknown): ConnectorFailure => {
   return {};
 };
 
+const diagnosticMessage = (error: unknown): string => {
+  let candidate: unknown = error;
+  const parts: string[] = [];
+  for (let depth = 0; depth < 5 && candidate && typeof candidate === "object"; depth += 1) {
+    const value = candidate as {
+      readonly name?: unknown;
+      readonly message?: unknown;
+      readonly code?: unknown;
+      readonly reason?: unknown;
+      readonly cause?: unknown;
+      readonly failure?: unknown;
+    };
+    for (const item of [value.name, value.code, value.reason, value.message]) {
+      if (typeof item === "string" && item.trim() && !parts.includes(item.trim())) parts.push(item.trim());
+    }
+    candidate = value.cause ?? value.failure;
+  }
+  return parts
+    .join(": ")
+    .replace(/mn_[a-z0-9_]+/giu, "[address]")
+    .replace(/\b(?:0x)?[0-9a-f]{32,}\b/giu, "[hex]")
+    .replace(/\s+/gu, " ")
+    .slice(0, 240);
+};
+
 const friendlyError = (error: unknown, operation: Operation = "protected filing"): string => {
   const message = error instanceof Error ? error.message : "";
   const connector = connectorFailure(error);
@@ -216,7 +241,8 @@ function App() {
       setCounterDeployment(receipt);
       setNotice("The canonical example-counter deployment was submitted through the connected Midnight wallet.");
     } catch (error) {
-      setNotice(`${friendlyError(error, "example-counter deployment")} Last stage: ${lastStage}.`);
+      const diagnostic = diagnosticMessage(error);
+      setNotice(`${friendlyError(error, "example-counter deployment")} Last stage: ${lastStage}.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
     } finally {
       setWorking(false);
       setWorkingStage(null);

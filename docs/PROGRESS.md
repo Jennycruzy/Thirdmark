@@ -10,7 +10,7 @@ forward.
 
 ## W1-P0 — source verification and registration
 
-Status: **blocked**.
+Status: **passed for source verification, CI validation, and the canonical Preprod wallet smoke test. Thirdmark deployment remains blocked on issuer configuration.**
 
 Passed:
 
@@ -39,19 +39,19 @@ Not passed:
 
 - The development Mac still cannot execute the local 0.30.0 `zkir` process; it exits with `SIGILL`. Managed CircleCI has now completed the full proving-key compile, so the local CPU issue is not blocking CI validation.
 - The supplied in-circuit inverse step is not available in the verified Compact API. The pinned runtime also does not export the Jubjub scalar modulus; the scratch harness uses the source-backed protocol constant explicitly, and product OPRF code must resolve this dependency choice before implementation.
-- `example-counter` has been compiled in CircleCI but has not been deployed.
 - The local full counter compile still exits with `zkir` `-4`/`SIGILL`; the managed compiled assets are available from pipeline `#5` and are installed only in the gitignored reference checkout.
-- No Preprod address, transaction, block, timing, screenshot, or URL exists.
-- No AKINDO comment is ready to post because the required W1-P0 gate is not complete. The non-postable draft in [`COMMENTS.md`](COMMENTS.md) now includes the CircleCI evidence.
+- Thirdmark has no Preprod address, transaction, block, timing, dossier, or live URL yet.
+- The canonical example-counter now has a wallet-backed Preprod receipt; its address, transaction ID, transaction hash, block, and screenshot are recorded below.
 
 Why blocked:
 
-The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The next action is a user-controlled wallet create/restore and funding step, followed by deployment of the official example-counter.
+The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The canonical example-counter has now been deployed through 1AM on Preprod. The next action is to run the issuer with its operator-held scalar, expose only its public key and evaluation endpoint to the browser, then deploy Thirdmark through the same wallet path.
 
 User inputs still required before the external gates:
 
 - AKINDO account confirmation and Discord handle.
-- A funded Preprod wallet at W1-P2; the wallet seed or key must never be shared.
+- A funded Preprod wallet at W1-P2; the wallet seed or key must never be shared. This is now satisfied by the owner-controlled 1AM wallet.
+- An operator-run issuer process with its scalar kept outside the repository and chat; only the issuer URL and derived public point belong in browser configuration.
 - A Vercel or Netlify account and optional domain at W1-P5.
 
 ## Parallel local implementation — 2026-09-12
@@ -207,9 +207,9 @@ Evidence:
 - No Preprod transaction, contract address, block, dossier, live URL, or screenshot
   was claimed.
 
-The W1-P0 deployment gate and W1-P1 contract gate remain open. No AKINDO comment
-draft was added for this local layer; the existing W1-P0 draft remains explicitly
-not ready to post.
+The canonical example-counter portion of W1-P0 is complete. The Thirdmark deployment
+gate remains open until the issuer public key is configured and a Thirdmark Preprod
+receipt exists.
 
 ## Browser counter deployment batch — 2026-09-14
 
@@ -230,8 +230,25 @@ Evidence:
 - `npm test`: 8 files, 52 tests passed.
 - `npm run web:typecheck`: passed.
 - `npm run web:build`: passed; 1,259 modules transformed.
-- No example-counter or Thirdmark Preprod transaction has been claimed. The next
-  external action is user approval in Lace with a funded Preprod wallet.
+- The example-counter transaction is now recorded below. Thirdmark remains pending
+  issuer configuration and a separate wallet-backed deployment.
 
-Comment draft status: no AKINDO draft is ready because this batch has not produced
-an on-chain artifact.
+Comment draft status: the W1-P0 draft is updated and ready for the user to review and
+post. It reports only the verified example-counter receipt; it does not claim a
+Thirdmark deployment.
+
+## Canonical example-counter Preprod receipt — 2026-09-14
+
+The owner supplied a 1AM wallet receipt after the browser path completed delegated
+proving, wallet balancing, signing, submission, and indexer confirmation:
+
+- Contract address: `fdfd87f55cfcb499dec443d1c35f38fd7d721baa45dbb66303b8f3fb8dd38c4`
+- Transaction ID: `00003035511fe02e788f6a82fb0085cb5a60803ddb6c891f296212b5997cc6a499`
+- Transaction hash: `3c8a9e7474f8f6b3422c3b5d110199368e5fbee63b9d8f66664f5b1d3d126ea5`
+- Block: `2549975`
+- Screenshot: `/Users/user/Pictures/Photos Library.photoslibrary/originals/E/E62C02DF-B536-417E-9039-06402050A149.jpeg`
+
+The browser-side `Buffer` compatibility fix and deployment-stage diagnostics were
+validated with `npm run typecheck --workspace @thirdmark/web` and `git diff --check`.
+The next blocker is explicit in the UI: the issuer public key and issuer endpoint
+must be configured before the Thirdmark deployment button can be enabled.
