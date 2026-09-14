@@ -22,6 +22,14 @@ web/public/zkir/
 web/public/counter/keys/
 web/public/counter/zkir/
 
+# The pinned example-counter binding is source-controlled so the browser build
+# has the exact Compact-generated contract shape on a clean checkout.
+!verification/example-counter/managed/
+!verification/example-counter/managed/counter/
+!verification/example-counter/managed/counter/contract/
+!verification/example-counter/managed/counter/contract/index.js
+!verification/example-counter/managed/counter/contract/index.d.ts
+
 # Operating-system and editor files
 .DS_Store
 .idea/
