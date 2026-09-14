@@ -31,6 +31,8 @@ a { color: inherit; }
 .deployment-panel { margin: 34px 0 0; }
 .deployment-panel h2 { max-width: 620px; margin: 6px 0 10px; }
 .deployment-panel .primary-button { margin-top: 12px; }
+.deployment-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.deployment-actions .quiet-button { margin-left: 0; }
 .deployment-receipt { display: grid; gap: 8px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--quiet); }
 .deployment-receipt div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; }
 .deployment-receipt dt { color: #566168; font-size: 12px; }

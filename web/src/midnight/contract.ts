@@ -31,6 +31,9 @@ import {
   type Ledger,
 } from "../../../contract/managed/thirdmark/contract/index.js";
 import {
+  Contract as ExampleCounterContract,
+} from "../../../verification/example-counter/managed/counter/contract/index.js";
+import {
   advancePrivateState,
   createInitialPrivateState,
   stageOprfPrivateState,
@@ -75,6 +78,12 @@ const compiledContract = () => {
   return result;
 };
 
+const counterCompiledContract = () =>
+  CompiledContract.make("counter", ExampleCounterContract).pipe(
+    CompiledContract.withVacantWitnesses,
+    CompiledContract.withCompiledFileAssets("/counter/"),
+  );
+
 const hexToBytes = (hex: string): Uint8Array => {
   const normalized = hex.startsWith("0x") ? hex.slice(2) : hex;
   if (!/^(?:[0-9a-f]{2})*$/iu.test(normalized)) throw new Error("wallet returned invalid transaction hex");
@@ -111,7 +120,10 @@ const patchPublicDataProvider = (base: ReturnType<typeof indexerPublicDataProvid
 
 const randomBytes32 = (): Uint8Array => crypto.getRandomValues(new Uint8Array(32));
 
-const buildProviders = async (session: WalletSession): Promise<ThirdmarkProviders> => {
+const buildProviders = async (
+  session: WalletSession,
+  artifactRoot = ARTIFACT_ROOT,
+): Promise<ThirdmarkProviders> => {
   setNetworkId(publicAppConfig.networkId);
   const walletConfig = await session.api.getConfiguration();
   if (walletConfig.networkId !== publicAppConfig.networkId) {
@@ -120,7 +132,7 @@ const buildProviders = async (session: WalletSession): Promise<ThirdmarkProvider
 
   const shielded = await session.api.getShieldedAddresses();
   const zkConfigProvider = new FetchZkConfigProvider<"file">(
-    window.location.origin,
+    new URL(artifactRoot, window.location.origin).toString(),
     fetch.bind(window),
   );
   const proofProvider = createProofProvider(
@@ -205,6 +217,34 @@ export type DeploymentReceipt = {
   readonly txId: string;
   readonly txHash: string;
   readonly blockHeight: number | null;
+};
+
+export type CounterDeploymentReceipt = {
+  readonly contractAddress: string;
+  readonly txId: string;
+  readonly txHash: string;
+  readonly blockHeight: number | null;
+};
+
+/**
+ * Deploy the canonical Midnight example-counter through Lace. This is the
+ * pre-product network smoke test: it proves the wallet, proving assets, fee
+ * balancing, signing, and Preprod submission without the headless history scan.
+ */
+export const deployExampleCounter = async (session: WalletSession): Promise<CounterDeploymentReceipt> => {
+  const providers = await buildProviders(session, "/counter/");
+  const deployed = await deployContract(providers as never, {
+    compiledContract: counterCompiledContract(),
+    privateStateId: "example-counter-private-state",
+    initialPrivateState: { privateCounter: 0 },
+  } as never);
+  const publicData = deployed.deployTxData.public;
+  return {
+    contractAddress: publicData.contractAddress,
+    txId: publicData.txId,
+    txHash: publicData.txHash,
+    blockHeight: publicData.blockHeight === undefined ? null : Number(publicData.blockHeight),
+  };
 };
 
 /**

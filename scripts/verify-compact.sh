@@ -17,6 +17,13 @@ trap 'rm -rf "${compile_root}"' EXIT
 git clone --quiet "${example_counter_repository}" "${compile_root}/example-counter"
 git -C "${compile_root}/example-counter" checkout --quiet "${example_counter_commit}"
 
+if ! cmp -s \
+  "${compile_root}/example-counter/contract/src/counter.compact" \
+  verification/example-counter/counter.compact; then
+  printf 'checked-in example-counter source differs from the pinned reference commit\n' >&2
+  exit 1
+fi
+
 compact compile \
   "${compile_root}/example-counter/contract/src/counter.compact" \
   "${compile_root}/counter-managed"
@@ -28,6 +35,16 @@ compact compile \
 compact compile \
   contract/src/thirdmark.compact \
   "${compile_root}/thirdmark-managed"
+
+for generated_file in contract/index.js contract/index.d.ts; do
+  if ! cmp -s \
+    "${compile_root}/counter-managed/${generated_file}" \
+    "verification/example-counter/managed/counter/${generated_file}"; then
+    printf 'checked-in example-counter binding differs from the pinned Compact output: %s\n' \
+      "${generated_file}" >&2
+    exit 1
+  fi
+done
 
 if [[ -n "${COMPACT_ARTIFACT_ROOT:-}" ]]; then
   mkdir -p "${COMPACT_ARTIFACT_ROOT}/example-counter/contract/src/managed/counter"

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { encryptReport, type ReportAttestation } from "../../client/crypto.js";
 import { hasContractConfiguration, hasIssuerConfiguration, publicAppConfig } from "./config.js";
 import { deriveCompanySlot } from "./issuer.js";
-import { connectThirdmark, deployThirdmark, type DeploymentReceipt, type FilingReceipt, type SlotSnapshot } from "./midnight/contract.js";
+import { connectThirdmark, deployExampleCounter, deployThirdmark, type CounterDeploymentReceipt, type DeploymentReceipt, type FilingReceipt, type SlotSnapshot } from "./midnight/contract.js";
 import { connectWallet, type WalletSession } from "./midnight/wallet.js";
 import { searchCompanies, type RegistrySearchResult } from "./registry.js";
 import "./styles.css";
@@ -47,6 +47,7 @@ function App() {
   const [working, setWorking] = useState(false);
   const [workingStage, setWorkingStage] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [counterDeployment, setCounterDeployment] = useState<CounterDeploymentReceipt | null>(null);
   const [deployment, setDeployment] = useState<DeploymentReceipt | null>(null);
 
   const publicState = useMemo(
@@ -152,6 +153,27 @@ function App() {
     }
   };
 
+  const handleCounterDeploy = async (): Promise<void> => {
+    if (!wallet) {
+      setNotice("Connect Lace on Midnight preprod before deploying.");
+      return;
+    }
+    setNotice(null);
+    setWorking(true);
+    setWorkingStage("Preparing the example-counter deployment");
+    try {
+      setWorkingStage("Lace is balancing and signing the example-counter");
+      const receipt = await deployExampleCounter(wallet);
+      setCounterDeployment(receipt);
+      setNotice("The canonical example-counter deployment was submitted through Lace.");
+    } catch (error) {
+      setNotice(friendlyError(error));
+    } finally {
+      setWorking(false);
+      setWorkingStage(null);
+    }
+  };
+
   const selectCompany = (company: RegistrySearchResult): void => {
     setSelectedCompany(company);
     setStep("file");
@@ -198,6 +220,20 @@ function App() {
             The browser wallet keeps its own synchronized state. Approve the deployment in Lace;
             no seed, wallet key, or local historical replay is used here.
           </p>
+          <div className="deployment-actions">
+            <button className="quiet-button" type="button" onClick={() => void handleCounterDeploy()} disabled={working || !wallet}>
+              {working ? "Preparing deployment…" : "Deploy canonical example-counter first"}
+            </button>
+            <span className="field-note">This is the required wallet and Preprod smoke test.</span>
+          </div>
+          {counterDeployment && (
+            <dl className="deployment-receipt">
+              <div><dt>Counter contract</dt><dd>{counterDeployment.contractAddress}</dd></div>
+              <div><dt>Transaction</dt><dd>{counterDeployment.txId}</dd></div>
+              <div><dt>Transaction hash</dt><dd>{counterDeployment.txHash}</dd></div>
+              <div><dt>Block</dt><dd>{counterDeployment.blockHeight ?? "pending indexer confirmation"}</dd></div>
+            </dl>
+          )}
           <button className="primary-button" type="button" onClick={() => void handleDeploy()} disabled={working || !wallet || !hasIssuerConfiguration()}>
             {working ? "Preparing deployment…" : "Deploy Thirdmark through Lace"}
           </button>

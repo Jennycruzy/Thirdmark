@@ -1,6 +1,6 @@
 # Progress
 
-Updated 2026-09-12.
+Updated 2026-09-14.
 
 Source correction recorded during local contract inspection: Compact circuits do not
 enumerate ledger state, but the generated public-state query wrapper exposes map/set
@@ -90,6 +90,11 @@ The headless wallet path is no longer the only option. Thirdmark now has a real
 Lace-backed browser deployment action, so the laptop does not need to run the
 Node wallet’s multi-hour historical replay. The browser path still waits for
 Lace to be ready and does not bypass network or balance safety checks.
+
+The browser deployment batch now includes the pinned official example-counter
+contract and its `increment` proving assets. The browser presents that smoke test
+before Thirdmark deployment. This remains local/CI implementation evidence only;
+no counter or Thirdmark Preprod transaction is claimed.
 
 Completed locally:
 
@@ -205,3 +210,28 @@ Evidence:
 The W1-P0 deployment gate and W1-P1 contract gate remain open. No AKINDO comment
 draft was added for this local layer; the existing W1-P0 draft remains explicitly
 not ready to post.
+
+## Browser counter deployment batch — 2026-09-14
+
+Completed locally:
+
+- Added the pinned official `example-counter` source and generated Compact binding
+  under [`verification/example-counter/`](../verification/example-counter/).
+- Added the four `increment` proving assets to the browser artifact staging contract
+  and checked that the pinned source and generated bindings match Compact 0.30.0
+  output exactly.
+- Added a real Lace deployment action for `example-counter` before the Thirdmark
+  deployment action. It uses wallet balancing, delegated proving, signing, and
+  submission; it does not bypass wallet synchronization or network checks.
+
+Evidence:
+
+- Compact 0.30.0 `--skip-zk` source/binding comparison: passed.
+- `npm test`: 8 files, 52 tests passed.
+- `npm run web:typecheck`: passed.
+- `npm run web:build`: passed; 1,259 modules transformed.
+- No example-counter or Thirdmark Preprod transaction has been claimed. The next
+  external action is user approval in Lace with a funded Preprod wallet.
+
+Comment draft status: no AKINDO draft is ready because this batch has not produced
+an on-chain artifact.

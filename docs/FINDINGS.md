@@ -1,6 +1,6 @@
 # Findings
 
-Updated 2026-09-12.
+Updated 2026-09-14.
 
 This file records source verification that changes or constrains the build. The local reference checkouts used for line-level inspection are gitignored under `.references/`; the commit IDs below make the evidence reproducible.
 
@@ -308,3 +308,17 @@ transaction balancing, proof generation, or network confirmation.
 The deployment action is intentionally disabled until the public issuer key is
 configured and Lace is connected on Preprod. No secret issuer scalar or wallet
 material is placed in browser configuration.
+
+The browser deployment panel now also deploys the pinned official example-counter
+contract before the Thirdmark action. Its generated binding is checked against the
+same Compact 0.30.0 output used by the managed full compile, and its four proving
+artifacts are staged under `/counter/`. This is a wallet/fee/proof/submission smoke
+test only; it is not deployment evidence until the user approves it in Lace and the
+resulting address, transaction, and block are recorded.
+
+The browser deployment panel now also deploys the pinned official example-counter
+contract before the Thirdmark action. Its generated binding is checked against the
+same Compact 0.30.0 output used by the managed full compile, and its four proving
+artifacts are staged under `/counter/`. This is a wallet/fee/proof/submission smoke
+test only; it is not deployment evidence until the user approves it in Lace and the
+resulting address, transaction, and block are recorded.
