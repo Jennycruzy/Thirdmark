@@ -16,7 +16,7 @@ Display typography uses a restrained grotesk with a narrow, numeric-friendly fac
 
 ```text
 +----------------------------------------------------------------+
-| THIRDMARK            sealed by design        network / wallet   |
+| THIRDMARK                         PREPROD / OPEN WORKSPACE     |
 +----------------------------------------------------------------+
 |                                                                |
 |  [step marker] Find the company                                |
@@ -34,9 +34,16 @@ Display typography uses a restrained grotesk with a narrow, numeric-friendly fac
 
 The signature element is the “sealed tally”: three quiet vertical marks inside a square, with the third mark changing from signal red to confirmed green only when the threshold predicate is true. Before unlock it never encodes a numeric count.
 
+The first viewport is a landing page, not the filing form. It gives a judge the
+problem, the three-step threshold rule, the public/private boundary, evidence links,
+and the residual privacy limit before the user enters the workspace. The workspace is
+opened deliberately through “Open the filing workspace” or the clearly labelled
+synthetic subject path.
+
 ## Screen sequence
 
-1. Find the company: search and select a canonical registry result; never ask the user to type a registration number.
+0. Landing page: explain the problem, threshold, public/private boundary, evidence links, and safe synthetic-subject rule before opening the workflow.
+1. Find the company: search and select a canonical registry result, or choose the labelled synthetic-only subject; never ask the user to type a live registration number.
 2. File: show amount overdue, days late, and invoice reference beside a live public/private inspector.
 3. Sealed: state plainly that nothing is visible until two independent suppliers file too; show no sub-threshold count.
 4. Unlocked: orchestrate the third-mark transition, then reveal only the three authorized records.

@@ -58,5 +58,21 @@ The browser then uses `http://127.0.0.1:8788/v1/cac/search` as
 `VITE_REGISTRY_ADAPTER_URL`. The adapter does not accept an RC number directly
 from the user interface; it returns the RC number only after CAC name search.
 
-Synthetic demo subjects must remain clearly invalid and labelled synthetic. No
+## Safe synthetic subject
+
+Live CAC search results are real companies and must not be used in a screenshot,
+recording, fixture, or fabricated late-payment report. The browser therefore has a
+separate synthetic-only path configured outside the repository:
+
+```dotenv
+VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company — Synthetic Only
+VITE_SYNTHETIC_SUBJECT_RC=000000000
+```
+
+The identifier is deliberately invalid and is passed through the same subject
+canonicalization, OPRF, encryption, and contract code as a live result. The label is
+part of the safety boundary; it is not a CAC registration claim and must never be
+replaced with a real registration number for a recording.
+
+Synthetic subjects must remain clearly invalid and labelled synthetic. No
 real company's registration number is used in screenshots, tests, or recordings.

@@ -5,6 +5,8 @@ export type PublicAppConfig = {
   readonly issuerPublicKeyX: string;
   readonly issuerPublicKeyY: string;
   readonly registryAdapterUrl: string;
+  readonly syntheticSubjectName: string;
+  readonly syntheticSubjectRc: string;
 };
 
 const env = import.meta.env as Record<string, string | undefined>;
@@ -20,6 +22,8 @@ export const publicAppConfig: PublicAppConfig = {
   issuerPublicKeyX: env.VITE_ISSUER_PUBLIC_KEY_X ?? "",
   issuerPublicKeyY: env.VITE_ISSUER_PUBLIC_KEY_Y ?? "",
   registryAdapterUrl: env.VITE_REGISTRY_ADAPTER_URL ?? "",
+  syntheticSubjectName: env.VITE_SYNTHETIC_SUBJECT_NAME ?? "",
+  syntheticSubjectRc: env.VITE_SYNTHETIC_SUBJECT_RC ?? "",
 };
 
 export const hasIssuerConfiguration = (): boolean =>
@@ -29,3 +33,7 @@ export const hasIssuerConfiguration = (): boolean =>
 
 export const hasContractConfiguration = (): boolean =>
   publicAppConfig.contractAddress.length > 0;
+
+export const hasSyntheticSubjectConfiguration = (): boolean =>
+  publicAppConfig.syntheticSubjectName.length > 0 &&
+  publicAppConfig.syntheticSubjectRc.length > 0;

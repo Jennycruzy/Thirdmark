@@ -1,183 +1,232 @@
 # Thirdmark
 
-Three suppliers can independently attest that the same company is 90+ days overdue. A single filing is sealed. Only the third independent filing unlocks the three records to those three filers and produces a co-signed dossier.
+> Three suppliers know the buyer does not pay. None of them has to say it alone.
 
-Thirdmark is a Midnight Buildathon project focused on one narrow Wave 1 vertical: late-payment corroboration for synthetic companies in one registry jurisdiction. The project keeps filing contents private, discloses one public threshold result, and settles the result as a dossier that can be checked against the public ledger.
+Thirdmark is a privacy-first corroboration product for late-payment reporting. Each supplier submits an encrypted, dated attestation about the same company. The first report is sealed. The second is still sealed. Only the third independent filing changes the public threshold state, and only the three participating suppliers can read the records that they choose to share.
 
-> Status: source verification, the local contract layer, client AES-GCM envelope, client and issuer OPRF cores, subject-blind issuer transport, browser Midnight.js contract client, encrypted browser private-state provider, deterministic dossier artifact, Nigeria CAC subject canonicalization, the canonical example-counter Preprod smoke test, and the Thirdmark Preprod deployment are complete. The safe ledger-v8 candidate is Compact 0.30.0 (language 0.22.0, runtime 0.15.0, compiler target ledger-8.0.2), which the official advisory identifies as outside the affected 0.31.x range. The local command passes 8 test files and 52 tests, and the web typecheck and Vite/WASM production build pass. CircleCI compiles the full proving artifacts, stages them for the browser build, and runs the same checks. This development Mac still exits with `SIGILL` from the bundled `zkir` binary locally. The remaining Wave 1 work is the three-party filing cycle, timestamp-backed dossier, and public frontend deployment.
+The product is built on Midnight: private inputs drive a public state transition, while the public ledger receives an opaque report envelope, anti-replay protection, private-state commitments, and the threshold result. A transparent chain cannot provide this boundary without exposing the first supplier.
+
+## The problem
+
+A supplier may know that a large customer is more than 90 days overdue and still stay silent. Being the only supplier on record can cost the relationship, the next order, or the supplier’s reputation.
+
+Thirdmark makes corroboration possible without publishing a lone accusation. Three independent suppliers can point to the same canonical company reference, file privately, and reach a shared dossier only when the threshold is genuinely met.
+
+## Judge first: the important links
+
+- [Source repository](https://github.com/Jennycruzy/Thirdmark) — Compact contract, simulator, client cryptography, browser application, and evidence.
+- [Preprod deployment and progress evidence](docs/PROGRESS.md) — verified contract receipts, blocks, tests, and remaining gates.
+- [Threat model and architecture](docs/ARCHITECTURE.md) — state layout, OPRF derivation, private filing history, residual leaks, and dossier boundary.
+- [Safety rules](docs/ETHICS.md) — why the threshold is the safety property and why public recordings use synthetic subjects.
+- [Source findings](docs/FINDINGS.md) — version decisions, source corrections, and constraints discovered from Compact and Midnight tooling.
+- [Midnight documentation](https://docs.midnight.network/) — the platform and dual-ledger model used by Thirdmark.
+- [Nigeria CAC public search](https://icrp.cac.gov.ng/public-search/) — the official registry boundary used to resolve a company name to an RC number.
+- [CircleCI build evidence](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark) — managed full-proof compilation and browser checks.
+
+The current build has a real Thirdmark contract on Midnight Preprod. The public browser URL and the completed three-wallet filing cycle are the remaining submission gates; this repository does not pretend those artifacts exist before they do.
+
+## The product in one minute
+
+The browser workspace follows five steps:
+
+1. **Find** — choose a company from the Nigeria CAC lookup, or choose the clearly labelled synthetic subject for a safe recording. The user does not type a registration number.
+2. **File** — enter amount overdue, days late, and invoice reference. The browser encrypts the report before preparing the contract call.
+3. **Sealed** — the report is finalized but no sub-threshold count is shown.
+4. **Unlocked** — the third independent filing makes the threshold true. Only the participating filers can decrypt their records locally.
+5. **Dossier** — the three attestations are assembled into a signed, independently checkable artifact using public ledger evidence.
+
+For local testing and public recordings, use the synthetic subject named **“Thirdmark Synthetic Company — Synthetic Only”** with the deliberately invalid identifier `000000000`. It is test data, not a CAC company. Never use a live CAC result in screenshots, recordings, or fabricated allegations.
+
+## What makes it private
+
+| Visible to the public ledger | Kept in the browser or private service boundary |
+| --- | --- |
+| Fixed-width encrypted report envelope | Company reference before blinded derivation |
+| Anti-replay nullifier | Amount overdue, days late, and invoice reference |
+| Evolving filing-history commitment | Slot secret and filing-history contents |
+| Opaque slot occupancy and threshold state | Plaintext report and local decryption keys |
+
+The product-level disclosure is the threshold result: sealed or unlocked. The ledger also has public state because Midnight ledger state is public; the commitments, ciphertexts, and keys are designed to be opaque rather than personal data.
 
 ## Why Midnight
 
-This is inter-party private state, not self-attestation. Each supplier proves knowledge of a private filing and a private filing history while the public ledger stores only commitments, nullifiers, opaque ciphertexts, aggregate counts, and the threshold result. The dual-ledger model lets private witness data drive a public state transition without placing report plaintext on a server. A transparent chain cannot provide the same selective disclosure boundary.
+Thirdmark needs Midnight for three related reasons:
 
-The differentiator is simple: every supplier knows the buyer does not pay, and none of them has to be the only one to say it.
+- **Selective disclosure:** report details remain private while the contract exposes the threshold transition.
+- **Private state with public settlement:** each filer proves knowledge of a private filing history while the ledger records only the commitment update and protected envelope.
+- **A real contract boundary:** the third filing is checked by Compact logic and settled on Preprod, rather than being simulated by a web server.
 
-## Planned Wave 1 architecture
+This is inter-party private state, not self-attestation. A supplier is not proving a fact about its own balance; several independent parties are corroborating a subject that none of them should expose alone.
 
-- Canonical company registration identifiers are resolved by registry lookup. Wave 1 uses Nigeria's Corporate Affairs Commission (CAC) company `RC Number`; free-text company names are not cryptographic inputs. The canonicalization rules and current public-search boundary are documented in [`docs/REGISTRY.md`](docs/REGISTRY.md).
-- A single issuer provides a blind OPRF service. The issuer can rate-limit or censor requests, but cannot recover the company identifier from a blinded point, read filings, or force a reveal. Wave 2 distributes the OPRF key across issuers. The client computes the Jubjub scalar inverse using the source-backed runtime constant; the selected ledger-v8 Compact toolchain does not expose arithmetic or inversion for `JubjubScalar`.
-- Slot keys and filer nullifiers use `persistentHash`. Filing-history commitments use `persistentCommit` with a fresh opening for every filing.
-- The Compact contract authenticates the issuer’s OPRF evaluation with an in-circuit DLEQ proof. It derives the slot key only from the verified evaluated point and the private unblinding scalar; the caller cannot submit an arbitrary slot key.
-- Report plaintext is encrypted in the client with AES-GCM. The Compact contract receives only a fixed-width opaque ciphertext.
-- The contract has no administrator, pause circuit, upgrade path, or operator reveal path.
-- Compact circuits have no enumeration operation. However, the generated public-state
-  query wrapper exposes `size()` and iterators for ledger maps and sets, so a chain
-  observer can enumerate opaque occupied keys and aggregate counts. The OPRF is
-  therefore mandatory: those keys are not company identifiers, and an observer without
-  the issuer-derived slot secret cannot map them to a registry subject. This is a
-  broader residual leak than the original no-enumeration assumption; it is recorded in
-  [`docs/FINDINGS.md`](docs/FINDINGS.md) and must be shown honestly in the privacy UI.
+## Current verified delivery
 
-The detailed threat model is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The safety and demo rules are in [`docs/ETHICS.md`](docs/ETHICS.md).
+### Deployed on Midnight Preprod
 
-## Local contract and simulator
+Thirdmark was deployed through the connected 1AM wallet on 14 September 2026 with a threshold of three:
 
-The first product contract is [`contract/src/thirdmark.compact`](contract/src/thirdmark.compact).
-It contains the sealed issuer configuration, DLEQ-authenticated OPRF slot derivation,
-nullifier and ciphertext replay guards, evolving private filing-history commitment,
-opaque `Bytes<128>` storage, and threshold-only unlock state. The in-process
-[`ThirdmarkSimulator`](contract/src/test/thirdmark-simulator.ts) runs without a proof
-server or wallet and uses the same production witness implementation from
-[`contract/src/witnesses.ts`](contract/src/witnesses.ts). State is advanced only after
-the transaction succeeds. Run the local checks with:
-
-```sh
-npm test
-```
-
-The local command intentionally uses `--skip-zk` because this Intel Mac cannot execute
-the bundled `zkir`; CircleCI performs the full proving-key compile. This is test/build
-evidence only, not Preprod deployment evidence.
-
-Client report encryption lives in [`client/crypto.ts`](client/crypto.ts). It derives an
-AES-GCM key from the OPRF-derived Jubjub point, places a random IV and authentication
-tag in a fixed `Bytes<128>` envelope, and rejects malformed widths or report fields
-before a contract call. Plaintext and slot secrets stay in the client process; the
-contract receives only the opaque envelope.
-
-The client-side 2HashDH session is [`client/oprf.ts`](client/oprf.ts). It blinds the
-fixed-width registry subject, verifies the issuer's DLEQ evaluation with the generated
-Compact pure circuit, unblinds the point, and derives the same slot key that the filing
-circuit derives. The subject-blind issuer HTTP boundary is documented in
-[`docs/ISSUER.md`](docs/ISSUER.md). It is a real request handler and local transport
-test, but it is not a hosted issuer and does not contain an operator scalar.
-
-The browser client lives in [`web/`](web/). It connects to a real Midnight wallet when
-one is installed, uses the source-backed Midnight.js provider path for delegated
-proving and transaction submission, refuses to accept a raw RC number, renders the
-five-step product flow and privacy inspector, and blocks actions until explicit
-public deployment configuration exists. Filer witness state is stored as encrypted
-IndexedDB records through [`web/src/midnight/private-state.ts`](web/src/midnight/private-state.ts);
-the encryption key is non-exportable browser storage, not a hardware vault or a
-password vault. The browser does not fake a filing transaction: it either submits a
-real wallet call or explains which deployment value is missing.
-
-When `VITE_CONTRACT_ADDRESS` is empty, the browser shows a deployment panel. After
-the public issuer key is configured and Lace is connected to Preprod, use that panel
-to deploy the canonical example-counter first, then Thirdmark. Lace owns wallet
-synchronization, balancing, signing, and submission; the laptop does not need to run
-the headless reference-counter wallet replay. The Thirdmark action remains disabled
-without the public issuer key and neither action bypasses wallet or network safety
-checks. The pinned counter source and generated binding are in
-[`verification/example-counter/`](verification/example-counter/).
-
-The browser runtime requires the four full Thirdmark proving artifacts generated by
-the managed Compact compile (`file.prover`, `file.verifier`, `file.bzkir`, and
-`file.zkir`) plus the four `example-counter` `increment` artifacts. They are staged
-by [`scripts/prepare-browser-artifacts.sh`](scripts/prepare-browser-artifacts.sh) in
-CircleCI and are intentionally not committed. The public build still has no contract
-address, issuer endpoint, issuer public key, or registry-adapter fallback.
-
-### Canonical example-counter Preprod evidence
-
-The official example-counter was deployed through the connected 1AM wallet on
-2026-09-14. This is the required wallet, proving, balancing, signing, and indexer
-smoke test before Thirdmark deployment:
-
-- Contract address: `fdfd87f55cfcb499dec443d1c35f38fd7d721baa45dbb66303b8f3fb8dd38c4`
-- Transaction ID: `00003035511fe02e788f6a82fb0085cb5a60803ddb6c891f296212b5997cc6a499`
-- Transaction hash: `3c8a9e7474f8f6b3422c3b5d110199368e5fbee63b9d8f66664f5b1d3d126ea5`
-- Block: `2549975`
-
-The owner supplied the browser receipt screenshot at
-`/Users/user/Pictures/Photos Library.photoslibrary/originals/E/E62C02DF-B536-417E-9039-06402050A149.jpeg`.
-No Thirdmark filing or unlock is claimed yet.
-
-### Thirdmark Preprod deployment evidence
-
-Thirdmark was deployed through the connected 1AM wallet on 2026-09-14 with the
-Wave 1 threshold set to three:
-
-- Contract address: `22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4`
+- Contract: `22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4`
 - Transaction ID: `000513b756e248426c0fec067dd16d3b5b7e0c05d89b32d65cea2ffee19593089a`
 - Transaction hash: `792aa4578159921056df362d819be425675e644d3f81cd66e2d634df8cbdd0b2`
 - Block: `2550375`
 
-The owner supplied the browser receipt screenshot at
-`/Users/user/Pictures/Photos Library.photoslibrary/originals/8/81867582-D096-445A-A17B-A2BBBD596855.jpeg`.
-The local browser configuration points to this address and does not contain the
-issuer scalar.
+The canonical example-counter smoke test was deployed first through the same browser-wallet path:
 
-The local dossier implementation is [`client/dossier.ts`](client/dossier.ts). It sorts
-the three unlocked records by entry key, binds the contract address, slot key,
-threshold, and indexer-supplied filing times, then signs the canonical JSON bytes with
-three distinct signer references. The current Compact contract has no timestamp
-ledger cell, so the browser client does not invent filing dates: indexer transaction
-retrieval and wallet-backed dossier signing remain the next integration layer and are
-not represented as complete here.
+- Contract: `fdfd87f55cfcb499dec443d1c35f38fd7d721baa45dbb66303b8f3fb8dd38c4`
+- Transaction hash: `3c8a9e7474f8f6b3422c3b5d110199368e5fbee63b9d8f66664f5b1d3d126ea5`
+- Block: `2549975`
+
+### Implemented and tested
+
+- Compact contract with sealed issuer configuration and threshold `3`.
+- DLEQ-authenticated blinded OPRF evaluation for subject-derived slots.
+- Client-side AES-GCM report encryption with an exact `Bytes<128>` envelope.
+- Anti-replay nullifiers and evolving private filing-history commitments with fresh salts.
+- No admin key, forced reveal, pause circuit, or upgrade path.
+- `ThirdmarkSimulator` and adversarial tests for replay, stale history, bad proofs, wrong widths, threshold safety, and subject separation.
+- Browser wallet client using delegated proving and real Midnight transaction submission.
+- Encrypted browser private-state storage that advances only after a finalized transaction.
+- Nigeria CAC adapter based on the official public-search request path, with no CAC credential in the browser and no registry storage.
+- Landing page, privacy inspector, five-step filing workspace, and a synthetic-only subject path.
+
+Latest local validation before this product pass: 52 root tests passed and the browser typecheck passed. CircleCI performs the full proving-key compile because the development Mac cannot execute the bundled `zkir` binary. Full evidence and historical findings are in [`docs/PROGRESS.md`](docs/PROGRESS.md), not inferred from a green local UI.
+
+## How the privacy mechanism works
+
+The company name is not a cryptographic input. The CAC lookup supplies a company RC number, which is normalized into a subject namespace:
+
+```text
+NG:CAC:company:RC:<digits>
+```
+
+The browser hashes that canonical subject into a fixed-width OPRF input, blinds it, and asks the single Wave 1 issuer to apply its secret. The issuer sees only the blinded curve point. The browser unblinds the result and derives the slot secret. The issuer can rate-limit or refuse service, but it does not receive the company identifier, report plaintext, or decryption key.
+
+For each filing, the Compact circuit:
+
+1. Verifies the issuer evaluation and the caller’s private unblinding relation.
+2. Derives the slot key and filer nullifier inside the circuit.
+3. Rejects a repeated filer, a stale private filing-history opening, or a malformed envelope.
+4. Stores only the opaque ciphertext and entry commitment.
+5. Recommits the private filing history with a fresh salt.
+6. Discloses the threshold predicate only when the third valid filing arrives.
+
+The detailed state model is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The contract source is [`contract/src/thirdmark.compact`](contract/src/thirdmark.compact), and the simulator is [`contract/src/test/thirdmark-simulator.ts`](contract/src/test/thirdmark-simulator.ts).
+
+## Limits we state plainly
+
+Privacy is not the same as invisibility. The public ledger contains opaque occupancy and aggregate state. Anyone who can derive an exact slot key can query that slot’s count. The OPRF is the protection against ordinary subject enumeration; it does not make a leaked or guessable slot secret safe.
+
+Wave 1 uses one issuer. That issuer can censor or throttle OPRF requests. It cannot read report plaintext or force a threshold reveal. Wave 2 is planned to distribute the OPRF key across multiple issuers so one party cannot control the service boundary alone.
+
+The current Compact contract does not record a timestamp cell itself. The final dossier must obtain filing dates from the public indexer and label that source. The local dossier module already enforces deterministic ordering, threshold cardinality, distinct signers, and signature verification; wallet-backed signing and indexer retrieval remain open integration work until a real three-party cycle proves them.
+
+## Run the checks
+
+Requirements: Node.js matching the pinned CI image, Docker for the proof server, and no wallet secret in the repository or chat.
+
+```sh
+npm ci
+npm test
+npm run web:typecheck
+npm run web:build
+```
+
+`npm test` uses the safe local Compact `--skip-zk` compile and the in-process simulator. The full proving-key compile runs in CircleCI. The selected safe toolchain is Compact `0.30.0`, language `0.22.0`, runtime `0.15.0`, and ledger-v8 `8.0.3`; the version rationale is recorded in [`docs/FINDINGS.md`](docs/FINDINGS.md).
+
+## Run the local product
+
+### 1. Start the issuer
+
+Keep the issuer scalar only in the terminal process. Generate it locally; do not paste it into chat, a file, or a commit. The complete runtime boundary is documented in [`docs/ISSUER.md`](docs/ISSUER.md).
+
+```sh
+export THIRDMARK_ISSUER_HOST=127.0.0.1
+export THIRDMARK_ISSUER_PORT=8787
+export THIRDMARK_ISSUER_ALLOWED_ORIGIN=http://localhost:5173
+export THIRDMARK_ISSUER_SCALAR_HEX="$(node --import tsx -e 'import { randomJubjubScalar } from "./client/scalars.ts"; process.stdout.write(randomJubjubScalar().toString(16))')"
+npm run issuer:start
+```
+
+The browser receives only the issuer URL and public point through ignored local configuration.
+
+### 2. Start the CAC adapter
+
+The adapter proxies the source-backed public search request because CAC’s response allows its official page origin rather than arbitrary localhost origins. It stores no records and forwards no credential.
+
+```sh
+export THIRDMARK_CAC_PUBLIC_SEARCH_URL='https://authapp.cac.gov.ng/name_similarity_app/api/public_search/search'
+export THIRDMARK_REGISTRY_HOST=127.0.0.1
+export THIRDMARK_REGISTRY_PORT=8788
+export THIRDMARK_REGISTRY_ALLOWED_ORIGIN=http://localhost:5173
+npm run registry:start
+```
+
+If the command reports `EADDRINUSE`, the adapter is already running. Check it instead of starting another copy:
+
+```sh
+curl http://127.0.0.1:8788/health
+```
+
+### 3. Configure the browser
+
+Create the ignored file `web/.env.local` with public deployment values. Never place the issuer scalar, wallet seed, private key, or CAC credential in it:
+
+```dotenv
+VITE_ISSUER_URL=http://127.0.0.1:8787
+VITE_ISSUER_PUBLIC_KEY_X=<issuer-public-x>
+VITE_ISSUER_PUBLIC_KEY_Y=<issuer-public-y>
+VITE_CONTRACT_ADDRESS=22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4
+VITE_REGISTRY_ADAPTER_URL=http://127.0.0.1:8788/v1/cac/search
+VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company — Synthetic Only
+VITE_SYNTHETIC_SUBJECT_RC=000000000
+```
+
+### 4. Start the browser
+
+```sh
+npm run dev --workspace @thirdmark/web -- --host 127.0.0.1
+```
+
+Open `http://localhost:5173`. The landing page explains the product before the filing workspace is opened. Use **Open the workspace** and select the clearly labelled synthetic subject for recordings. Connect a funded Midnight Preprod wallet before submitting a real transaction.
+
+## Tests and quality bar
+
+The test suite includes:
+
+- OPRF round trips under different blindings and subject separation.
+- DLEQ proof rejection and forged issuer evaluation rejection.
+- Duplicate filer and ciphertext replay rejection.
+- Stale private-history replay rejection.
+- Threshold rejection below three and unlock at exactly three.
+- Wrong ciphertext width and invalid report-field rejection.
+- Fresh history-salt enforcement.
+- Client encryption/decryption and authentication failure.
+- Deterministic dossier ordering, signature verification, and tamper rejection.
+- CAC RC canonicalization across display variants.
+
+No test is skipped or marked as a placeholder. The simulator does not pretend to be a Preprod transaction; deployment evidence is kept separately in [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 ## Three-wave roadmap
 
-Wave 1 is one jurisdiction, a k=3 late-payment flow, a single-issuer OPRF, an evolving filing-history commitment, client-side encrypted payloads, nullifier protection, a deployed contract, five finished screens, and a verifiable dossier.
+### Wave 1 — one complete vertical
 
-Wave 2 generalises to arbitrary k, distributes the OPRF key across t-of-n issuers, adds expiry and pre-threshold withdrawal, and completes the adversarial suite.
+Nigeria CAC company references, threshold `3`, one issuer, evolving filing-history commitment, client-side encryption, real Preprod deployment, five screens, and a verifiable dossier.
 
-Wave 3 takes one vertical to a design partner, publishes an audit-style threat-model writeup, and hardens the deployment.
+### Wave 2 — general threshold service
 
-## Development status and evidence
+Arbitrary `k`, distributed OPRF issuers, expiry windows, pre-threshold withdrawal, and the completed adversarial suite.
 
-All progress, source findings, residual leaks, and public-comment drafts are maintained in [`docs/PROGRESS.md`](docs/PROGRESS.md), [`docs/FINDINGS.md`](docs/FINDINGS.md), and [`docs/COMMENTS.md`](docs/COMMENTS.md). No Preprod address, transaction, timing, screenshot, or live URL is claimed until it exists as evidence.
+### Wave 3 — operational deployment
 
-## Local setup
+One narrow design-partner vertical, synthetic-but-plausible volume, an audit-style threat-model report, and a hardened deployment.
 
-The local setup is intentionally limited by the development Mac’s `zkir` CPU requirement; the authoritative full-proof compile runs in CircleCI. The source references used during verification are kept outside version control in `.references/`.
+If scope must be reduced, the dossier can remain a signed JSON artifact. The filing-history commitment and threshold safety are not optional shortcuts.
 
-Required before the first compile:
+## Prior art and ethics
 
-- Node.js 24.11.1, matching the pinned `example-counter` reference; the CircleCI job uses the verified `cimg/node:24.11` image.
-- Compact 0.30.0, language 0.22.0, runtime 0.15.0, and the matching ledger-v8 JavaScript packages. The version decision and source evidence are in [`docs/FINDINGS.md`](docs/FINDINGS.md).
-- Docker and Docker Compose for the proof server.
-- A funded Preprod wallet supplied by the project owner at the deployment gate. Wallet keys and seed phrases never enter this repository or the chat.
+Callisto is prior art for threshold escrow in a more sensitive reporting vertical. Thirdmark does not claim to invent threshold escrow. The intended distinction is the trust boundary: Callisto’s custodians can decrypt; Thirdmark’s Wave 1 issuer is designed to rate-limit or censor without receiving report plaintext or forcing a reveal.
 
-The reproducible reference-counter and OPRF compile check is [`scripts/verify-compact.sh`](scripts/verify-compact.sh). It intentionally requires full proving-key generation; `--skip-zk` is not a passing build.
-
-The managed browser-artifact step is [`scripts/prepare-browser-artifacts.sh`](scripts/prepare-browser-artifacts.sh). It fails closed when a full Compact compile has not produced all four `file` proving assets; it never creates placeholder files.
-
-The archived `example-counter` Preprod CLI currently has a wallet SDK collection-shape defect during sync. After installing its dependencies, apply the narrow, source-checked compatibility patch before running the CLI:
-
-```sh
-npm run patch:reference-wallet
-```
-
-The patch converts the ledger’s native `Map` iterator to an array before mapping pending shielded outputs. It also adds progress reporting and five-second checkpoints for the three SDK wallet states. A fresh CLI otherwise replays the complete Preprod event history from cursor zero and presents only a spinner; after an interruption, the same public wallet resumes from its latest local checkpoint. Checkpoints contain SDK-serialized wallet state, not the seed or secret keys, and are written below the ignored reference checkout with `0700`/`0600` permissions. The script refuses to modify an unexpected SDK source.
-
-If the current CLI is already showing `Syncing with network`, stop it with `Ctrl-C`, apply the patch, and restart it. Do not fund a second address. The first run still has to catch up to the current Preprod indexer; subsequent interruptions do not discard the completed replay.
-
-Start the pinned Preprod proof server and check its health:
-
-```sh
-docker compose up -d
-curl http://127.0.0.1:6300/
-```
-
-A healthy server returns a JSON response with `"status":"ok"`. The compose configuration is pinned to the source-backed `midnightntwrk/proof-server:8.0.3` image.
-
-## Prior art and attribution
-
-Thirdmark is built for Midnight and uses the Compact language and Midnight tooling. It is informed by the cited Midnight example and winner repositories listed in [`docs/FINDINGS.md`](docs/FINDINGS.md).
-
-Callisto is prior art for threshold escrow in a different and more sensitive vertical. Callisto relies on trusted custodians who can decrypt; Thirdmark’s intended issuer can rate-limit but cannot decrypt filings. Thirdmark does not claim to invent threshold escrow.
+The project uses synthetic companies with clearly invalid identifiers in public recordings. It does not store report plaintext on a project-controlled server, and it has no administrator, pause key, forced reveal, or upgrade path. Read the full rules in [`docs/ETHICS.md`](docs/ETHICS.md).
 
 ## License
 
-Midnight-related code in this repository is licensed under Apache-2.0. See [`LICENSE`](LICENSE).
+Midnight-related code is licensed under [Apache-2.0](LICENSE).

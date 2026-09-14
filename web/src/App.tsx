@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
 import { encryptReport, type ReportAttestation } from "../../client/crypto.js";
-import { hasContractConfiguration, hasIssuerConfiguration, publicAppConfig } from "./config.js";
+import { hasContractConfiguration, hasIssuerConfiguration, hasSyntheticSubjectConfiguration, publicAppConfig } from "./config.js";
 import { deriveCompanySlot } from "./issuer.js";
 import { connectThirdmark, deployExampleCounter, deployThirdmark, type CounterDeploymentReceipt, type DeploymentReceipt, type FilingReceipt, type SlotSnapshot } from "./midnight/contract.js";
 import { connectWallet, type WalletSession } from "./midnight/wallet.js";
-import { searchCompanies, type RegistrySearchResult } from "./registry.js";
+import { createSyntheticCompany, searchCompanies, type RegistrySearchResult } from "./registry.js";
 import "./styles.css";
 
 type Step = "find" | "file" | "sealed" | "unlocked" | "dossier";
+type View = "landing" | "workspace";
 
 const steps: readonly { id: Step; label: string }[] = [
   { id: "find", label: "Find" },
@@ -80,8 +81,8 @@ const friendlyError = (error: unknown, operation: Operation = "protected filing"
   if (message.includes("wallet") || message.includes("network")) {
     return "The wallet is not ready. Connect a Midnight wallet on Preprod and try again.";
   }
-  if (message.includes("issuer")) return "The issuer could not complete the blinded request. Try again later.";
-  if (message.includes("registry")) return "The company search is unavailable. Try again or contact the registry adapter operator.";
+  if (message.includes("issuer")) return "The private company reference could not be derived. Check the privacy service and try again.";
+  if (message.includes("registry")) return "The company search is unavailable. Check the lookup connection and try again.";
   if (message.includes("contract")) return "The Thirdmark contract is not available on this network.";
   if (message.includes("balance") || message.includes("fund") || message.includes("DUST")) {
     return `The wallet could not balance the ${operation}. Confirm that 1AM is synced on Preprod and try again.`;
@@ -90,7 +91,7 @@ const friendlyError = (error: unknown, operation: Operation = "protected filing"
     return `The proving assets for the ${operation} are unavailable. Reload the app and try again.`;
   }
   if (message.includes("ciphertext") || message.includes("report")) return "Check the filing fields and try again.";
-  if (operation === "company search") return "The company search is unavailable. Try again or contact the registry adapter operator.";
+  if (operation === "company search") return "The company search is unavailable. Check the lookup connection and try again.";
   if (operation === "wallet connection") return "The wallet connection could not be completed. Unlock 1AM on Preprod and try again.";
   if (operation === "example-counter deployment") return "The example-counter deployment could not be completed. Check the 1AM approval and try again.";
   if (operation === "Thirdmark deployment") return "The Thirdmark deployment could not be completed. Check the wallet approval and try again.";
@@ -101,6 +102,7 @@ const shortValue = (value: string): string =>
   value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
 
 function App() {
+  const [view, setView] = useState<View>("landing");
   const [step, setStep] = useState<Step>("find");
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<RegistrySearchResult[]>([]);
@@ -118,12 +120,19 @@ function App() {
   const [counterDeployment, setCounterDeployment] = useState<CounterDeploymentReceipt | null>(null);
   const [deployment, setDeployment] = useState<DeploymentReceipt | null>(null);
 
+  const syntheticCompany = useMemo(
+    () => hasSyntheticSubjectConfiguration()
+      ? createSyntheticCompany(publicAppConfig.syntheticSubjectName, publicAppConfig.syntheticSubjectRc)
+      : null,
+    [],
+  );
+
   const publicState = useMemo(
     () => [
-      "one opaque 128-byte envelope",
-      "one anti-replay nullifier",
-      "one evolving history commitment",
-      "one threshold boolean",
+      "one encrypted report envelope",
+      "one repeat-submission guard",
+      "one private-history commitment",
+      "one threshold result",
     ],
     [],
   );
@@ -159,7 +168,7 @@ function App() {
       return;
     }
     if (!hasIssuerConfiguration() || !hasContractConfiguration()) {
-      setNotice("This deployment is not connected to the issuer and Thirdmark contract yet.");
+      setNotice("This workspace is not connected to the deployed privacy contract yet.");
       return;
     }
     setNotice(null);
@@ -259,44 +268,51 @@ function App() {
   };
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${view === "landing" ? "landing-shell" : "workspace-shell"}`}>
       <header className="topbar">
-        <a className="wordmark" href="/" aria-label="Thirdmark home">
+        <button className="wordmark" type="button" onClick={() => setView("landing")} aria-label="Thirdmark home">
           <span className="wordmark-mark" aria-hidden="true">///</span>
           <span>Thirdmark</span>
-        </a>
-        <div className="topbar-status" aria-live="polite">
-          <span className="network-label">{publicAppConfig.networkId}</span>
-          <span className={wallet ? "status-dot connected" : "status-dot"} aria-hidden="true" />
-          <span>{wallet ? `${wallet.walletName} connected` : "Wallet not connected"}</span>
-          <button className="quiet-button" type="button" onClick={() => void handleConnect()} disabled={working || Boolean(wallet)}>
-            {wallet ? "Connected" : "Connect wallet"}
-          </button>
-        </div>
+        </button>
+        {view === "landing" ? (
+          <div className="topbar-status" aria-label="Network status">
+            <span className="network-label">Preprod prototype</span>
+            <button className="quiet-button" type="button" onClick={() => setView("workspace")}>Open workspace</button>
+          </div>
+        ) : (
+          <div className="topbar-status" aria-live="polite">
+            <span className="network-label">{publicAppConfig.networkId}</span>
+            <span className={wallet ? "status-dot connected" : "status-dot"} aria-hidden="true" />
+            <span>{wallet ? `${wallet.walletName} connected` : "Wallet not connected"}</span>
+            <button className="quiet-button" type="button" onClick={() => void handleConnect()} disabled={working || Boolean(wallet)}>
+              {wallet ? "Connected" : "Connect wallet"}
+            </button>
+          </div>
+        )}
       </header>
 
+      {view === "landing" ? <LandingPage onOpenWorkspace={() => setView("workspace")} /> : (<>
       <section className="intro-grid">
         <div>
-          <p className="eyebrow">Sealed corroboration on Midnight</p>
-          <h1>Say it together.<br /><em>Not alone.</em></h1>
+          <p className="eyebrow">Private filing workspace</p>
+          <h1>File without<br /><em>standing alone.</em></h1>
           <p className="lede">
-            Three suppliers can attest to the same late payer without making the first
-            supplier the only one on record.
+            Each report stays sealed until three independent suppliers choose the same company reference.
           </p>
         </div>
         <div className="tally-panel" aria-label="Three-party threshold">
           <Tally unlocked={step === "unlocked" || step === "dossier"} />
-          <p><strong>Threshold 3</strong><br />No sub-threshold count is shown.</p>
+          <p><strong>Three marks</strong><br />The tally changes only at the threshold.</p>
         </div>
       </section>
 
       {!hasContractConfiguration() && (
         <section className="panel deployment-panel" aria-labelledby="deployment-title">
           <p className="eyebrow">Preprod deployment</p>
-          <h2 id="deployment-title">Deploy through a Midnight wallet, not the headless CLI.</h2>
+          <h2 id="deployment-title">Connect the deployed privacy contract.</h2>
           <p className="muted">
-            The browser wallet keeps its own synchronized state. Approve the deployment in your connected wallet;
-            no seed, wallet key, or local historical replay is used here.
+            This setup panel appears only when a public contract address is missing. Approve deployment in your
+            connected wallet; no seed or wallet key is handled by this page.
           </p>
           <div className="deployment-actions">
             <button className="quiet-button" type="button" onClick={() => void handleCounterDeploy()} disabled={working || !wallet}>
@@ -356,8 +372,8 @@ function App() {
               <p className="eyebrow">Step 01</p>
               <h2>Find the company</h2>
               <p className="muted">
-                Search an authorized CAC adapter by company name. Thirdmark uses the
-                returned RC Number as the canonical subject; it never hashes free text.
+                Choose a company reference. The lookup turns an approved name into a canonical CAC number so
+                suppliers who have never met still point to the same subject. Free text never becomes the key.
               </p>
               <form className="search-form" onSubmit={(event) => { event.preventDefault(); void handleSearch(); }}>
                 <label htmlFor="company-search">Company name</label>
@@ -376,20 +392,33 @@ function App() {
               </form>
               {!publicAppConfig.registryAdapterUrl && (
                 <div className="configuration-note">
-                  <strong>Registry adapter not configured.</strong>
+                  <strong>Company lookup is not connected.</strong>
                   <span>
-                    The official CAC public search is available at{" "}
+                    Start the local lookup service before searching. The official CAC public search is available at{" "}
                     <a href="https://icrp.cac.gov.ng/public-search/" target="_blank" rel="noreferrer">icrp.cac.gov.ng</a>,
-                    but it does not publish an anonymous autocomplete API. No company
-                    identifier is accepted directly in this app.
+                    but this page uses the configured adapter so no identifier needs to be typed.
                   </span>
+                </div>
+              )}
+              {syntheticCompany && (
+                <div className="synthetic-card" aria-labelledby="synthetic-subject-title">
+                  <p className="eyebrow">Safe synthetic subject</p>
+                  <h3 id="synthetic-subject-title">{syntheticCompany.name}</h3>
+                  <p>
+                    A deliberately invalid registry reference for local testing and recordings. It is not a CAC
+                    company and must never be presented as one.
+                  </p>
+                  <button className="quiet-button" type="button" onClick={() => selectCompany(syntheticCompany)} disabled={working}>
+                    Use the synthetic subject
+                  </button>
                 </div>
               )}
               {searchResults.length > 0 && (
                 <div className="result-list" aria-label="Company results">
+                  <p className="result-heading">Live CAC results — use the synthetic subject for recordings</p>
                   {searchResults.map((company) => (
                     <button key={company.subject.canonical} type="button" className="result-row" onClick={() => selectCompany(company)}>
-                      <span><strong>{company.name}</strong><small>{company.status} · CAC company</small></span>
+                      <span><strong>{company.name}</strong><small>{company.status} · live CAC result</small></span>
                       <span className="result-arrow" aria-hidden="true">→</span>
                     </button>
                   ))}
@@ -402,11 +431,18 @@ function App() {
             <section className="panel flow-panel">
               <p className="eyebrow">Step 02</p>
               <div className="selected-company">
-                <div><span className="label">Selected subject</span><strong>{selectedCompany.name}</strong></div>
-                <span className="subject-status">{selectedCompany.status}</span>
+                <div><span className="label">Selected company reference</span><strong>{selectedCompany.name}</strong></div>
+                <span className={selectedCompany.source === "synthetic" ? "subject-status synthetic-status" : "subject-status"}>
+                  {selectedCompany.source === "synthetic" ? "synthetic only" : selectedCompany.status}
+                </span>
               </div>
+              {selectedCompany.source === "synthetic" ? (
+                <p className="selection-note synthetic-note">Synthetic subject selected. This is the only safe subject for screenshots and recordings.</p>
+              ) : (
+                <p className="selection-note">Live CAC result selected. Do not use this company in a public recording.</p>
+              )}
               <h2>File a late payment</h2>
-              <p className="muted">The report is encrypted in this browser. Only the fixed-width envelope crosses into the contract.</p>
+              <p className="muted">The report is encrypted in this browser. Only an opaque envelope and the minimum threshold proofs cross into the public ledger.</p>
               <form className="filing-form" onSubmit={(event) => { event.preventDefault(); void handleFile(); }}>
                 <label htmlFor="amount">Amount overdue <span>minor units</span></label>
                 <input id="amount" inputMode="numeric" value={amount} onChange={(event) => setAmount(event.target.value.replace(/\D/gu, ""))} placeholder="e.g. 250000" required />
@@ -415,16 +451,16 @@ function App() {
                 <label htmlFor="invoice">Invoice reference</label>
                 <input id="invoice" value={invoiceReference} onChange={(event) => setInvoiceReference(event.target.value)} maxLength={256} placeholder="Your internal reference" required />
                 <button className="primary-button full-width" type="submit" disabled={working || !hasIssuerConfiguration() || !hasContractConfiguration() || !wallet}>
-                  {working ? (workingStage ?? "Working") : "File protected record"}
+                  {working ? (workingStage ?? "Working") : "Submit sealed report"}
                 </button>
-                {!hasIssuerConfiguration() && <p className="field-note">The issuer endpoint and sealed public key are not configured for this deployment.</p>}
-                {!hasContractConfiguration() && <p className="field-note">The Preprod contract address is not configured; no local-only button is offered.</p>}
+                {!hasIssuerConfiguration() && <p className="field-note">The privacy service is not connected for this workspace.</p>}
+                {!hasContractConfiguration() && <p className="field-note">The deployed contract is not connected; this page will not claim a local-only filing.</p>}
                 {!wallet && <p className="field-note">Connect the Midnight wallet before submitting a filing.</p>}
               </form>
               {prepared && fileReceipt && <div className="prepared-note">
                 <strong>{fileReceipt.unlocked ? "Threshold met." : "Filing finalized."}</strong>
                 <span>Transaction {shortValue(fileReceipt.txId)} · block {fileReceipt.blockHeight}</span>
-                <span>Only the opaque envelope, nullifier, and history commitment crossed the boundary.</span>
+                <span>Only the encrypted envelope and threshold protections crossed the boundary.</span>
               </div>}
             </section>
           )}
@@ -436,7 +472,73 @@ function App() {
 
         <PrivacyInspector publicState={publicState} prepared={prepared} receipt={fileReceipt} />
       </section>
+      </>)}
     </main>
+  );
+}
+
+function LandingPage({ onOpenWorkspace }: { readonly onOpenWorkspace: () => void }) {
+  return (
+    <div className="landing-page">
+      <section className="landing-hero">
+        <div className="landing-hero-copy">
+          <p className="eyebrow">Sealed corroboration on Midnight</p>
+          <h1>Three suppliers know.<br /><em>None stands alone.</em></h1>
+          <p className="landing-lede">
+            Thirdmark lets suppliers report the same late payer without making the first report an exposed,
+            isolated accusation. Each report stays sealed until the third independent filing.
+          </p>
+          <div className="landing-actions">
+            <button className="primary-button" type="button" onClick={onOpenWorkspace}>Open the filing workspace</button>
+            <a className="quiet-button link-button" href="https://github.com/Jennycruzy/Thirdmark" target="_blank" rel="noreferrer">View the source</a>
+          </div>
+          <p className="landing-caption">Wave 1 prototype · Nigeria CAC subject lookup · Midnight Preprod</p>
+        </div>
+        <div className="landing-threshold" aria-label="Three independent filings are required">
+          <div className="threshold-marks"><i /><i /><i /></div>
+          <p className="eyebrow">The rule</p>
+          <strong>One is sealed.<br />Two are still sealed.<br />Three unlock.</strong>
+          <span>The count itself is never shown below the threshold.</span>
+        </div>
+      </section>
+
+      <section className="landing-section landing-problem">
+        <div className="section-heading"><p className="eyebrow">The problem</p><h2>Late payment is easier to survive together.</h2></div>
+        <div className="problem-copy"><p>A supplier can know a customer is 90+ days overdue and still keep quiet because being the only one to say it can cost them the relationship.</p><p>Thirdmark changes the decision. The first two suppliers do not become a public list. They become part of a private threshold that only opens when independent corroboration exists.</p></div>
+      </section>
+
+      <section className="landing-section landing-flow">
+        <div className="section-heading"><p className="eyebrow">The flow</p><h2>Private input. One public outcome.</h2></div>
+        <div className="flow-cards">
+          <article><span>01</span><h3>Choose the same company</h3><p>A registry lookup gives every supplier the same canonical company reference.</p></article>
+          <article><span>02</span><h3>Submit a sealed report</h3><p>The browser encrypts the amount, delay, and invoice reference before anything reaches the ledger.</p></article>
+          <article><span>03</span><h3>Unlock only at three</h3><p>The third independent filing changes one public fact: the threshold has been met.</p></article>
+          <article><span>04</span><h3>Settle as a dossier</h3><p>The three filers can decrypt their records locally and produce an artifact for verification.</p></article>
+        </div>
+      </section>
+
+      <section className="landing-section boundary-section">
+        <div className="boundary-card public-boundary"><p className="eyebrow">Visible to the ledger</p><h2>Opaque state</h2><ul><li>Encrypted report envelope</li><li>Repeat-submission guard</li><li>Private-history commitment</li><li>Threshold result</li></ul></div>
+        <div className="boundary-card private-boundary"><p className="eyebrow">Kept in the browser</p><h2>Report details</h2><ul><li>Company reference</li><li>Amount and days late</li><li>Invoice reference</li><li>Filing history and slot secret</li></ul></div>
+      </section>
+
+      <section className="landing-section landing-links">
+        <div className="section-heading"><p className="eyebrow">Judge in five minutes</p><h2>Start with the evidence.</h2></div>
+        <div className="judge-links">
+          <a href="https://github.com/Jennycruzy/Thirdmark" target="_blank" rel="noreferrer"><strong>Source repository</strong><span>Contract, client, simulator, browser, and evidence.</span>↗</a>
+          <a href="https://docs.midnight.network/" target="_blank" rel="noreferrer"><strong>Midnight documentation</strong><span>The platform this selective-disclosure design depends on.</span>↗</a>
+          <a href="https://icrp.cac.gov.ng/public-search/" target="_blank" rel="noreferrer"><strong>Nigeria CAC public search</strong><span>The official registry boundary used for company references.</span>↗</a>
+          <a href="https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark" target="_blank" rel="noreferrer"><strong>Build evidence</strong><span>Managed full-proof validation and browser checks.</span>↗</a>
+        </div>
+      </section>
+
+      <section className="landing-section limits-section">
+        <p className="eyebrow">What it does not hide</p>
+        <h2>Privacy has boundaries. We name them.</h2>
+        <p>An observer who can derive an exact private slot key can query that slot’s aggregate occupancy. The single Wave 1 issuer can also rate-limit or refuse service. It cannot read report plaintext or force a reveal. These are design limits, not footnotes.</p>
+        <button className="primary-button" type="button" onClick={onOpenWorkspace}>Open the workspace</button>
+      </section>
+    </div>
   );
 }
 
@@ -450,23 +552,23 @@ function PrivacyInspector({ publicState, prepared, receipt }: { readonly publicS
       <div className="inspector-heading"><span className="eyebrow">Privacy inspector</span><span className="live-mark">{prepared ? "ready" : "live"}</span></div>
       <h2>What crosses the boundary</h2>
       <div className="inspector-group public-group">
-        <span className="inspector-label">Public state</span>
-        <ul>{publicState.map((item) => <li key={item}>{item}</li>)}{receipt && <li>history commitment {shortValue(Array.from(receipt.historyCommitment, (byte) => byte.toString(16).padStart(2, "0")).join(""))}</li>}</ul>
+        <span className="inspector-label">Visible to the ledger</span>
+        <ul>{publicState.map((item) => <li key={item}>{item}</li>)}{receipt && <li>private-history proof {shortValue(Array.from(receipt.historyCommitment, (byte) => byte.toString(16).padStart(2, "0")).join(""))}</li>}</ul>
       </div>
       <div className="inspector-group private-group">
-        <span className="inspector-label">Private witness</span>
-        <ul><li>company subject</li><li>report plaintext</li><li>slot secret</li><li>filing history contents</li></ul>
+        <span className="inspector-label">Kept in this browser</span>
+        <ul><li>company reference</li><li>report details</li><li>slot secret</li><li>filing history</li></ul>
       </div>
-      <p className="inspector-footnote">An observer can see opaque public occupancy. Without the OPRF-derived subject secret, it cannot label that occupancy with a company.</p>
+      <p className="inspector-footnote">The ledger sees opaque occupancy. Without the private company reference, it cannot label that state with a company.</p>
     </aside>
   );
 }
 
 function StatePanel({ step, receipt, snapshot, onBack }: { readonly step: "sealed" | "unlocked" | "dossier"; readonly receipt: FilingReceipt | null; readonly snapshot: SlotSnapshot | null; readonly onBack: () => void }) {
   const copy = {
-    sealed: { eyebrow: "Step 03", title: "Filed. Now quiet.", body: "Nothing is visible until two independent suppliers file against the same subject. Thirdmark never shows a sub-threshold count." },
-    unlocked: { eyebrow: "Step 04", title: "The third mark changed the state.", body: "Only the three authorized filers can decrypt their records locally. No operator receives the plaintext." },
-    dossier: { eyebrow: "Step 05", title: "The dossier is the settlement.", body: "Dossier export follows the timestamped entry read path. This build does not invent filing dates that the current contract has not recorded." },
+    sealed: { eyebrow: "Step 03", title: "Filed. Still sealed.", body: "Nothing is visible until two more independent suppliers file against the same company reference. No sub-threshold count is shown." },
+    unlocked: { eyebrow: "Step 04", title: "The third mark changed the state.", body: "Only the three participating filers can decrypt their records locally. No service receives the report details." },
+    dossier: { eyebrow: "Step 05", title: "The dossier is the settlement.", body: "The final artifact joins the three attestations with public ledger evidence. Dates and approvals must come from the completed chain read path." },
   }[step];
   return <section className="panel state-panel"><p className="eyebrow">{copy.eyebrow}</p><h2>{copy.title}</h2><p className="muted">{copy.body}</p><div className="state-placeholder"><Tally unlocked={step !== "sealed"} /><span>{step === "sealed" ? (receipt ? `Transaction ${shortValue(receipt.txId)} is sealed at the threshold.` : "Waiting for an actual filing transaction") : snapshot?.unlocked ? `${snapshot.records?.length ?? 0} decrypted attestations are held in this browser.` : "Unlock requires a finalized threshold transaction."}</span></div>{step === "unlocked" && snapshot?.records && <div className="record-list" aria-label="Decrypted attestations">{snapshot.records.map((record, index) => <article className="record-card" key={`${record.invoiceReference}-${index}`}><span className="label">Attestation {index + 1}</span><strong>{record.amountOverdueMinorUnits} minor units overdue</strong><span>{record.daysLate} days late · {record.invoiceReference}</span></article>)}</div>}<button className="quiet-button" type="button" onClick={onBack}>Back</button></section>;
 }

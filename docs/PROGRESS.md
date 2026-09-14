@@ -283,3 +283,24 @@ The adapter forwards no credentials, stores no CAC records, and only sends the
 company name, RC number, and coarse status to the browser. It is a buildathon
 integration against CAC's public-search request path; production should migrate to
 an authorized CAC VAS integration when available.
+
+## Product presentation and safe synthetic-subject path — 2026-09-14
+
+Completed:
+
+- Added a separate landing page so a judge sees the problem, threshold rule,
+  public/private boundary, evidence links, and residual limits before entering the
+  filing workspace.
+- Added a configuration-driven synthetic subject, labelled `Thirdmark Synthetic
+  Company — Synthetic Only` with deliberately invalid identifier `000000000`. It uses the
+  same subject canonicalization, OPRF, encryption, and contract path as a live lookup;
+  it is not a CAC record and must not be replaced with one for a recording.
+- Replaced user-facing implementation language with product language where it crossed
+  the privacy boundary: report details, company reference, sealed report, and private
+  history. Technical detail remains in the linked architecture and findings documents.
+- Rewrote the README to lead with the problem, link the judge path immediately, publish
+  verified Preprod evidence, explain the product in one minute, state residual leaks,
+  and distinguish completed artifacts from open filing/dossier gates.
+
+Validation for this presentation pass is pending the browser typecheck and production
+build. No new Preprod claim is made by this UI/documentation change.

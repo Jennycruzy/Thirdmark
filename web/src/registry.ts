@@ -8,6 +8,7 @@ export type RegistrySearchResult = {
   readonly name: string;
   readonly rcNumber: string;
   readonly status: "active" | "dissolved" | "unknown";
+  readonly source: "cac" | "synthetic";
   readonly subject: NigeriaCompanySubject;
 };
 
@@ -35,10 +36,22 @@ const parseResults = (value: unknown): RegistrySearchResult[] => {
       name: candidate.name,
       rcNumber: candidate.rcNumber,
       status: parseStatus(candidate.status),
+      source: "cac",
       subject: canonicalNigeriaCompanySubject(candidate.rcNumber),
     };
   });
 };
+
+export const createSyntheticCompany = (
+  name: string,
+  rcNumber: string,
+): RegistrySearchResult => ({
+  name,
+  rcNumber,
+  status: "unknown",
+  source: "synthetic",
+  subject: canonicalNigeriaCompanySubject(rcNumber),
+});
 
 /**
  * Query Thirdmark's explicitly configured registry adapter. The local adapter
