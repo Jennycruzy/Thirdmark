@@ -8,9 +8,32 @@ sizes and iterators. The architecture and privacy claims now describe the result
 opaque-key occupancy/count leak explicitly; no no-enumeration claim is being carried
 forward.
 
+## Delegated-proving payload correction — 2026-09-15
+
+The four-entry private-history reduction was still rejected by 1AM. The current
+Wave 1 circuit removes the private filing-history vector, its salts, and the public
+history commitment map. The duplicate-filer guarantee remains the scoped opaque
+`filerNullifier`; exact ciphertext replay, threshold safety, DLEQ issuer
+authentication, and client-side encryption remain enforced.
+
+Evidence for commit `99a48cb`:
+
+- CircleCI pipeline `#30` completed the full Compact proving-key compile, all 52
+  root tests, browser typecheck, and browser build.
+- The verified `file.prover` artifact is 21,579,079 bytes; the failing four-entry
+  artifact was 42,686,064 bytes. `file.zkir` is 23,530 bytes.
+- The public browser at `https://thirdmark.vercel.app` serves the new artifacts and
+  intentionally has no build-time contract address, preventing calls to the old
+  incompatible contract.
+
+The old receipt below remains a valid Preprod deployment receipt, but that contract
+contains the superseded circuit and cannot be upgraded in place. The next external
+step is one fresh wallet deployment from the browser setup panel, followed by the
+three-wallet filing and dossier evidence.
+
 ## W1-P0 — source verification and registration
 
-Status: **source verification, CI validation, canonical counter smoke test, replacement Thirdmark Preprod deployment, and public demo hosting passed. The three-party filing and dossier gates remain open.**
+Status: **source verification, CI validation, canonical counter smoke test, superseded Thirdmark Preprod deployment, reduced proving assets, and public demo hosting passed. The replacement contract, three-party filing, and dossier gates remain open.**
 
 Passed:
 
@@ -45,12 +68,12 @@ Not passed:
 
 Why the remaining gates are open:
 
-The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The canonical example-counter has now been deployed through 1AM on Preprod. A replacement Thirdmark contract and fresh operator-held issuer key are now deployed; the remaining proof is the real three-filer cycle and the dossier/indexer path.
+The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for the reference counter, OPRF scratch circuit, and current reduced Thirdmark circuit passed on the managed CircleCI runner. The scratch and Thirdmark simulator suites also pass locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The canonical example-counter and superseded four-entry Thirdmark contract have been deployed through 1AM on Preprod. The current reduced contract still needs one fresh wallet deployment; the remaining proof is the real three-filer cycle and the dossier/indexer path.
 
 User inputs still required before the external gates:
 
 - AKINDO account confirmation and Discord handle.
-- A funded Preprod wallet at W1-P2; the wallet seed or key must never be shared. This is now satisfied by the owner-controlled 1AM wallet.
+- A funded Preprod wallet at W1-P2; the wallet seed or key must never be shared. This is satisfied for the owner-controlled 1AM wallet, which must now approve one fresh reduced-circuit deployment.
 - An operator-run issuer process with its scalar kept outside the repository and chat; only the issuer URL and derived public point belong in browser configuration.
 - A Vercel or Netlify account and optional domain at W1-P5.
 
@@ -306,14 +329,14 @@ returned `access-control-allow-origin: https://thirdmark.vercel.app`, and the
 Vercel root served the rebuilt browser bundle. No filing, unlock, or dossier is
 claimed by these checks.
 
-## Delegated-proving payload fix and current deployment — 2026-09-15
+## Superseded delegated-proving payload fix and deployment receipt — 2026-09-15
 
 The first replacement circuit still carried a 32-entry private filing history.
 1AM reached delegated proving but rejected the resulting payload as too large or
-too deeply nested. The circuit now uses a four-entry Wave 1 history bound; this
-keeps the private-history commitment and replay checks while reducing the prover
-key from approximately 81 MiB to 41 MiB. CircleCI pipeline `#26` completed the
-full Compact proving-key compile and all simulator tests for the revised source.
+too deeply nested. A four-entry Wave 1 history bound was compiled and deployed,
+but it also failed at the same proving stage. CircleCI pipeline `#26` completed
+the full Compact proving-key compile and all simulator tests for that superseded
+revision.
 
 The owner then deployed the matching contract through 1AM:
 
@@ -323,9 +346,9 @@ The owner then deployed the matching contract through 1AM:
 - Block: `2561298`
 
 The indexer state decodes with threshold `3` and the expected sealed issuer
-public point. The public build now pins this address and serves the matching
-prover/ZKIR assets. The three-filer filing, threshold unlock, and dossier remain
-the next evidence gates.
+public point. The current public build no longer pins this address; it serves the
+reduced circuit assets and requires a fresh deployment. The three-filer filing,
+threshold unlock, and dossier remain the next evidence gates.
 
 ## CAC registry adapter — 2026-09-14
 
@@ -356,8 +379,8 @@ Completed:
   same subject canonicalization, OPRF, encryption, and contract path as a live lookup;
   it is not a CAC record and must not be replaced with one for a recording.
 - Replaced user-facing implementation language with product language where it crossed
-  the privacy boundary: report details, company reference, sealed report, and private
-  history. Technical detail remains in the linked architecture and findings documents.
+  the privacy boundary: report details, company reference, sealed report, and opaque
+  filer state. Technical detail remains in the linked architecture and findings documents.
 - Rewrote the README to lead with the problem, link the judge path immediately, publish
   verified Preprod evidence, explain the product in one minute, state residual leaks,
   and distinguish completed artifacts from open filing/dossier gates.

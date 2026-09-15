@@ -13,7 +13,7 @@ import type { JubjubPoint } from "@midnight-ntwrk/compact-runtime";
  *
  * The state is deliberately read-only from the witness perspective. The
  * public nullifier set is the replay guard, so a failed proof does not need
- * to roll back any evolving private history.
+ * to roll back an evolving private history.
  */
 export type ThirdmarkPrivateState = {
   readonly filerSecret: Uint8Array;

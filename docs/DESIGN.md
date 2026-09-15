@@ -26,7 +26,7 @@ Display typography uses a restrained grotesk with a narrow, numeric-friendly fac
 |  |                              |     | Public: one opaque   | |
 |  | autocomplete result          |     | blob + commitments   | |
 |  +------------------------------+     | Private: subject +   | |
-|                                       | report + history     | |
+|                                       | report + filer secret | |
 |  [continue]                           +---------------------+ |
 |                                                                |
 +----------------------------------------------------------------+

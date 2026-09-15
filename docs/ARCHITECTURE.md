@@ -9,14 +9,14 @@ filed       Set<Bytes<32>>            filer nullifiers
 entries     Map<Bytes<32>, Bytes<N>>   entry key -> opaque ciphertext
 slotFilled  Map<Bytes<32>, Uint<8>>    slot key -> aggregate count
 unlocked    Set<Bytes<32>>             slot keys whose threshold predicate is true
-history     Map<Bytes<32>, Bytes<32>>  filer id -> latest history commitment
 ```
 
 The Wave 1 contract fixes `Bytes<128>` for the AES-GCM envelope, matching the
-source-backed MatchLock boundary. `FilingHistory` is a private witness struct with
-32 slots and 32 commitment salts. Compact 0.30.0 exposes `List` as a ledger ADT, not
-as a private witness collection; the bound is therefore explicit in the circuit and
-is surfaced as a product limit rather than hidden behind a fake unbounded list.
+source-backed MatchLock boundary. The delegated-wallet circuit intentionally keeps
+the private witness to a filer secret and OPRF/DLEQ material. The public nullifier
+set is the duplicate-filing guard; an evolving private filing-history commitment
+was removed from the Wave 1 circuit because its generated proof payload exceeded
+the 1AM connector boundary.
 
 ## Key derivation
 
@@ -46,29 +46,31 @@ global occupancy/count leak and is stronger than the original no-enumeration
 assumption; the privacy inspector must show it rather than imply that public state is
 unqueryable.
 
-## Filing and history
+## Filing and replay guards
 
 For a filer secret `sk` and slot key `slotKey`:
 
 ```text
 filerNullifier = persistentHash([pad(32, "thirdmark:nullifier:v1"), sk, slotKey])
 entryKey       = persistentHash([pad(32, "thirdmark:entry:v1"), slotKey, index])
-historyCommit  = persistentCommit(privateFilingHistory, freshSalt)
 ```
 
-The nullifier is a public anti-replay guard. The private filing-history witness is the scored private-state feature: the circuit proves the new slot is not already in the history, appends it, and commits with a fresh salt. The private witness also retains prior commitment salts and proves that the next salt has not appeared in that history. Both guards remain because they protect against different failure modes. A stale history commitment must fail; a repeated salt must never be accepted as a construction detail. The stable `filerId` key needed to reopen the evolving commitment is itself a public pseudonym and can link that filer’s history entries; it is not an identity claim, but it is a residual leak.
+The nullifier is a public opaque anti-replay guard scoped to both filer secret and
+slot. An exact ciphertext replay is separately rejected. This means one filer
+cannot file twice on the same subject slot, while the same filer can still file on
+another slot. The guard is visible only as an opaque ledger key; it does not expose
+the filer secret or report contents. A richer evolving private-history commitment
+remains a later circuit option after a toolchain or wallet payload limit is verified.
 
-The browser provider stages the next private witness in AES-GCM encrypted IndexedDB
-storage before a proof is generated. It advances the private history only after the
-wallet returns a finalized transaction. A failed proof restores the previous state;
-an indexer read that fails after finalization does not restore it, because doing so
-would make a committed filing appear unused and enable a stale-history retry. The
+The browser provider stages fresh OPRF material in AES-GCM encrypted IndexedDB
+storage before a proof is generated. A failed proof restores the prior witness;
+after finalization the staged material remains available for the next filing. The
 browser key is non-extractable same-origin storage, not a hardware vault; an active
 compromised page can still use the witness while it is open.
 
 ## Threshold transition
 
-The contract discloses only the boolean threshold predicate at the point it controls public state. It inserts the ciphertext and updates the aggregate count only after checking the nullifier and history opening. It adds the slot to `unlocked` only when the count reaches the product threshold. No circuit returns a below-threshold count or exposes a filer identity.
+The contract discloses only the boolean threshold predicate at the point it controls public state. It inserts the ciphertext and updates the aggregate count only after checking the nullifier and replay guard. It adds the slot to `unlocked` only when the count reaches the product threshold. No circuit returns a below-threshold count or exposes a filer identity.
 
 Insertion order must not carry information. The three records are indexed by anonymous entry keys and are retrieved by the authorized filers after unlock; the contract does not publish an identity-to-entry mapping. Compact 0.30.0 exposes block-time predicates but no block timestamp value circuit, so the contract does not self-report a filing date. The dossier obtains the transaction/block date from the public indexer and must label that source explicitly.
 

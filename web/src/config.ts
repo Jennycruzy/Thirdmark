@@ -11,7 +11,10 @@ export type PublicAppConfig = {
 
 const env = import.meta.env as Record<string, string | undefined>;
 const envContractAddress = env.VITE_CONTRACT_ADDRESS ?? "";
-const RUNTIME_CONTRACT_ADDRESS_KEY = "thirdmark:contract-address:v1";
+// Contract ABI/state changed with the delegated-proving payload reduction.
+// Keep the replacement address in a new namespace so an older browser cannot
+// silently reuse the superseded history-bearing deployment.
+const RUNTIME_CONTRACT_ADDRESS_KEY = "thirdmark:contract-address:v2";
 
 const isContractAddress = (value: string): boolean => /^[0-9a-f]{64}$/iu.test(value);
 

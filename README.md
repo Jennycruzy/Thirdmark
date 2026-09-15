@@ -4,7 +4,7 @@
 
 Thirdmark is a privacy-first corroboration product for late-payment reporting. Each supplier submits an encrypted, dated attestation about the same company. The first report is sealed. The second is still sealed. Only the third independent filing changes the public threshold state, and only the three participating suppliers can read the records that they choose to share.
 
-The product is built on Midnight: private inputs drive a public state transition, while the public ledger receives an opaque report envelope, anti-replay protection, private-state commitments, and the threshold result. A transparent chain cannot provide this boundary without exposing the first supplier.
+The product is built on Midnight: private inputs drive a public state transition, while the public ledger receives an opaque report envelope, scoped anti-replay protection, and the threshold result. A transparent chain cannot provide this boundary without exposing the first supplier.
 
 ## The problem
 
@@ -16,7 +16,7 @@ Thirdmark makes corroboration possible without publishing a lone accusation. Thr
 
 - [Source repository](https://github.com/Jennycruzy/Thirdmark) — Compact contract, simulator, client cryptography, browser application, and evidence.
 - [Preprod deployment and progress evidence](docs/PROGRESS.md) — verified contract receipts, blocks, tests, and remaining gates.
-- [Threat model and architecture](docs/ARCHITECTURE.md) — state layout, OPRF derivation, private filing history, residual leaks, and dossier boundary.
+- [Threat model and architecture](docs/ARCHITECTURE.md) — state layout, OPRF derivation, filing guards, residual leaks, and dossier boundary.
 - [Safety rules](docs/ETHICS.md) — why the threshold is the safety property and why public recordings use synthetic subjects.
 - [Source findings](docs/FINDINGS.md) — version decisions, source corrections, and constraints discovered from Compact and Midnight tooling.
 - [Midnight documentation](https://docs.midnight.network/) — the platform and dual-ledger model used by Thirdmark.
@@ -43,7 +43,7 @@ For local testing and public recordings, use the synthetic subject named **“Th
 | --- | --- |
 | Fixed-width encrypted report envelope | Company reference before blinded derivation |
 | Anti-replay nullifier | Amount overdue, days late, and invoice reference |
-| Evolving filing-history commitment | Slot secret and filing-history contents |
+| Opaque filer nullifier and ciphertext guard | Slot secret, filer secret, and report details |
 | Opaque slot occupancy and threshold state | Plaintext report and local decryption keys |
 
 The product-level disclosure is the threshold result: sealed or unlocked. The ledger also has public state because Midnight ledger state is public; the commitments, ciphertexts, and keys are designed to be opaque rather than personal data.
@@ -53,7 +53,7 @@ The product-level disclosure is the threshold result: sealed or unlocked. The le
 Thirdmark needs Midnight for three related reasons:
 
 - **Selective disclosure:** report details remain private while the contract exposes the threshold transition.
-- **Private state with public settlement:** each filer proves knowledge of a private filing history while the ledger records only the commitment update and protected envelope.
+- **Private state with public settlement:** each filer proves private OPRF material and a filer secret while the ledger records only opaque guards, a protected envelope, and the threshold result.
 - **A real contract boundary:** the third filing is checked by Compact logic and settled on Preprod, rather than being simulated by a web server.
 
 This is inter-party private state, not self-attestation. A supplier is not proving a fact about its own balance; several independent parties are corroborating a subject that none of them should expose alone.
@@ -62,12 +62,20 @@ This is inter-party private state, not self-attestation. A supplier is not provi
 
 ### Deployed on Midnight Preprod
 
-The current Thirdmark deployment was submitted through the connected 1AM wallet on 15 September 2026 with a threshold of three:
+The first replacement Thirdmark deployment was submitted through the connected
+1AM wallet on 15 September 2026 with a threshold of three. It is retained as a
+receipt, but it is superseded by the smaller delegated-proving circuit below
+and must not be used with the current browser build:
 
 - Contract: `76df34103d6e2e0e0b1a561509366090c27eb392f6a07eb75b2d102fd646ef12`
 - Transaction ID: `00a602aeba4fb9ffd0a9a04902da9f870c79a82ca03fae0d565d433b94d93525cb`
 - Transaction hash: `c5e7eddd73bc3463c55f05131d7b15563d2a0a4f460e9a5bca2db4f174b2135c`
 - Block: `2561298`
+
+The current browser build serves the smaller circuit and intentionally leaves the
+contract address empty. The next wallet action is one fresh Thirdmark deployment
+from the setup panel; that browser remembers the new address locally. The old
+address above cannot be upgraded in place.
 
 The canonical example-counter smoke test was deployed first through the same browser-wallet path:
 
@@ -80,19 +88,19 @@ The canonical example-counter smoke test was deployed first through the same bro
 - Compact contract with sealed issuer configuration and threshold `3`.
 - DLEQ-authenticated blinded OPRF evaluation for subject-derived slots.
 - Client-side AES-GCM report encryption with an exact `Bytes<128>` envelope.
-- Anti-replay nullifiers and evolving private filing-history commitments with fresh salts.
+- Scoped anti-replay nullifiers and ciphertext replay guards.
 - No admin key, forced reveal, pause circuit, or upgrade path.
-- `ThirdmarkSimulator` and adversarial tests for replay, stale history, bad proofs, wrong widths, threshold safety, and subject separation.
+- `ThirdmarkSimulator` and adversarial tests for replay, bad proofs, wrong widths, threshold safety, and subject separation.
 - Browser wallet client using delegated proving and real Midnight transaction submission.
-- Encrypted browser private-state storage that advances only after a finalized transaction.
+- Encrypted browser private-state storage that retains the filer secret and OPRF material locally.
 - Nigeria CAC adapter based on the official public-search request path, with no CAC credential in the browser and no registry storage.
 - Landing page, privacy inspector, five-step filing workspace, and a synthetic-only subject path.
 
 The public frontend is available at `https://thirdmark.vercel.app`. Its issuer
 and CAC adapter run as isolated user services on the selected Lightsail host
 behind temporary HTTPS tunnels. The three-filer filing, threshold unlock, and
-dossier evidence remain open; see [`docs/PROGRESS.md`](docs/PROGRESS.md) for the
-hosting caveat and receipts.
+dossier evidence remain open; deploy the replacement contract first. See
+[`docs/PROGRESS.md`](docs/PROGRESS.md) for the hosting caveat and receipts.
 
 Latest local validation before this product pass: 52 root tests passed and the browser typecheck passed. CircleCI performs the full proving-key compile because the development Mac cannot execute the bundled `zkir` binary. Full evidence and historical findings are in [`docs/PROGRESS.md`](docs/PROGRESS.md), not inferred from a green local UI.
 
@@ -110,10 +118,9 @@ For each filing, the Compact circuit:
 
 1. Verifies the issuer evaluation and the caller’s private unblinding relation.
 2. Derives the slot key and filer nullifier inside the circuit.
-3. Rejects a repeated filer, a stale private filing-history opening, or a malformed envelope.
+3. Rejects a repeated filer, an exact ciphertext replay, or a malformed envelope.
 4. Stores only the opaque ciphertext and entry commitment.
-5. Recommits the private filing history with a fresh salt.
-6. Discloses the threshold predicate only when the third valid filing arrives.
+5. Discloses the threshold predicate only when the third valid filing arrives.
 
 The detailed state model is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The contract source is [`contract/src/thirdmark.compact`](contract/src/thirdmark.compact), and the simulator is [`contract/src/test/thirdmark-simulator.ts`](contract/src/test/thirdmark-simulator.ts).
 
@@ -202,10 +209,10 @@ The test suite includes:
 - OPRF round trips under different blindings and subject separation.
 - DLEQ proof rejection and forged issuer evaluation rejection.
 - Duplicate filer and ciphertext replay rejection.
-- Stale private-history replay rejection.
+- Scoped nullifier replay rejection.
 - Threshold rejection below three and unlock at exactly three.
 - Wrong ciphertext width and invalid report-field rejection.
-- Fresh history-salt enforcement.
+- Fourth-filing rejection after unlock.
 - Client encryption/decryption and authentication failure.
 - Deterministic dossier ordering, signature verification, and tamper rejection.
 - CAC RC canonicalization across display variants.
@@ -216,7 +223,7 @@ No test is skipped or marked as a placeholder. The simulator does not pretend to
 
 ### Wave 1 — one complete vertical
 
-Nigeria CAC company references, threshold `3`, one issuer, evolving filing-history commitment, client-side encryption, real Preprod deployment, five screens, and a verifiable dossier.
+Nigeria CAC company references, threshold `3`, one issuer, scoped opaque nullifiers, client-side encryption, real Preprod deployment, five screens, and a verifiable dossier.
 
 ### Wave 2 — general threshold service
 
@@ -226,7 +233,7 @@ Arbitrary `k`, distributed OPRF issuers, expiry windows, pre-threshold withdrawa
 
 One narrow design-partner vertical, synthetic-but-plausible volume, an audit-style threat-model report, and a hardened deployment.
 
-If scope must be reduced, the dossier can remain a signed JSON artifact. The filing-history commitment and threshold safety are not optional shortcuts.
+If scope must be reduced, the dossier can remain a signed JSON artifact. Threshold safety and the scoped nullifier guard are not optional shortcuts; a richer evolving private-history commitment is deferred until it can fit the delegated-wallet proving boundary.
 
 ## Prior art and ethics
 

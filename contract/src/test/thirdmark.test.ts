@@ -200,6 +200,22 @@ describe("Thirdmark filing simulator", () => {
     );
   });
 
+  it("scopes the nullifier to the subject slot", () => {
+    const first = state(1, 7n, 13n, 1);
+    const otherSubject = subject.slice();
+    otherSubject[31] ^= 1;
+    const second = {
+      ...first,
+      ...makeOprfMaterial(otherSubject, issuerSecret, 19n, 23n),
+    };
+    const simulator = new ThirdmarkSimulator(issuerKey, 3n, first);
+
+    expect(simulator.file(ciphertext(1))).toBe(false);
+    simulator.setPrivateState(second);
+    expect(simulator.file(ciphertext(2))).toBe(false);
+    expect(simulator.getLedger().entries.size()).toBe(2n);
+  });
+
   it("blocks exact ciphertext replay by a different filer", () => {
     const first = state(1, 7n, 13n, 1);
     const second = state(2, 19n, 23n, 41);
@@ -242,6 +258,24 @@ describe("Thirdmark filing simulator", () => {
     expect(simulator.file(ciphertext(2))).toBe(false);
     expect(simulator.getLedger().unlocked.member(slotKey)).toBe(false);
     expect(simulator.getLedger().slotFilled.lookup(slotKey)).toBe(2n);
+  });
+
+  it("rejects a fourth filing after the threshold is unlocked", () => {
+    const first = state(1, 7n, 13n, 1);
+    const second = state(2, 19n, 23n, 41);
+    const third = state(3, 31n, 37n, 81);
+    const fourth = state(4, 43n, 47n, 121);
+    const simulator = new ThirdmarkSimulator(issuerKey, 3n, first);
+
+    expect(simulator.file(ciphertext(1))).toBe(false);
+    simulator.setPrivateState(second);
+    expect(simulator.file(ciphertext(2))).toBe(false);
+    simulator.setPrivateState(third);
+    expect(simulator.file(ciphertext(3))).toBe(true);
+    simulator.setPrivateState(fourth);
+    expect(() => simulator.file(ciphertext(4))).toThrow(
+      "slot is already unlocked",
+    );
   });
 
   it("rejects malformed widths before a circuit can run", () => {
