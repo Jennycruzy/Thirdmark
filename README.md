@@ -23,7 +23,7 @@ Thirdmark makes corroboration possible without publishing a lone accusation. Thr
 - [Nigeria CAC public search](https://icrp.cac.gov.ng/public-search/) — the official registry boundary used to resolve a company name to an RC number.
 - [CircleCI build evidence](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark) — managed full-proof compilation and browser checks.
 
-The current build has a real Thirdmark contract on Midnight Preprod and a public browser URL at `https://thirdmark.vercel.app`. The completed three-wallet filing cycle and dossier remain open submission gates; this repository does not pretend those artifacts exist before they do.
+The current build has a real Thirdmark contract on Midnight Preprod and a public browser URL at `https://thirdmark.vercel.app`. The three-wallet filing cycle and threshold unlock are evidenced in [`docs/PROGRESS.md`](docs/PROGRESS.md); the dossier export and independent verification remain open product gates.
 
 ## The product in one minute
 
@@ -98,8 +98,9 @@ The canonical example-counter smoke test was deployed first through the same bro
 
 The public frontend is available at `https://thirdmark.vercel.app`. Its issuer
 and CAC adapter run as isolated user services on the selected Lightsail host
-behind temporary HTTPS tunnels. The three-filer filing, threshold unlock, and
-dossier evidence remain open; deploy the replacement contract first. See
+behind temporary HTTPS tunnels. The three-filer filing and threshold unlock are
+recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md); the dossier export and
+independent verification remain open. See
 [`docs/PROGRESS.md`](docs/PROGRESS.md) for the hosting caveat and receipts.
 
 Latest local validation before this product pass: 52 root tests passed and the browser typecheck passed. CircleCI performs the full proving-key compile because the development Mac cannot execute the bundled `zkir` binary. Full evidence and historical findings are in [`docs/PROGRESS.md`](docs/PROGRESS.md), not inferred from a green local UI.

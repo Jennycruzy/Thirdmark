@@ -2,6 +2,32 @@
 
 Updated 2026-09-15.
 
+## Three-filer Preprod filing and threshold-unlock evidence — 2026-09-15
+
+The reduced Wave 1 contract was exercised end to end on Preprod with three
+distinct 1AM wallet/filer states against the labelled synthetic subject
+`Thirdmark Synthetic Company — Synthetic Only` (`000000000`). The third filing
+changed the threshold bit to true and the browser decrypted all three
+attestations locally. The explorer receipts supplied during the run are:
+
+Active contract:
+
+- Contract address: `acda20c181cee5a84030a088de372949104b1ea894373e2cc9af4813e0ad5fbe`
+- Deployment transaction ID: `002aae5c1e3c6fdb5fbc36c082833978e7b8ea3363f45497f3608a8a85ccd25c3d`
+- Deployment transaction hash: `b67da74efeb47b98bcf5570b8b7eff384a4f84874bd99ec377a4b6fb5ba77d3f`
+- Deployment block: `2562366`
+
+- Filing 1 — `25000` minor units, `90` days late, `TM-SYN-001`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/6084a446c87573749aed73b7db74a67a727c6c54aeb4f687d179435c3216f2f6?network=preprod)
+- Filing 2 — `300000` minor units, `90` days late, `TM-SYN-002`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb?network=preprod)
+- Filing 3 — `35000` minor units, `150` days late, `TM-SYN-003`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904?network=preprod)
+
+The second amount is recorded as `300000` because that is what the unlocked
+browser dossier displayed; it is not silently corrected to the originally
+suggested `30000`. The cycle proves the real issuer, browser encryption,
+delegated proving, contract threshold transition, and local decryption path.
+The dossier export, signer approvals, indexer timestamps, and independent
+verification wiring remain separate product work.
+
 Source correction recorded during local contract inspection: Compact circuits do not
 enumerate ledger state, but the generated public-state query wrapper exposes map/set
 sizes and iterators. The architecture and privacy claims now describe the resulting
@@ -26,14 +52,14 @@ Evidence for commit `99a48cb`:
   intentionally has no build-time contract address, preventing calls to the old
   incompatible contract.
 
-The old receipt below remains a valid Preprod deployment receipt, but that contract
-contains the superseded circuit and cannot be upgraded in place. The next external
-step is one fresh wallet deployment from the browser setup panel, followed by the
-three-wallet filing and dossier evidence.
+The old receipt below remains a valid historical Preprod deployment receipt, but
+that contract contains the superseded circuit and cannot be upgraded in place.
+The active replacement deployment and the completed three-filer cycle are
+recorded above.
 
 ## W1-P0 — source verification and registration
 
-Status: **source verification, CI validation, canonical counter smoke test, superseded Thirdmark Preprod deployment, reduced proving assets, and public demo hosting passed. The replacement contract, three-party filing, and dossier gates remain open.**
+Status: **source verification, CI validation, canonical counter smoke test, reduced Thirdmark Preprod deployment, public demo hosting, three-party filing, and threshold unlock passed. The dossier export, signer approvals, indexer timestamps, and independent verification gates remain open.**
 
 Passed:
 
@@ -63,12 +89,12 @@ Not passed:
 - The development Mac still cannot execute the local 0.30.0 `zkir` process; it exits with `SIGILL`. Managed CircleCI has now completed the full proving-key compile, so the local CPU issue is not blocking CI validation.
 - The supplied in-circuit inverse step is not available in the verified Compact API. The pinned runtime also does not export the Jubjub scalar modulus; the scratch harness uses the source-backed protocol constant explicitly, and product OPRF code must resolve this dependency choice before implementation.
 - The local full counter compile still exits with `zkir` `-4`/`SIGILL`; the managed compiled assets are available from pipeline `#5` and are installed only in the gitignored reference checkout.
-- Three-party Thirdmark filing, unlock, dossier, and proving-time evidence do not exist yet. The public frontend and isolated issuer/registry endpoints are now live for that test.
+- Three-party Thirdmark filing and threshold-unlock evidence are recorded in the current filing section above. The dossier export, signer approvals, indexer timestamps, and independent verification still need implementation and evidence.
 - The canonical example-counter now has a wallet-backed Preprod receipt; its address, transaction ID, transaction hash, block, and screenshot are recorded below.
 
 Why the remaining gates are open:
 
-The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for the reference counter, OPRF scratch circuit, and current reduced Thirdmark circuit passed on the managed CircleCI runner. The scratch and Thirdmark simulator suites also pass locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The canonical example-counter and superseded four-entry Thirdmark contract have been deployed through 1AM on Preprod. The current reduced contract still needs one fresh wallet deployment; the remaining proof is the real three-filer cycle and the dossier/indexer path.
+The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for the reference counter, OPRF scratch circuit, and current reduced Thirdmark circuit passed on the managed CircleCI runner. The scratch and Thirdmark simulator suites also pass locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The canonical example-counter and superseded four-entry Thirdmark contract have been deployed through 1AM on Preprod. The current reduced contract has now been deployed and exercised through the real three-filer cycle; the remaining proof is the dossier/indexer path.
 
 User inputs still required before the external gates:
 
@@ -346,9 +372,10 @@ The owner then deployed the matching contract through 1AM:
 - Block: `2561298`
 
 The indexer state decodes with threshold `3` and the expected sealed issuer
-public point. The current public build no longer pins this address; it serves the
-reduced circuit assets and requires a fresh deployment. The three-filer filing,
-threshold unlock, and dossier remain the next evidence gates.
+public point. The current public build no longer pins this superseded address;
+it serves the reduced circuit assets and uses the replacement contract recorded
+in the current deployment evidence. The three-filer filing and threshold unlock
+are recorded above; the dossier remains the next evidence gate.
 
 ## CAC registry adapter — 2026-09-14
 
