@@ -44,7 +44,7 @@ import {
 import { asCiphertext128, decryptReport, type ReportAttestation } from "../../../client/crypto.js";
 import type { CompletedOprf } from "../../../client/oprf.js";
 import { configuredIssuerPublicKey } from "../issuer.js";
-import { publicAppConfig } from "../config.js";
+import { getContractAddress, publicAppConfig } from "../config.js";
 import type { WalletSession } from "./wallet.js";
 import { encryptedPrivateStateProvider } from "./private-state.js";
 
@@ -241,10 +241,11 @@ const buildProviders = async (
 };
 
 const requireContractAddress = (): ContractAddress => {
-  if (!publicAppConfig.contractAddress) {
+  const address = getContractAddress();
+  if (!address) {
     throw new Error("The Thirdmark contract address is not configured for this deployment.");
   }
-  return publicAppConfig.contractAddress as ContractAddress;
+  return address as ContractAddress;
 };
 
 const assertIssuerConfiguration = (current: Ledger): void => {
@@ -331,7 +332,7 @@ export const deployThirdmark = async (
   session: WalletSession,
   reportProgress?: ProgressReporter,
 ): Promise<DeploymentReceipt> => {
-  if (publicAppConfig.contractAddress) {
+  if (getContractAddress()) {
     throw new Error("A Thirdmark contract address is already configured for this deployment.");
   }
   const providers = await buildProviders(session, ARTIFACT_ROOT, reportProgress);

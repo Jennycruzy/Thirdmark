@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { encryptReport, type ReportAttestation } from "../../client/crypto.js";
-import { hasContractConfiguration, hasIssuerConfiguration, hasSyntheticSubjectConfiguration, publicAppConfig } from "./config.js";
+import { hasContractConfiguration, hasIssuerConfiguration, hasSyntheticSubjectConfiguration, rememberContractAddress, publicAppConfig } from "./config.js";
 import { deriveCompanySlot } from "./issuer.js";
 import { connectThirdmark, deployExampleCounter, deployThirdmark, type CounterDeploymentReceipt, type DeploymentReceipt, type FilingReceipt, type SlotSnapshot } from "./midnight/contract.js";
 import { connectWallet, type WalletSession } from "./midnight/wallet.js";
@@ -240,6 +240,7 @@ function App() {
         setWorkingStage(stage);
       });
       setDeployment(receipt);
+      rememberContractAddress(receipt.contractAddress);
       setNotice("Deployment submitted through the connected Midnight wallet. Keep this receipt for the Preprod record.");
     } catch (error) {
       const diagnostic = diagnosticMessage(error);
@@ -329,7 +330,7 @@ function App() {
         </div>
       </section>
 
-      {!hasContractConfiguration() && (
+      {(!hasContractConfiguration() || deployment) && (
         <section className="panel deployment-panel" aria-labelledby="deployment-title">
           <p className="eyebrow">Preprod deployment</p>
           <h2 id="deployment-title">Connect the deployed privacy contract.</h2>
