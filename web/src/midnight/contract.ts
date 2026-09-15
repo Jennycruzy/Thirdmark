@@ -1,5 +1,5 @@
 import { CompiledContract } from "@midnight-ntwrk/compact-js";
-import type { ContractAddress, JubjubPoint } from "@midnight-ntwrk/compact-runtime";
+import { ContractState, type ContractAddress, type JubjubPoint } from "@midnight-ntwrk/compact-runtime";
 import {
   deployContract,
   findDeployedContract,
@@ -18,7 +18,6 @@ import {
 } from "@midnight-ntwrk/midnight-js-types";
 import { fromHex, toHex } from "@midnight-ntwrk/midnight-js-utils";
 import {
-  ContractState,
   type FinalizedTransaction,
   type Proof,
   type SignatureEnabled,

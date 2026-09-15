@@ -102,7 +102,7 @@ record retrieval is being claimed.
 
 The Compact sources inspected for the selected toolchain use `List` as a ledger ADT;
 no reference contract supplies an unbounded private witness list. Thirdmark’s first
-contract therefore represents the private filing history as a 32-entry witness
+contract therefore represents the private filing history as a bounded witness
 vector with a private length and private per-entry commitment salts. The circuit
 rejects a full history instead of silently dropping an entry. This preserves the
 history-commitment property and makes the limit visible to the product layer; an

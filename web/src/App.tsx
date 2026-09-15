@@ -69,12 +69,15 @@ const friendlyError = (error: unknown, operation: Operation = "protected filing"
   const message = error instanceof Error ? error.message : "";
   const connector = connectorFailure(error);
   const connectorCode = connector.code ?? "";
+  const reason = `${connector.reason ?? ""} ${message}`.toLowerCase();
+  if (reason.includes("wallet is syncing") || reason.includes("wallet syncing")) {
+    return "1AM is still syncing Preprod. Keep 1AM open until sync finishes, then click Reconnect wallet in Thirdmark.";
+  }
   if (connectorCode === "PermissionRejected") return "1AM denied this app's wallet permission. Reconnect Thirdmark in 1AM and try again.";
   if (connectorCode === "Rejected") return "The wallet request was rejected. Approve the transaction in 1AM and try again.";
   if (connectorCode === "InvalidRequest") return `The wallet rejected the ${operation} request as invalid. Reload Thirdmark and reconnect 1AM.`;
   if (connectorCode === "Disconnected") return "The 1AM connection was lost. Reconnect the wallet and try again.";
   if (connectorCode === "InternalError") return "1AM could not start delegated proving. Keep 1AM open, reload Thirdmark, reconnect, and try again.";
-  const reason = `${connector.reason ?? ""} ${message}`.toLowerCase();
   if (reason.includes("proving") || reason.includes("prover")) {
     return "1AM could not start delegated proving. Keep 1AM open, reload Thirdmark, reconnect, and try again.";
   }
@@ -160,6 +163,13 @@ function App() {
     } finally {
       setWorking(false);
     }
+  };
+
+  const handleDisconnect = (): void => {
+    // The connector API has no disconnect method. This detaches the session from
+    // Thirdmark so the user can reconnect after 1AM finishes syncing.
+    setWallet(null);
+    setNotice("Thirdmark disconnected. Keep 1AM open until syncing finishes, then reconnect.");
   };
 
   const handleFile = async (): Promise<void> => {
@@ -291,9 +301,15 @@ function App() {
             <span className="network-label">{publicAppConfig.networkId}</span>
             <span className={wallet ? "status-dot connected" : "status-dot"} aria-hidden="true" />
             <span>{wallet ? `${wallet.walletName} connected` : "Wallet not connected"}</span>
-            <button className="quiet-button" type="button" onClick={() => void handleConnect()} disabled={working || Boolean(wallet)}>
-              {wallet ? "Connected" : "Connect wallet"}
-            </button>
+            {wallet ? (
+              <button className="quiet-button" type="button" onClick={handleDisconnect} disabled={working}>
+                Disconnect
+              </button>
+            ) : (
+              <button className="quiet-button" type="button" onClick={() => void handleConnect()} disabled={working}>
+                Reconnect wallet
+              </button>
+            )}
           </div>
         )}
       </header>

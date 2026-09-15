@@ -12,8 +12,10 @@ Honesty note: this is the canonical example-counter smoke test, not a Thirdmark 
 
 ## W1-P2 — ready to post after owner review
 
-Thirdmark is deployed on Midnight Preprod with a sealed single-issuer key and a threshold of three. Contract `22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4`, deployment transaction ID `000513b756e248426c0fec067dd16d3b5b7e0c05d89b32d65cea2ffee19593089a`, transaction hash `792aa4578159921056df362d819be425675e644d3f81cd66e2d634df8cbdd0b2`, block `2550375`.
+Thirdmark is deployed on Midnight Preprod with a sealed single-issuer key and a threshold of three. The current contract is `0c3bc3991fa7cd8e8f88e444f01925810db4eb6c15b102c767dc0ccc9093d85a`, deployment transaction ID `00b3588bdb549b2fbce08c66402d79483b5efa2c3c244d8a7a03b31dd6c6de04d1`, transaction hash `79a43b9220e636fc7f34afcc347e481306699dd53d5a52ae618475e180d127df`, block `2559681`.
 
 The browser deployment path uses 1AM delegated proving, wallet balancing, signing, and submission. The canonical example-counter smoke test completed first at block `2549975`. The public issuer endpoint exposes only the issuer public point and blinded OPRF evaluation; its scalar remains runtime-only.
 
-Honesty note: the three-party filing cycle, registry adapter, dossier timestamps, and public frontend deployment are not complete yet. The deployment receipt is real Preprod evidence; no filing or unlock is being claimed here.
+The public demo frontend is `https://thirdmark.vercel.app`; the issuer and CAC adapter are live behind temporary HTTPS tunnels on an isolated Lightsail user service. The registry adapter and public hosting are now complete.
+
+Honesty note: the three-party filing cycle, threshold unlock, dossier timestamps, approvals, export, and independent verification are not complete yet. The deployment receipt is real Preprod evidence; no filing or unlock is being claimed here.

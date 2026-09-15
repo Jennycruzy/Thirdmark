@@ -1,6 +1,6 @@
 # Thirdmark
 
-> Three suppliers know the buyer does not pay. None of them has to say it alone.
+> Three suppliers know. None stands alone.
 
 Thirdmark is a privacy-first corroboration product for late-payment reporting. Each supplier submits an encrypted, dated attestation about the same company. The first report is sealed. The second is still sealed. Only the third independent filing changes the public threshold state, and only the three participating suppliers can read the records that they choose to share.
 
@@ -23,7 +23,7 @@ Thirdmark makes corroboration possible without publishing a lone accusation. Thr
 - [Nigeria CAC public search](https://icrp.cac.gov.ng/public-search/) — the official registry boundary used to resolve a company name to an RC number.
 - [CircleCI build evidence](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark) — managed full-proof compilation and browser checks.
 
-The current build has a real Thirdmark contract on Midnight Preprod. The public browser URL and the completed three-wallet filing cycle are the remaining submission gates; this repository does not pretend those artifacts exist before they do.
+The current build has a real Thirdmark contract on Midnight Preprod and a public browser URL at `https://thirdmark.vercel.app`. The completed three-wallet filing cycle and dossier remain open submission gates; this repository does not pretend those artifacts exist before they do.
 
 ## The product in one minute
 
@@ -62,12 +62,12 @@ This is inter-party private state, not self-attestation. A supplier is not provi
 
 ### Deployed on Midnight Preprod
 
-Thirdmark was deployed through the connected 1AM wallet on 14 September 2026 with a threshold of three:
+The current Thirdmark deployment was submitted through the connected 1AM wallet on 15 September 2026 with a threshold of three:
 
-- Contract: `22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4`
-- Transaction ID: `000513b756e248426c0fec067dd16d3b5b7e0c05d89b32d65cea2ffee19593089a`
-- Transaction hash: `792aa4578159921056df362d819be425675e644d3f81cd66e2d634df8cbdd0b2`
-- Block: `2550375`
+- Contract: `0c3bc3991fa7cd8e8f88e444f01925810db4eb6c15b102c767dc0ccc9093d85a`
+- Transaction ID: `00b3588bdb549b2fbce08c66402d79483b5efa2c3c244d8a7a03b31dd6c6de04d1`
+- Transaction hash: `79a43b9220e636fc7f34afcc347e481306699dd53d5a52ae618475e180d127df`
+- Block: `2559681`
 
 The canonical example-counter smoke test was deployed first through the same browser-wallet path:
 
@@ -87,6 +87,12 @@ The canonical example-counter smoke test was deployed first through the same bro
 - Encrypted browser private-state storage that advances only after a finalized transaction.
 - Nigeria CAC adapter based on the official public-search request path, with no CAC credential in the browser and no registry storage.
 - Landing page, privacy inspector, five-step filing workspace, and a synthetic-only subject path.
+
+The public frontend is available at `https://thirdmark.vercel.app`. Its issuer
+and CAC adapter run as isolated user services on the selected Lightsail host
+behind temporary HTTPS tunnels. The three-filer filing, threshold unlock, and
+dossier evidence remain open; see [`docs/PROGRESS.md`](docs/PROGRESS.md) for the
+hosting caveat and receipts.
 
 Latest local validation before this product pass: 52 root tests passed and the browser typecheck passed. CircleCI performs the full proving-key compile because the development Mac cannot execute the bundled `zkir` binary. Full evidence and historical findings are in [`docs/PROGRESS.md`](docs/PROGRESS.md), not inferred from a green local UI.
 
@@ -175,7 +181,7 @@ Create the ignored file `web/.env.local` with public deployment values. Never pl
 VITE_ISSUER_URL=/__thirdmark_issuer
 VITE_ISSUER_PUBLIC_KEY_X=<issuer-public-x>
 VITE_ISSUER_PUBLIC_KEY_Y=<issuer-public-y>
-VITE_CONTRACT_ADDRESS=22749f19d9b8ae40df5fd25a61866ee8b3d166e727967dea3ffef31f734cd6e4
+VITE_CONTRACT_ADDRESS=0c3bc3991fa7cd8e8f88e444f01925810db4eb6c15b102c767dc0ccc9093d85a
 VITE_REGISTRY_ADAPTER_URL=/__thirdmark_registry/v1/cac/search
 VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company — Synthetic Only
 VITE_SYNTHETIC_SUBJECT_RC=000000000

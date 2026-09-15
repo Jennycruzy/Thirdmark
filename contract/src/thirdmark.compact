@@ -9,11 +9,13 @@ pragma language_version 0.22;
 import CompactStandardLibrary;
 
 // A bounded witness is used because Compact 0.30.0 exposes List as a ledger
-// ADT, not as a private witness collection. The bound is deliberately explicit
-// rather than silently pretending that an unbounded private list exists.
+// ADT, not as a private witness collection. Four entries are enough for the
+// Wave 1 browser journey while keeping delegated 1AM proving within the
+// connector's payload/depth limits. This is a circuit bound, not an assertion
+// that a production filer history should be capped here.
 export struct FilingHistory {
-  slots: Vector<32, Bytes<32>>;
-  commitmentSalts: Vector<32, Bytes<32>>;
+  slots: Vector<4, Bytes<32>>;
+  commitmentSalts: Vector<4, Bytes<32>>;
   length: Uint<8>;
 }
 
@@ -211,69 +213,13 @@ export pure circuit nextFilingHistory(
       current.length == 0 ? slotKey : current.slots[0],
       current.length == 1 ? slotKey : current.slots[1],
       current.length == 2 ? slotKey : current.slots[2],
-      current.length == 3 ? slotKey : current.slots[3],
-      current.length == 4 ? slotKey : current.slots[4],
-      current.length == 5 ? slotKey : current.slots[5],
-      current.length == 6 ? slotKey : current.slots[6],
-      current.length == 7 ? slotKey : current.slots[7],
-      current.length == 8 ? slotKey : current.slots[8],
-      current.length == 9 ? slotKey : current.slots[9],
-      current.length == 10 ? slotKey : current.slots[10],
-      current.length == 11 ? slotKey : current.slots[11],
-      current.length == 12 ? slotKey : current.slots[12],
-      current.length == 13 ? slotKey : current.slots[13],
-      current.length == 14 ? slotKey : current.slots[14],
-      current.length == 15 ? slotKey : current.slots[15],
-      current.length == 16 ? slotKey : current.slots[16],
-      current.length == 17 ? slotKey : current.slots[17],
-      current.length == 18 ? slotKey : current.slots[18],
-      current.length == 19 ? slotKey : current.slots[19],
-      current.length == 20 ? slotKey : current.slots[20],
-      current.length == 21 ? slotKey : current.slots[21],
-      current.length == 22 ? slotKey : current.slots[22],
-      current.length == 23 ? slotKey : current.slots[23],
-      current.length == 24 ? slotKey : current.slots[24],
-      current.length == 25 ? slotKey : current.slots[25],
-      current.length == 26 ? slotKey : current.slots[26],
-      current.length == 27 ? slotKey : current.slots[27],
-      current.length == 28 ? slotKey : current.slots[28],
-      current.length == 29 ? slotKey : current.slots[29],
-      current.length == 30 ? slotKey : current.slots[30],
-      current.length == 31 ? slotKey : current.slots[31]
+      current.length == 3 ? slotKey : current.slots[3]
     ],
     commitmentSalts: [
       current.length == 0 ? nextSalt : current.commitmentSalts[0],
       current.length == 1 ? nextSalt : current.commitmentSalts[1],
       current.length == 2 ? nextSalt : current.commitmentSalts[2],
-      current.length == 3 ? nextSalt : current.commitmentSalts[3],
-      current.length == 4 ? nextSalt : current.commitmentSalts[4],
-      current.length == 5 ? nextSalt : current.commitmentSalts[5],
-      current.length == 6 ? nextSalt : current.commitmentSalts[6],
-      current.length == 7 ? nextSalt : current.commitmentSalts[7],
-      current.length == 8 ? nextSalt : current.commitmentSalts[8],
-      current.length == 9 ? nextSalt : current.commitmentSalts[9],
-      current.length == 10 ? nextSalt : current.commitmentSalts[10],
-      current.length == 11 ? nextSalt : current.commitmentSalts[11],
-      current.length == 12 ? nextSalt : current.commitmentSalts[12],
-      current.length == 13 ? nextSalt : current.commitmentSalts[13],
-      current.length == 14 ? nextSalt : current.commitmentSalts[14],
-      current.length == 15 ? nextSalt : current.commitmentSalts[15],
-      current.length == 16 ? nextSalt : current.commitmentSalts[16],
-      current.length == 17 ? nextSalt : current.commitmentSalts[17],
-      current.length == 18 ? nextSalt : current.commitmentSalts[18],
-      current.length == 19 ? nextSalt : current.commitmentSalts[19],
-      current.length == 20 ? nextSalt : current.commitmentSalts[20],
-      current.length == 21 ? nextSalt : current.commitmentSalts[21],
-      current.length == 22 ? nextSalt : current.commitmentSalts[22],
-      current.length == 23 ? nextSalt : current.commitmentSalts[23],
-      current.length == 24 ? nextSalt : current.commitmentSalts[24],
-      current.length == 25 ? nextSalt : current.commitmentSalts[25],
-      current.length == 26 ? nextSalt : current.commitmentSalts[26],
-      current.length == 27 ? nextSalt : current.commitmentSalts[27],
-      current.length == 28 ? nextSalt : current.commitmentSalts[28],
-      current.length == 29 ? nextSalt : current.commitmentSalts[29],
-      current.length == 30 ? nextSalt : current.commitmentSalts[30],
-      current.length == 31 ? nextSalt : current.commitmentSalts[31]
+      current.length == 3 ? nextSalt : current.commitmentSalts[3]
     ],
     length: (current.length + 1) as Uint<8>
   };
@@ -283,35 +229,7 @@ pure circuit latestHistorySalt(current: FilingHistory): Bytes<32> {
   return current.length == 1 ? current.commitmentSalts[0]
     : current.length == 2 ? current.commitmentSalts[1]
     : current.length == 3 ? current.commitmentSalts[2]
-    : current.length == 4 ? current.commitmentSalts[3]
-    : current.length == 5 ? current.commitmentSalts[4]
-    : current.length == 6 ? current.commitmentSalts[5]
-    : current.length == 7 ? current.commitmentSalts[6]
-    : current.length == 8 ? current.commitmentSalts[7]
-    : current.length == 9 ? current.commitmentSalts[8]
-    : current.length == 10 ? current.commitmentSalts[9]
-    : current.length == 11 ? current.commitmentSalts[10]
-    : current.length == 12 ? current.commitmentSalts[11]
-    : current.length == 13 ? current.commitmentSalts[12]
-    : current.length == 14 ? current.commitmentSalts[13]
-    : current.length == 15 ? current.commitmentSalts[14]
-    : current.length == 16 ? current.commitmentSalts[15]
-    : current.length == 17 ? current.commitmentSalts[16]
-    : current.length == 18 ? current.commitmentSalts[17]
-    : current.length == 19 ? current.commitmentSalts[18]
-    : current.length == 20 ? current.commitmentSalts[19]
-    : current.length == 21 ? current.commitmentSalts[20]
-    : current.length == 22 ? current.commitmentSalts[21]
-    : current.length == 23 ? current.commitmentSalts[22]
-    : current.length == 24 ? current.commitmentSalts[23]
-    : current.length == 25 ? current.commitmentSalts[24]
-    : current.length == 26 ? current.commitmentSalts[25]
-    : current.length == 27 ? current.commitmentSalts[26]
-    : current.length == 28 ? current.commitmentSalts[27]
-    : current.length == 29 ? current.commitmentSalts[28]
-    : current.length == 30 ? current.commitmentSalts[29]
-    : current.length == 31 ? current.commitmentSalts[30]
-    : current.commitmentSalts[31];
+    : current.commitmentSalts[3];
 }
 
 export circuit file(
@@ -334,7 +252,7 @@ export circuit file(
 
   assert(!filed.member(disclose(nullifier)), "this filer already filed on this slot");
   assert(!ciphertextsUsed.member(disclose(cipherId)), "ciphertext has already been filed");
-  assert(currentHistory.length < 32 as Uint<8>, "private filing history is full");
+  assert(currentHistory.length < 4 as Uint<8>, "private filing history is full");
 
   const openedHistory = persistentCommit<FilingHistory>(
     currentHistory,
@@ -350,7 +268,7 @@ export circuit file(
     assert(currentHistory.length == 0 as Uint<8>, "history must start empty");
   }
 
-  for (const i of 0..32) {
+  for (const i of 0..4) {
     assert(currentHistory.length <= i || currentHistory.slots[i] != slotKey,
       "slot already exists in private filing history");
     assert(currentHistory.length <= i || currentHistory.commitmentSalts[i] != nextHistorySalt(),

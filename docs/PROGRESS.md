@@ -1,6 +1,6 @@
 # Progress
 
-Updated 2026-09-14.
+Updated 2026-09-15.
 
 Source correction recorded during local contract inspection: Compact circuits do not
 enumerate ledger state, but the generated public-state query wrapper exposes map/set
@@ -10,7 +10,7 @@ forward.
 
 ## W1-P0 — source verification and registration
 
-Status: **source verification, CI validation, canonical counter smoke test, and Thirdmark Preprod deployment passed. The filing and dossier gates remain open.**
+Status: **source verification, CI validation, canonical counter smoke test, replacement Thirdmark Preprod deployment, and public demo hosting passed. The three-party filing and dossier gates remain open.**
 
 Passed:
 
@@ -40,12 +40,12 @@ Not passed:
 - The development Mac still cannot execute the local 0.30.0 `zkir` process; it exits with `SIGILL`. Managed CircleCI has now completed the full proving-key compile, so the local CPU issue is not blocking CI validation.
 - The supplied in-circuit inverse step is not available in the verified Compact API. The pinned runtime also does not export the Jubjub scalar modulus; the scratch harness uses the source-backed protocol constant explicitly, and product OPRF code must resolve this dependency choice before implementation.
 - The local full counter compile still exits with `zkir` `-4`/`SIGILL`; the managed compiled assets are available from pipeline `#5` and are installed only in the gitignored reference checkout.
-- Thirdmark filing, dossier, proving-time, and live-URL evidence do not exist yet.
+- Three-party Thirdmark filing, unlock, dossier, and proving-time evidence do not exist yet. The public frontend and isolated issuer/registry endpoints are now live for that test.
 - The canonical example-counter now has a wallet-backed Preprod receipt; its address, transaction ID, transaction hash, block, and screenshot are recorded below.
 
-Why blocked:
+Why the remaining gates are open:
 
-The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The canonical example-counter has now been deployed through 1AM on Preprod. The next action is to run the issuer with its operator-held scalar, expose only its public key and evaluation endpoint to the browser, then deploy Thirdmark through the same wallet path.
+The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for both the reference counter and the OPRF scratch circuit passed on the managed CircleCI runner. The scratch circuit also passes the in-process simulator suite locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The canonical example-counter has now been deployed through 1AM on Preprod. A replacement Thirdmark contract and fresh operator-held issuer key are now deployed; the remaining proof is the real three-filer cycle and the dossier/indexer path.
 
 User inputs still required before the external gates:
 
@@ -98,7 +98,7 @@ no counter or Thirdmark Preprod transaction is claimed.
 
 Completed locally:
 
-- Added `contract/src/thirdmark.compact` with sealed issuer configuration, DLEQ-authenticated OPRF evaluation, persistent slot/nullifier/entry derivations, `Bytes<128>` opaque ciphertext storage, nullifier and ciphertext replay guards, a 32-entry evolving private filing-history commitment, fresh-salt uniqueness checks, and threshold-only unlock state.
+- Added `contract/src/thirdmark.compact` with sealed issuer configuration, DLEQ-authenticated OPRF evaluation, persistent slot/nullifier/entry derivations, `Bytes<128>` opaque ciphertext storage, nullifier and ciphertext replay guards, a bounded evolving private filing-history commitment, fresh-salt uniqueness checks, and threshold-only unlock state.
 - Added `ThirdmarkSimulator` and 14 product tests. The suite covers valid and invalid DLEQ proofs, same-subject/different-blind equality, different-subject separation, first/second/third threshold behavior, duplicate filer, stale private state, ciphertext replay, invalid proof mutation safety, wrong ciphertext width, and history-salt reuse.
 - Added the product contract to the full CircleCI proving-key compile and changed the CI simulator step to `npm test`. Pipeline `#10` is the successful managed result.
 - Added the client-side AES-GCM report envelope in `client/crypto.ts`. It derives its key from the OPRF-derived Jubjub point, uses a random 12-byte IV, authenticates the report, and enforces the contract’s exact 128-byte ciphertext width. Seven tests cover round-trip recovery, randomized envelopes, wrong-key failure, width and length rejection, field validation, and capacity rejection.
@@ -266,6 +266,44 @@ The ignored `web/.env.local` now contains only the issuer URL, issuer public poi
 and this public contract address. It contains no issuer scalar or wallet material.
 The next gate is an end-to-end filing, beginning with a real CAC adapter result and
 one browser-held filer state.
+
+## Replacement Thirdmark deployment and public demo stack — 2026-09-15
+
+The original issuer scalar for the 14 September contract could not be recovered
+from the local workspace or either available Lightsail host. Because the issuer
+public point is sealed into the contract, generating a new scalar for that old
+contract would have made the browser path fail closed. The owner authorized a
+fresh Preprod deployment instead; the old receipt above remains historical.
+
+Replacement receipt supplied by the owner after the connected 1AM wallet path
+completed:
+
+- Contract address: `0c3bc3991fa7cd8e8f88e444f01925810db4eb6c15b102c767dc0ccc9093d85a`
+- Transaction ID: `00b3588bdb549b2fbce08c66402d79483b5efa2c3c244d8a7a03b31dd6c6de04d1`
+- Transaction hash: `79a43b9220e636fc7f34afcc347e481306699dd53d5a52ae618475e180d127df`
+- Block: `2559681`
+- Issuer public point X: `204672577557605287820497018819041753968088741810193409593349906945901987694`
+- Issuer public point Y: `28428946414311095959940971962553415704357918583949997884813409128029017757158`
+
+The public demo stack is now:
+
+- Frontend: `https://thirdmark.vercel.app`
+- Issuer HTTPS endpoint: `https://together-session-consequently-employee.trycloudflare.com`
+- CAC adapter HTTPS endpoint: `https://proper-directed-concerts-utilize.trycloudflare.com`
+- Host: the selected Lightsail instance `13.62.181.128`, isolated under
+  `/home/ubuntu/thirdmark`, with loopback listeners on `8797` and `8798`.
+
+The issuer scalar is generated and stored only on that host with restrictive
+permissions; it is not in the repository, browser bundle, or this record. The
+existing projects, ports, Nginx routes, and processes on the host were not
+modified. The two `trycloudflare.com` URLs are accountless Quick Tunnels for the
+demo and are not production-grade stable service names; a restart may require
+capturing new URLs and rebuilding the browser configuration.
+
+Verification after deployment: both HTTPS health checks returned HTTP 200, both
+returned `access-control-allow-origin: https://thirdmark.vercel.app`, and the
+Vercel root served the rebuilt browser bundle. No filing, unlock, or dossier is
+claimed by these checks.
 
 ## CAC registry adapter — 2026-09-14
 

@@ -33,8 +33,8 @@ export type ThirdmarkWitnesses = Witnesses<ThirdmarkPrivateState>;
 type Context = WitnessContext<Ledger, ThirdmarkPrivateState>;
 
 export const emptyFilingHistory = (): FilingHistory => ({
-  slots: Array.from({ length: 32 }, () => new Uint8Array(32)),
-  commitmentSalts: Array.from({ length: 32 }, () => new Uint8Array(32)),
+  slots: Array.from({ length: 4 }, () => new Uint8Array(32)),
+  commitmentSalts: Array.from({ length: 4 }, () => new Uint8Array(32)),
   length: 0n,
 });
 
