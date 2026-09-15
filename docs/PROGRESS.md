@@ -24,9 +24,44 @@ Active contract:
 The second amount is recorded as `300000` because that is what the unlocked
 browser dossier displayed; it is not silently corrected to the originally
 suggested `30000`. The cycle proves the real issuer, browser encryption,
-delegated proving, contract threshold transition, and local decryption path.
-The dossier export, signer approvals, indexer timestamps, and independent
-verification wiring remain separate product work.
+delegated proving, contract threshold transition, and local decryption path. The
+dossier screen and its public-indexer/export/verification path are implemented
+below.
+
+## Dossier integration and final public deployment — 2026-09-15
+
+The dossier screen is now wired to the existing [`client/dossier.ts`](../client/dossier.ts)
+library and the Midnight public indexer. It assembles the three locally decrypted
+attestations with finalized transaction evidence, collects three distinct artifact
+approvals, verifies the signed artifact, downloads `thirdmark-dossier.json`, and
+independently verifies a re-uploaded JSON file.
+
+Indexer evidence for the three successful filing hashes is:
+
+| Filing | Transaction ID | Block | Filed at (UTC) | Explorer |
+| --- | --- | ---: | --- | --- |
+| 1 | `0082ceec77bace946fb68b1836f9e3cf2e4ea31c7f37470d4943e90e5e12dd1f0e` | 2562464 | 2026-09-15 15:50:42 | [Preprod](https://explorer.1am.xyz/tx/6084a446c87573749aed73b7db74a67a727c6c54aeb4f687d179435c3216f2f6?network=preprod) |
+| 2 | `00cc453bdc5ddeaa7ff07737f121549dc199209e4a8c6aa6d7663d9b62f7ca19bb` | 2562606 | 2026-09-15 16:04:54 | [Preprod](https://explorer.1am.xyz/tx/2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb?network=preprod) |
+| 3 | `0030963b0784245ce3d57a367844e8cf7e9a7ad1a2f862bf64fd9d361807e3a71f` | 2562931 | 2026-09-15 16:37:24 | [Preprod](https://explorer.1am.xyz/tx/1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904?network=preprod) |
+
+The transaction hashes in those receipts are, respectively,
+`6084a446c87573749aed73b7db74a67a727c6c54aeb4f687d179435c3216f2f6`,
+`2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb`, and
+`1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904`.
+
+The production frontend deployment is `dpl_589ZBvpR7z6b2rXRkDbRoSssjvUp` at
+[`thirdmark.vercel.app`](https://thirdmark.vercel.app). Its live bundle was checked
+for the dossier builder, JSON export path, and active contract address. Both
+public adapter health endpoints returned HTTP 200 after the issuer and registry
+were moved into Thirdmark-scoped user-level systemd services on the selected
+Lightsail host. The accountless Quick Tunnel URLs remain temporary; no other
+project, Nginx route, or host secret was changed.
+
+The three approvals are deliberately described as browser-held Ed25519 artifact
+signatures. They prove that three distinct keys approved the canonical dossier in
+the current browser and are independently verifiable, but they are not yet
+wallet-native 1AM signatures tied to supplier identity. That binding is the only
+material dossier hardening item left for a production identity model.
 
 Source correction recorded during local contract inspection: Compact circuits do not
 enumerate ledger state, but the generated public-state query wrapper exposes map/set
@@ -59,7 +94,7 @@ recorded above.
 
 ## W1-P0 — source verification and registration
 
-Status: **source verification, CI validation, canonical counter smoke test, reduced Thirdmark Preprod deployment, public demo hosting, three-party filing, and threshold unlock passed. The dossier export, signer approvals, indexer timestamps, and independent verification gates remain open.**
+Status: **source verification, CI validation, canonical counter smoke test, reduced Thirdmark Preprod deployment, public demo hosting, three-party filing, threshold unlock, dossier assembly, indexer evidence, artifact approvals, export, and independent verification path passed. Stable DNS and wallet-native signer identity remain optional production hardening.**
 
 Passed:
 
@@ -84,24 +119,20 @@ Passed:
 - Verified the patch from a clean temporary reference checkout and reran `npm run test:oprf`: strict typechecking and all six simulator tests passed. The local Vitest timeout was raised to 30 seconds because the circuit simulator can exceed Vitest’s five-second default on this development machine.
 - The corrected CLI then exposed a second operational issue: its fresh wallet replayed the Preprod shielded and dust streams from cursor zero while displaying only a spinner. The public indexer remained responsive and advertised approximately 1.51 million Zswap events. Added source-checked checkpointing and cursor reporting to the ignored reference CLI; the checkpoint patch typechecks, applies cleanly to a fresh checkout, and is idempotent through `npm run patch:reference-wallet`.
 
-Not passed:
+Not blockers:
 
-- The development Mac still cannot execute the local 0.30.0 `zkir` process; it exits with `SIGILL`. Managed CircleCI has now completed the full proving-key compile, so the local CPU issue is not blocking CI validation.
-- The supplied in-circuit inverse step is not available in the verified Compact API. The pinned runtime also does not export the Jubjub scalar modulus; the scratch harness uses the source-backed protocol constant explicitly, and product OPRF code must resolve this dependency choice before implementation.
-- The local full counter compile still exits with `zkir` `-4`/`SIGILL`; the managed compiled assets are available from pipeline `#5` and are installed only in the gitignored reference checkout.
-- Three-party Thirdmark filing and threshold-unlock evidence are recorded in the current filing section above. The dossier export, signer approvals, indexer timestamps, and independent verification still need implementation and evidence.
-- The canonical example-counter now has a wallet-backed Preprod receipt; its address, transaction ID, transaction hash, block, and screenshot are recorded below.
+- The development Mac still cannot execute the local 0.30.0 `zkir` process; it exits with `SIGILL`. Managed CircleCI completed the full proving-key compile, so the local CPU issue does not block validation or deployment.
+- The supplied in-circuit inverse step is not available in the verified Compact API; the implemented client/circuit path uses the source-backed scalar modulus and has already passed the managed compile and real Preprod filing cycle.
+- The canonical example-counter and the active reduced Thirdmark contract both have wallet-backed Preprod receipts recorded below and above.
 
-Why the remaining gates are open:
+Optional production hardening:
 
-The official Compact security advisory GHSA-3p6x-5vpx-wwpj identifies 0.31.1 and earlier as vulnerable to forged `Uint<N>` range constraints, while the same advisory identifies 0.30.x as outside that regression. Compact 0.34.0 targets ledger v9 and is not a Preprod substitute. The safe 0.30.0 candidate is installed, and its full proving-key compile for the reference counter, OPRF scratch circuit, and current reduced Thirdmark circuit passed on the managed CircleCI runner. The scratch and Thirdmark simulator suites also pass locally and in the latest CircleCI run. This development Mac’s CPU still cannot execute the bundled `zkir`, but managed deployment assets are available. The canonical example-counter and superseded four-entry Thirdmark contract have been deployed through 1AM on Preprod. The current reduced contract has now been deployed and exercised through the real three-filer cycle; the remaining proof is the dossier/indexer path.
+- Stable HTTPS/DNS requires a domain and Cloudflare account/token. The current accountless Quick Tunnels are healthy and the two backend adapters are supervised on the selected host.
+- Wallet-native supplier identity binding would replace the current browser-held Ed25519 artifact approvals if AKINDO requires signer identity to be tied to 1AM accounts.
 
-User inputs still required before the external gates:
+External submission input still required:
 
-- AKINDO account confirmation and Discord handle.
-- A funded Preprod wallet at W1-P2; the wallet seed or key must never be shared. This is satisfied for the owner-controlled 1AM wallet, which must now approve one fresh reduced-circuit deployment.
-- An operator-run issuer process with its scalar kept outside the repository and chat; only the issuer URL and derived public point belong in browser configuration.
-- A Vercel or Netlify account and optional domain at W1-P5.
+- An AKINDO account confirmation and Discord handle are needed for an authenticated external comment submission; the final draft is in [`COMMENTS.md`](COMMENTS.md).
 
 ## Parallel local implementation — 2026-09-12
 

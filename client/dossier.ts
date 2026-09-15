@@ -8,16 +8,26 @@ export const DOSSIER_RECORD_COUNT = 3 as const;
 
 export type Hex32 = string & { readonly __thirdmarkHex32: unique symbol };
 
+export type DossierTransactionEvidence = {
+  readonly txId: string;
+  readonly txHash: string;
+  readonly blockHeight: number;
+  readonly blockHash: string;
+  readonly status: string;
+};
+
 export type DossierRecordInput = {
   readonly entryKey: Uint8Array;
   readonly filedAt: string;
   readonly attestation: ReportAttestation;
+  readonly transaction?: DossierTransactionEvidence;
 };
 
 export type DossierRecord = {
   readonly entryKey: Hex32;
   readonly filedAt: string;
   readonly attestation: ReportAttestation;
+  readonly transaction?: DossierTransactionEvidence;
 };
 
 export type Dossier = {
@@ -93,6 +103,32 @@ const assertNonEmpty = (value: string, field: string): void => {
   }
 };
 
+const assertHash = (value: string, field: string): void => {
+  if (!/^[0-9a-f]{64}$/iu.test(value)) {
+    throw new Error(`${field} must be a 32-byte hexadecimal value`);
+  }
+};
+
+const copyTransactionEvidence = (
+  evidence: DossierTransactionEvidence | undefined,
+): DossierTransactionEvidence | undefined => {
+  if (!evidence) return undefined;
+  assertNonEmpty(evidence.txId, "transaction ID");
+  assertHash(evidence.txHash, "transaction hash");
+  assertHash(evidence.blockHash, "block hash");
+  if (!Number.isSafeInteger(evidence.blockHeight) || evidence.blockHeight < 0) {
+    throw new Error("block height must be a non-negative safe integer");
+  }
+  assertNonEmpty(evidence.status, "transaction status");
+  return {
+    txId: evidence.txId,
+    txHash: evidence.txHash.toLowerCase(),
+    blockHeight: evidence.blockHeight,
+    blockHash: evidence.blockHash.toLowerCase(),
+    status: evidence.status,
+  };
+};
+
 const assertInstant = (value: string, field: string): void => {
   assertNonEmpty(value, field);
   if (!value.endsWith("Z") || Number.isNaN(Date.parse(value))) {
@@ -138,6 +174,7 @@ const assertDossier = (dossier: Dossier): void => {
     entryKeys.add(record.entryKey);
     assertInstant(record.filedAt, "filing time");
     validateReport(record.attestation);
+    if (record.transaction) copyTransactionEvidence(record.transaction);
   }
   const sorted = [...dossier.records].sort(compareRecords);
   if (sorted.some((record, index) => record !== dossier.records[index])) {
@@ -162,6 +199,7 @@ export const createDossier = (input: {
       entryKey: asHex32(record.entryKey),
       filedAt: record.filedAt,
       attestation: copyReport(record.attestation),
+      transaction: copyTransactionEvidence(record.transaction),
     }))
     .sort(compareRecords) as [DossierRecord, DossierRecord, DossierRecord];
   const dossier: Dossier = {
@@ -187,6 +225,7 @@ const dossierJsonValue = (dossier: Dossier): object => {
     records: dossier.records.map((record) => ({
       entryKey: record.entryKey,
       filedAt: record.filedAt,
+      ...(record.transaction ? { transaction: record.transaction } : {}),
       attestation: {
         amountOverdueMinorUnits: record.attestation.amountOverdueMinorUnits,
         daysLate: record.attestation.daysLate,
@@ -244,6 +283,14 @@ const signOne = async (
     publicKey: base64UrlEncode(await publicKeyBytes(signer.keyPair.publicKey)),
     signature: base64UrlEncode(new Uint8Array(signature)),
   };
+};
+
+export const signDossier = async (
+  dossier: Dossier,
+  signer: DossierSigner,
+): Promise<DossierSignature> => {
+  assertDossier(dossier);
+  return signOne(dossier, signer);
 };
 
 export const coSignDossier = async (
@@ -377,10 +424,34 @@ export const parseSignedDossier = (serialized: string): SignedDossier => {
     ) {
       throw new Error("dossier record has an invalid shape");
     }
+    let transaction: DossierTransactionEvidence | undefined;
+    if (record.transaction !== undefined) {
+      if (record.transaction === null || typeof record.transaction !== "object") {
+        throw new Error("dossier transaction evidence has an invalid shape");
+      }
+      const evidence = record.transaction as Record<string, unknown>;
+      if (
+        typeof evidence.txId !== "string" ||
+        typeof evidence.txHash !== "string" ||
+        typeof evidence.blockHeight !== "number" ||
+        typeof evidence.blockHash !== "string" ||
+        typeof evidence.status !== "string"
+      ) {
+        throw new Error("dossier transaction evidence has an invalid shape");
+      }
+      transaction = {
+        txId: evidence.txId,
+        txHash: evidence.txHash,
+        blockHeight: evidence.blockHeight,
+        blockHash: evidence.blockHash,
+        status: evidence.status,
+      };
+    }
     return {
       entryKey: fromHex(record.entryKey),
       filedAt: record.filedAt,
       attestation: record.attestation as ReportAttestation,
+      transaction,
     };
   });
   const dossier = createDossier({

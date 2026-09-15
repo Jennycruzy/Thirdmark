@@ -1,8 +1,19 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import { encryptReport, type ReportAttestation } from "../../client/crypto.js";
-import { hasContractConfiguration, hasIssuerConfiguration, hasSyntheticSubjectConfiguration, rememberContractAddress, publicAppConfig } from "./config.js";
+import {
+  createDossier,
+  parseSignedDossier,
+  serializeSignedDossier,
+  signDossier,
+  verifySignedDossier,
+  type Dossier,
+  type DossierSignature,
+  type SignedDossier,
+} from "../../client/dossier.js";
+import { getContractAddress, hasContractConfiguration, hasIssuerConfiguration, hasSyntheticSubjectConfiguration, rememberContractAddress, publicAppConfig } from "./config.js";
 import { deriveCompanySlot } from "./issuer.js";
 import { connectThirdmark, deployExampleCounter, deployThirdmark, type CounterDeploymentReceipt, type DeploymentReceipt, type FilingReceipt, type SlotSnapshot } from "./midnight/contract.js";
+import { fetchDossierTransactions, type IndexedTransaction } from "./midnight/indexer.js";
 import { connectWallet, type WalletSession } from "./midnight/wallet.js";
 import { createSyntheticCompany, searchCompanies, type RegistrySearchResult } from "./registry.js";
 import "./styles.css";
@@ -122,6 +133,11 @@ function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [counterDeployment, setCounterDeployment] = useState<CounterDeploymentReceipt | null>(null);
   const [deployment, setDeployment] = useState<DeploymentReceipt | null>(null);
+  const [dossier, setDossier] = useState<Dossier | null>(null);
+  const [dossierEvidence, setDossierEvidence] = useState<readonly IndexedTransaction[]>([]);
+  const [dossierSignatures, setDossierSignatures] = useState<readonly DossierSignature[]>([]);
+  const [dossierVerification, setDossierVerification] = useState<boolean | null>(null);
+  const [uploadedVerification, setUploadedVerification] = useState<boolean | null>(null);
 
   const syntheticCompany = useMemo(
     () => hasSyntheticSubjectConfiguration()
@@ -219,6 +235,132 @@ function App() {
     } finally {
       setWorking(false);
       setWorkingStage(null);
+    }
+  };
+
+  const handleBuildDossier = async (): Promise<void> => {
+    if (!wallet || !fileReceipt || !slotSnapshot?.unlocked || !slotSnapshot.records) {
+      setNotice("The dossier requires a finalized threshold filing in this browser.");
+      return;
+    }
+    if (publicAppConfig.dossierTransactionHashes.length !== 3) {
+      setNotice("The public dossier evidence is not configured with three filing transactions.");
+      return;
+    }
+    setNotice(null);
+    setWorking(true);
+    setWorkingStage("Reading finalized filing evidence from the Preprod indexer");
+    try {
+      const walletConfiguration = await wallet.api.getConfiguration();
+      const evidence = await fetchDossierTransactions(
+        walletConfiguration.indexerUri,
+        publicAppConfig.dossierTransactionHashes,
+        getContractAddress(),
+      );
+      const records = slotSnapshot.records.map((record, index) => ({
+        entryKey: record.entryKey,
+        filedAt: evidence[index].filedAt,
+        attestation: record.attestation,
+        transaction: evidence[index],
+      }));
+      const unlockedAt = [...evidence].map((transaction) => transaction.filedAt).sort().at(-1);
+      if (!unlockedAt) throw new Error("the indexer returned no unlock timestamp");
+      const built = createDossier({
+        contractAddress: getContractAddress(),
+        slotKey: fileReceipt.slotKey,
+        threshold: slotSnapshot.threshold,
+        unlockedAt,
+        records,
+      });
+      setDossierEvidence(evidence);
+      setDossier(built);
+      setDossierSignatures([]);
+      setDossierVerification(null);
+      setUploadedVerification(null);
+      setStep("dossier");
+      setNotice("Dossier assembled from the three decrypted attestations and public indexer evidence.");
+    } catch (error) {
+      const diagnostic = diagnosticMessage(error);
+      setNotice(`The dossier could not be assembled.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
+    } finally {
+      setWorking(false);
+      setWorkingStage(null);
+    }
+  };
+
+  const handleDossierApproval = async (index: number): Promise<void> => {
+    if (!dossier) {
+      setNotice("Assemble the dossier before approving it.");
+      return;
+    }
+    const reference = `filing-${index + 1}`;
+    if (dossierSignatures.some((signature) => signature.reference === reference)) return;
+    setNotice(null);
+    setWorking(true);
+    setWorkingStage(`Collecting signer approval ${index + 1} of 3`);
+    try {
+      const keyPair = (await globalThis.crypto.subtle.generateKey(
+        { name: "Ed25519" },
+        true,
+        ["sign", "verify"],
+      )) as CryptoKeyPair;
+      const signature = await signDossier(dossier, { reference, keyPair });
+      const next = [...dossierSignatures, signature].sort((left, right) => left.reference.localeCompare(right.reference));
+      setDossierSignatures(next);
+      if (next.length === 3) {
+        const signed = {
+          dossier,
+          signatures: next as [DossierSignature, DossierSignature, DossierSignature],
+        } satisfies SignedDossier;
+        const valid = await verifySignedDossier(signed);
+        setDossierVerification(valid);
+        setNotice(valid ? "Three distinct signer approvals captured and independently verified." : "The signer approvals could not be verified.");
+      } else {
+        setNotice(`Signer approval ${index + 1} captured. Two or more approvals are still required.`);
+      }
+    } catch (error) {
+      const diagnostic = diagnosticMessage(error);
+      setNotice(`Signer approval failed.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
+    } finally {
+      setWorking(false);
+      setWorkingStage(null);
+    }
+  };
+
+  const handleDownloadDossier = (): void => {
+    if (!dossier || dossierSignatures.length !== 3 || dossierVerification !== true) {
+      setNotice("Complete and verify all three signer approvals before exporting.");
+      return;
+    }
+    const signed = {
+      dossier,
+      signatures: dossierSignatures as [DossierSignature, DossierSignature, DossierSignature],
+    } satisfies SignedDossier;
+    const serialized = serializeSignedDossier(signed);
+    const url = URL.createObjectURL(new Blob([serialized], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "thirdmark-dossier.json";
+    link.click();
+    URL.revokeObjectURL(url);
+    setNotice("Signed dossier exported as thirdmark-dossier.json.");
+  };
+
+  const handleVerifyUpload = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const parsed = parseSignedDossier(await file.text());
+      const valid = await verifySignedDossier(parsed);
+      setUploadedVerification(valid);
+      setNotice(valid ? "Independent dossier verification passed." : "Independent dossier verification failed.");
+    } catch (error) {
+      setUploadedVerification(false);
+      const diagnostic = diagnosticMessage(error);
+      setNotice(`The uploaded dossier is invalid.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
+    } finally {
+      input.value = "";
     }
   };
 
@@ -490,8 +632,21 @@ function App() {
           )}
 
           {step === "sealed" && <StatePanel step="sealed" receipt={fileReceipt} snapshot={slotSnapshot} onBack={() => setStep("file")} />}
-          {step === "unlocked" && <StatePanel step="unlocked" receipt={fileReceipt} snapshot={slotSnapshot} onBack={() => setStep("sealed")} />}
-          {step === "dossier" && <StatePanel step="dossier" receipt={fileReceipt} snapshot={slotSnapshot} onBack={() => setStep("unlocked")} />}
+          {step === "unlocked" && <StatePanel step="unlocked" receipt={fileReceipt} snapshot={slotSnapshot} onBack={() => setStep("sealed")} onOpenDossier={() => void handleBuildDossier()} working={working} />}
+          {step === "dossier" && (
+            <DossierPanel
+              dossier={dossier}
+              evidence={dossierEvidence}
+              signatures={dossierSignatures}
+              verified={dossierVerification}
+              uploadedVerification={uploadedVerification}
+              working={working}
+              onApprove={(index) => void handleDossierApproval(index)}
+              onDownload={handleDownloadDossier}
+              onVerifyUpload={handleVerifyUpload}
+              onBack={() => setStep("unlocked")}
+            />
+          )}
         </div>
 
         <PrivacyInspector publicState={publicState} prepared={prepared} receipt={fileReceipt} />
@@ -588,13 +743,132 @@ function PrivacyInspector({ publicState, prepared, receipt }: { readonly publicS
   );
 }
 
-function StatePanel({ step, receipt, snapshot, onBack }: { readonly step: "sealed" | "unlocked" | "dossier"; readonly receipt: FilingReceipt | null; readonly snapshot: SlotSnapshot | null; readonly onBack: () => void }) {
+function StatePanel({ step, receipt, snapshot, onBack, onOpenDossier, working }: { readonly step: "sealed" | "unlocked" | "dossier"; readonly receipt: FilingReceipt | null; readonly snapshot: SlotSnapshot | null; readonly onBack: () => void; readonly onOpenDossier?: () => void; readonly working?: boolean }) {
   const copy = {
     sealed: { eyebrow: "Step 03", title: "Filed. Still sealed.", body: "Nothing is visible until two more independent suppliers file against the same company reference. No sub-threshold count is shown." },
     unlocked: { eyebrow: "Step 04", title: "The third mark changed the state.", body: "Only the three participating filers can decrypt their records locally. No service receives the report details." },
     dossier: { eyebrow: "Step 05", title: "The dossier is the settlement.", body: "The final artifact joins the three attestations with public ledger evidence. Dates and approvals must come from the completed chain read path." },
   }[step];
-  return <section className="panel state-panel"><p className="eyebrow">{copy.eyebrow}</p><h2>{copy.title}</h2><p className="muted">{copy.body}</p><div className="state-placeholder"><Tally unlocked={step !== "sealed"} /><span>{step === "sealed" ? (receipt ? `Transaction ${shortValue(receipt.txId)} is sealed at the threshold.` : "Waiting for an actual filing transaction") : snapshot?.unlocked ? `${snapshot.records?.length ?? 0} decrypted attestations are held in this browser.` : "Unlock requires a finalized threshold transaction."}</span></div>{step === "unlocked" && snapshot?.records && <div className="record-list" aria-label="Decrypted attestations">{snapshot.records.map((record, index) => <article className="record-card" key={`${record.invoiceReference}-${index}`}><span className="label">Attestation {index + 1}</span><strong>{record.amountOverdueMinorUnits} minor units overdue</strong><span>{record.daysLate} days late · {record.invoiceReference}</span></article>)}</div>}<button className="quiet-button" type="button" onClick={onBack}>Back</button></section>;
+  return (
+    <section className="panel state-panel">
+      <p className="eyebrow">{copy.eyebrow}</p>
+      <h2>{copy.title}</h2>
+      <p className="muted">{copy.body}</p>
+      <div className="state-placeholder">
+        <Tally unlocked={step !== "sealed"} />
+        <span>
+          {step === "sealed"
+            ? (receipt ? `Transaction ${shortValue(receipt.txId)} is sealed at the threshold.` : "Waiting for an actual filing transaction")
+            : snapshot?.unlocked
+              ? `${snapshot.records?.length ?? 0} decrypted attestations are held in this browser.`
+              : "Unlock requires a finalized threshold transaction."}
+        </span>
+      </div>
+      {step === "unlocked" && snapshot?.records && (
+        <div className="record-list" aria-label="Decrypted attestations">
+          {snapshot.records.map((record, index) => (
+            <article className="record-card" key={`${record.attestation.invoiceReference}-${index}`}>
+              <span className="label">Attestation {index + 1}</span>
+              <strong>{record.attestation.amountOverdueMinorUnits} minor units overdue</strong>
+              <span>{record.attestation.daysLate} days late · {record.attestation.invoiceReference}</span>
+            </article>
+          ))}
+        </div>
+      )}
+      <div className="state-actions">
+        <button className="quiet-button" type="button" onClick={onBack}>Back</button>
+        {step === "unlocked" && onOpenDossier && (
+          <button className="primary-button" type="button" onClick={onOpenDossier} disabled={working}>
+            {working ? "Preparing dossier…" : "Build the dossier"}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function DossierPanel({
+  dossier,
+  evidence,
+  signatures,
+  verified,
+  uploadedVerification,
+  working,
+  onApprove,
+  onDownload,
+  onVerifyUpload,
+  onBack,
+}: {
+  readonly dossier: Dossier | null;
+  readonly evidence: readonly IndexedTransaction[];
+  readonly signatures: readonly DossierSignature[];
+  readonly verified: boolean | null;
+  readonly uploadedVerification: boolean | null;
+  readonly working: boolean;
+  readonly onApprove: (index: number) => void;
+  readonly onDownload: () => void;
+  readonly onVerifyUpload: (event: ChangeEvent<HTMLInputElement>) => void;
+  readonly onBack: () => void;
+}) {
+  const signatureReferences = new Set(signatures.map((signature) => signature.reference));
+  return (
+    <section className="panel state-panel dossier-panel">
+      <p className="eyebrow">Step 05</p>
+      <h2>The dossier is the settlement.</h2>
+      <p className="muted">
+        Three decrypted attestations are joined with public Preprod transaction evidence. The signed JSON can be
+        downloaded and verified independently without sending report details to a Thirdmark service.
+      </p>
+      {!dossier ? (
+        <div className="configuration-note">
+          <strong>Dossier evidence is not ready.</strong>
+          <span>Return to the unlocked step and build the dossier from the connected wallet’s indexer.</span>
+        </div>
+      ) : (
+        <>
+          <div className="dossier-summary">
+            <div><span className="label">Contract</span><code>{shortValue(dossier.contractAddress)}</code></div>
+            <div><span className="label">Unlocked at</span><span>{dossier.unlockedAt}</span></div>
+            <div><span className="label">Records</span><strong>{dossier.records.length} / {dossier.threshold}</strong></div>
+          </div>
+          <div className="dossier-evidence" aria-label="Public filing evidence">
+            <p className="label">Public indexer evidence</p>
+            {evidence.map((transaction, index) => (
+              <article className="evidence-row" key={transaction.txHash}>
+                <span>Filing {index + 1}</span>
+                <code title={transaction.txId}>ID {shortValue(transaction.txId)}</code>
+                <code title={transaction.txHash}>hash {shortValue(transaction.txHash)}</code>
+                <span>block {transaction.blockHeight} · {transaction.filedAt}</span>
+              </article>
+            ))}
+          </div>
+          <div className="dossier-approvals">
+            <p className="label">Signer approvals</p>
+            <p className="field-note">Each approval creates a distinct Ed25519 signature in this browser and is checked against the canonical dossier bytes.</p>
+            {[0, 1, 2].map((index) => {
+              const reference = `filing-${index + 1}`;
+              const approved = signatureReferences.has(reference);
+              return (
+                <div className="approval-row" key={reference}>
+                  <span><strong>Filing {index + 1} signer</strong><small>{reference}</small></span>
+                  <button className={approved ? "quiet-button approval-complete" : "primary-button"} type="button" onClick={() => onApprove(index)} disabled={working || approved}>
+                    {approved ? "Approved" : `Approve ${index + 1}`}
+                  </button>
+                </div>
+              );
+            })}
+            {verified !== null && <p className={verified ? "verification-pass" : "verification-fail"}>{verified ? "✓ Three signatures verified" : "× Signature verification failed"}</p>}
+          </div>
+          <div className="dossier-actions">
+            <button className="primary-button" type="button" onClick={onDownload} disabled={working || verified !== true}>Download signed dossier</button>
+            <label className="quiet-button upload-button">Verify a dossier file<input type="file" accept="application/json,.json" onChange={onVerifyUpload} /></label>
+          </div>
+          {uploadedVerification !== null && <p className={uploadedVerification ? "verification-pass" : "verification-fail"}>{uploadedVerification ? "✓ Uploaded dossier independently verified" : "× Uploaded dossier rejected"}</p>}
+        </>
+      )}
+      <button className="quiet-button" type="button" onClick={onBack}>Back</button>
+    </section>
+  );
 }
 
 export default App;

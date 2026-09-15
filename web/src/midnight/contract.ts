@@ -275,7 +275,10 @@ export type FilingReceipt = {
 export type SlotSnapshot = {
   readonly unlocked: boolean;
   readonly threshold: number;
-  readonly records?: readonly ReportAttestation[];
+  readonly records?: readonly {
+    readonly entryKey: Uint8Array;
+    readonly attestation: ReportAttestation;
+  }[];
 };
 
 export type DeploymentReceipt = {
@@ -424,10 +427,16 @@ export class ThirdmarkClient {
     const unlocked = current.unlocked.member(completed.slotKey);
     if (!unlocked) return { unlocked: false, threshold };
 
-    const records: ReportAttestation[] = [];
+    const records: {
+      readonly entryKey: Uint8Array;
+      readonly attestation: ReportAttestation;
+    }[] = [];
     for (let index = 0n; index < current.slotFilled.lookup(completed.slotKey); index += 1n) {
       const key = pureCircuits.entryKey(completed.slotKey, index);
-      records.push(await decryptReport(completed.slotSecret, asCiphertext128(current.entries.lookup(key))));
+      records.push({
+        entryKey: key,
+        attestation: await decryptReport(completed.slotSecret, asCiphertext128(current.entries.lookup(key))),
+      });
     }
     return { unlocked: true, threshold, records };
   }

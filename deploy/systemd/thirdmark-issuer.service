@@ -1,0 +1,18 @@
+[Unit]
+Description=Thirdmark issuer adapter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/thirdmark/app
+Environment=THIRDMARK_ROOT=/home/ubuntu/thirdmark
+Environment=THIRDMARK_ALLOWED_ORIGIN=https://thirdmark.vercel.app
+ExecStart=/home/ubuntu/thirdmark/bin/run-backend.sh issuer
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

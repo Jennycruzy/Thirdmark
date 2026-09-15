@@ -7,6 +7,7 @@ export type PublicAppConfig = {
   readonly registryAdapterUrl: string;
   readonly syntheticSubjectName: string;
   readonly syntheticSubjectRc: string;
+  readonly dossierTransactionHashes: readonly string[];
 };
 
 const env = import.meta.env as Record<string, string | undefined>;
@@ -17,6 +18,13 @@ const envContractAddress = env.VITE_CONTRACT_ADDRESS ?? "";
 const RUNTIME_CONTRACT_ADDRESS_KEY = "thirdmark:contract-address:v2";
 
 const isContractAddress = (value: string): boolean => /^[0-9a-f]{64}$/iu.test(value);
+const isTransactionHash = (value: string): boolean => /^[0-9a-f]{64}$/iu.test(value);
+
+const configuredDossierTransactionHashes = (): readonly string[] =>
+  (env.VITE_DOSSIER_TRANSACTION_HASHES ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(isTransactionHash);
 
 const storedContractAddress = (): string => {
   if (typeof window === "undefined") return "";
@@ -54,6 +62,7 @@ export const publicAppConfig: PublicAppConfig = {
   registryAdapterUrl: env.VITE_REGISTRY_ADAPTER_URL ?? "",
   syntheticSubjectName: env.VITE_SYNTHETIC_SUBJECT_NAME ?? "",
   syntheticSubjectRc: env.VITE_SYNTHETIC_SUBJECT_RC ?? "",
+  dossierTransactionHashes: configuredDossierTransactionHashes(),
 };
 
 export const hasIssuerConfiguration = (): boolean =>

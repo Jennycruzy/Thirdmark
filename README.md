@@ -23,7 +23,7 @@ Thirdmark makes corroboration possible without publishing a lone accusation. Thr
 - [Nigeria CAC public search](https://icrp.cac.gov.ng/public-search/) — the official registry boundary used to resolve a company name to an RC number.
 - [CircleCI build evidence](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark) — managed full-proof compilation and browser checks.
 
-The current build has a real Thirdmark contract on Midnight Preprod and a public browser URL at `https://thirdmark.vercel.app`. The three-wallet filing cycle and threshold unlock are evidenced in [`docs/PROGRESS.md`](docs/PROGRESS.md); the dossier export and independent verification remain open product gates.
+The current build has a real Thirdmark contract on Midnight Preprod and a public browser URL at `https://thirdmark.vercel.app`. The three-wallet filing cycle, threshold unlock, public indexer evidence, dossier approvals, export, and independent verification path are recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 ## The product in one minute
 
@@ -60,22 +60,20 @@ This is inter-party private state, not self-attestation. A supplier is not provi
 
 ## Current verified delivery
 
-### Deployed on Midnight Preprod
+### Active Midnight Preprod deployment
 
-The first replacement Thirdmark deployment was submitted through the connected
-1AM wallet on 15 September 2026 with a threshold of three. It is retained as a
-receipt, but it is superseded by the smaller delegated-proving circuit below
-and must not be used with the current browser build:
+The active reduced Wave 1 contract was submitted through 1AM on 15 September
+2026 with a threshold of three:
 
-- Contract: `76df34103d6e2e0e0b1a561509366090c27eb392f6a07eb75b2d102fd646ef12`
-- Transaction ID: `00a602aeba4fb9ffd0a9a04902da9f870c79a82ca03fae0d565d433b94d93525cb`
-- Transaction hash: `c5e7eddd73bc3463c55f05131d7b15563d2a0a4f460e9a5bca2db4f174b2135c`
-- Block: `2561298`
+- Contract: `acda20c181cee5a84030a088de372949104b1ea894373e2cc9af4813e0ad5fbe`
+- Deployment transaction ID: `002aae5c1e3c6fdb5fbc36c082833978e7b8ea3363f45497f3608a8a85ccd25c3d`
+- Deployment transaction hash: `b67da74efeb47b98bcf5570b8b7eff384a4f84874bd99ec377a4b6fb5ba77d3f`
+- Block: `2562366`
 
-The current browser build serves the smaller circuit and intentionally leaves the
-contract address empty. The next wallet action is one fresh Thirdmark deployment
-from the setup panel; that browser remembers the new address locally. The old
-address above cannot be upgraded in place.
+The public browser build is configured with this address and the three recorded
+filing hashes. Superseded deployment receipts remain in
+[`docs/PROGRESS.md`](docs/PROGRESS.md) for audit history and must not be used by
+the current browser build.
 
 The canonical example-counter smoke test was deployed first through the same browser-wallet path:
 
@@ -95,12 +93,14 @@ The canonical example-counter smoke test was deployed first through the same bro
 - Encrypted browser private-state storage that retains the filer secret and OPRF material locally.
 - Nigeria CAC adapter based on the official public-search request path, with no CAC credential in the browser and no registry storage.
 - Landing page, privacy inspector, five-step filing workspace, and a synthetic-only subject path.
+- Dossier screen wired to the Midnight public indexer for transaction IDs, hashes, blocks, and timestamps; three distinct browser-held Ed25519 approvals; JSON export; and independent re-import verification.
 
 The public frontend is available at `https://thirdmark.vercel.app`. Its issuer
 and CAC adapter run as isolated user services on the selected Lightsail host
-behind temporary HTTPS tunnels. The three-filer filing and threshold unlock are
-recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md); the dossier export and
-independent verification remain open. See
+behind temporary HTTPS tunnels. The backend adapters are supervised by
+Thirdmark-scoped user-level systemd units. The three-filer filing, threshold
+unlock, and dossier evidence are recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md).
+See
 [`docs/PROGRESS.md`](docs/PROGRESS.md) for the hosting caveat and receipts.
 
 Latest local validation before this product pass: 52 root tests passed and the browser typecheck passed. CircleCI performs the full proving-key compile because the development Mac cannot execute the bundled `zkir` binary. Full evidence and historical findings are in [`docs/PROGRESS.md`](docs/PROGRESS.md), not inferred from a green local UI.
@@ -131,7 +131,13 @@ Privacy is not the same as invisibility. The public ledger contains opaque occup
 
 Wave 1 uses one issuer. That issuer can censor or throttle OPRF requests. It cannot read report plaintext or force a threshold reveal. Wave 2 is planned to distribute the OPRF key across multiple issuers so one party cannot control the service boundary alone.
 
-The current Compact contract does not record a timestamp cell itself. The final dossier must obtain filing dates from the public indexer and label that source. The local dossier module already enforces deterministic ordering, threshold cardinality, distinct signers, and signature verification; wallet-backed signing and indexer retrieval remain open integration work until a real three-party cycle proves them.
+The current Compact contract does not record a timestamp cell itself. The dossier
+obtains filing dates, transaction IDs, hashes, and blocks from the public indexer
+and labels that source. The local dossier module enforces deterministic ordering,
+threshold cardinality, distinct signers, and signature verification. The current
+demo approvals use fresh browser Ed25519 keys for artifact verification; binding
+each approval to a named 1AM wallet identity is a production-hardening follow-up,
+not a claim made by the demo.
 
 ## Run the checks
 
@@ -189,10 +195,12 @@ Create the ignored file `web/.env.local` with public deployment values. Never pl
 VITE_ISSUER_URL=/__thirdmark_issuer
 VITE_ISSUER_PUBLIC_KEY_X=<issuer-public-x>
 VITE_ISSUER_PUBLIC_KEY_Y=<issuer-public-y>
-VITE_CONTRACT_ADDRESS=0c3bc3991fa7cd8e8f88e444f01925810db4eb6c15b102c767dc0ccc9093d85a
+VITE_CONTRACT_ADDRESS=acda20c181cee5a84030a088de372949104b1ea894373e2cc9af4813e0ad5fbe
 VITE_REGISTRY_ADAPTER_URL=/__thirdmark_registry/v1/cac/search
 VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company — Synthetic Only
 VITE_SYNTHETIC_SUBJECT_RC=000000000
+# Completed three-filer evidence used by the public dossier demo.
+VITE_DOSSIER_TRANSACTION_HASHES=6084a446c87573749aed73b7db74a67a727c6c54aeb4f687d179435c3216f2f6,2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb,1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904
 ```
 
 ### 4. Start the browser

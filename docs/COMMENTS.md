@@ -2,6 +2,14 @@
 
 These are drafts for the user to review and post from their own account. No comment has been posted.
 
+## Final W1 submission draft — ready to post after owner review
+
+Thirdmark is live on Midnight Preprod at [`thirdmark.vercel.app`](https://thirdmark.vercel.app). The active Wave 1 contract is `acda20c181cee5a84030a088de372949104b1ea894373e2cc9af4813e0ad5fbe`, deployed in block `2562366` with transaction hash `b67da74efeb47b98bcf5570b8b7eff384a4f84874bd99ec377a4b6fb5ba77d3f`.
+
+The real filing journey is proven against the labelled synthetic subject: three distinct 1AM wallet/filer states filed encrypted attestations, the third filing changed the threshold bit to true, and the participating browser decrypted all three records locally. Receipts: [filing 1](https://explorer.1am.xyz/tx/6084a446c87573749aed73b7db74a67a727c6c54aeb4f687d179435c3216f2f6?network=preprod), [filing 2](https://explorer.1am.xyz/tx/2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb?network=preprod), and [filing 3](https://explorer.1am.xyz/tx/1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904?network=preprod).
+
+The dossier screen now joins the three private attestations with public indexer transaction IDs, hashes, blocks, and timestamps; captures three distinct browser-held Ed25519 approvals; exports a signed JSON dossier; and independently verifies a re-uploaded artifact. The demo is explicit that these are artifact approvals, not wallet-native supplier identity signatures. Local validation is 52/52 tests, browser typecheck, and production build. The issuer and CAC adapter run on an isolated Lightsail user service behind temporary HTTPS tunnels; stable DNS is optional production hardening.
+
 ## W1-P0 — ready to post after owner review
 
 Thirdmark’s canonical wallet smoke test is live on Midnight Preprod. The official example-counter was submitted through 1AM: contract `fdfd87f55cfcb499dec443d1c35f38fd7d721baa45dbb66303b8f3fb8dd38c4`, transaction ID `00003035511fe02e788f6a82fb0085cb5a60803ddb6c891f296212b5997cc6a499`, transaction hash `3c8a9e7474f8f6b3422c3b5d110199368e5fbee63b9d8f66664f5b1d3d126ea5`, block `2549975`. The browser receipt shows `TRANSACTION SUBMITTED`.

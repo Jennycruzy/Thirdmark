@@ -23,21 +23,32 @@ const report = (index: number): ReportAttestation => ({
   invoiceReference: `INV-SYNTH-${index}`,
 });
 
+const transactionEvidence = (index: number) => ({
+  txId: `transaction-${index}`,
+  txHash: index.toString(16).padStart(2, "0").repeat(32),
+  blockHeight: 100 + index,
+  blockHash: (index + 3).toString(16).padStart(2, "0").repeat(32),
+  status: "SUCCESS",
+});
+
 const dossierRecords: DossierRecordInput[] = [
   {
     entryKey: bytes32(3),
     filedAt: "2026-09-12T15:03:00.000Z",
     attestation: report(3),
+    transaction: transactionEvidence(3),
   },
   {
     entryKey: bytes32(1),
     filedAt: "2026-09-12T15:01:00.000Z",
     attestation: report(1),
+    transaction: transactionEvidence(1),
   },
   {
     entryKey: bytes32(2),
     filedAt: "2026-09-12T15:02:00.000Z",
     attestation: report(2),
+    transaction: transactionEvidence(2),
   },
 ];
 
@@ -106,6 +117,7 @@ describe("Thirdmark dossier", () => {
 
     expect(await verifySignedDossier(parsed)).toBe(true);
     expect(await verifySignedDossier(JSON.parse(serialized))).toBe(true);
+    expect(parsed.dossier.records[0].transaction?.blockHeight).toBe(101);
   });
 
   it("rejects tampering with a report or a signature", async () => {
