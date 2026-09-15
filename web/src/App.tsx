@@ -656,7 +656,7 @@ function App() {
               )}
               {searchResults.length > 0 && (
                 <div className="result-list" aria-label="Company results">
-                  <p className="result-heading">Live CAC results — use the synthetic subject for recordings</p>
+                  <p className="result-heading">Live CAC results: use the synthetic subject for recordings</p>
                   {searchResults.map((company) => (
                     <button key={company.subject.canonical} type="button" className="result-row" onClick={() => selectCompany(company)}>
                       <span><strong>{company.name}</strong><small>{company.status} · live CAC result</small></span>

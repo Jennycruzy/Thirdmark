@@ -2,11 +2,11 @@
 
 Updated 2026-09-15.
 
-## Three-filer Preprod filing and threshold-unlock evidence — 2026-09-15
+## Three-filer Preprod filing and threshold-unlock evidence: 2026-09-15
 
 The reduced Wave 1 contract was exercised end to end on Preprod with three
 distinct 1AM wallet/filer states against the labelled synthetic subject
-`Thirdmark Synthetic Company — Synthetic Only` (`000000000`). The third filing
+`Thirdmark Synthetic Company: Synthetic Only` (`000000000`). The third filing
 changed the threshold bit to true and the browser decrypted all three
 attestations locally. The explorer receipts supplied during the run are:
 
@@ -17,9 +17,9 @@ Active contract:
 - Deployment transaction hash: `b67da74efeb47b98bcf5570b8b7eff384a4f84874bd99ec377a4b6fb5ba77d3f`
 - Deployment block: `2562366`
 
-- Filing 1 — `25000` minor units, `90` days late, `TM-SYN-001`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/6084a446c87573749aed73b7db74a67a727c6c54aeb4f687d179435c3216f2f6?network=preprod)
-- Filing 2 — `300000` minor units, `90` days late, `TM-SYN-002`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb?network=preprod)
-- Filing 3 — `35000` minor units, `150` days late, `TM-SYN-003`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904?network=preprod)
+- Filing 1: `25000` minor units, `90` days late, `TM-SYN-001`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/6084a446c87573749aed73b7db74a67a727c6c54aeb4f687d179435c3216f2f6?network=preprod)
+- Filing 2: `300000` minor units, `90` days late, `TM-SYN-002`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb?network=preprod)
+- Filing 3: `35000` minor units, `150` days late, `TM-SYN-003`: [Preprod explorer transaction](https://explorer.1am.xyz/tx/1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904?network=preprod)
 
 The second amount is recorded as `300000` because that is what the unlocked
 browser dossier displayed; it is not silently corrected to the originally
@@ -28,7 +28,7 @@ delegated proving, contract threshold transition, and local decryption path. The
 dossier screen and its public-indexer/export/verification path are implemented
 below.
 
-## Dossier integration and final public deployment — 2026-09-15
+## Dossier integration and final public deployment: 2026-09-15
 
 The dossier screen is now wired to the existing [`client/dossier.ts`](../client/dossier.ts)
 library and the Midnight public indexer. It assembles the three locally decrypted
@@ -84,7 +84,7 @@ sizes and iterators. The architecture and privacy claims now describe the result
 opaque-key occupancy/count leak explicitly; no no-enumeration claim is being carried
 forward.
 
-## Delegated-proving payload correction — 2026-09-15
+## Delegated-proving payload correction: 2026-09-15
 
 The four-entry private-history reduction was still rejected by 1AM. The current
 Wave 1 circuit removes the private filing-history vector, its salts, and the public
@@ -107,7 +107,7 @@ that contract contains the superseded circuit and cannot be upgraded in place.
 The active replacement deployment and the completed three-filer cycle are
 recorded above.
 
-## W1-P0 — source verification and registration
+## W1-P0: source verification and registration
 
 Status: **source verification, CI validation, canonical counter smoke test, reduced Thirdmark Preprod deployment, public demo hosting, three-party filing, threshold unlock, dossier assembly, indexer evidence, artifact approvals, export, and independent verification path passed. Stable DNS and wallet-native signer identity remain optional production hardening.**
 
@@ -149,7 +149,7 @@ External submission input still required:
 
 - An AKINDO account confirmation and Discord handle are needed for an authenticated external comment submission; the final draft is in [`COMMENTS.md`](COMMENTS.md).
 
-## Parallel local implementation — 2026-09-12
+## Parallel local implementation: 2026-09-12
 
 ### Registry decision
 
@@ -209,7 +209,7 @@ Evidence:
 
 Not passed: no proof-server-backed product transaction, contract address, block, timing, screenshot, or AKINDO comment. The wallet process must finish a complete sync before the deployment path can be exercised. The next local layer is registry canonicalization and contract client integration; neither is being represented as deployed functionality.
 
-## Parallel local implementation — issuer and browser boundary — 2026-09-12
+## Parallel local implementation: issuer and browser boundary: 2026-09-12
 
 Completed locally:
 
@@ -243,7 +243,7 @@ adapter deployment, issuer hosting, contract address, Preprod filing, dossier fr
 chain records, screenshot, or AKINDO gate comment existed. The later 2026-09-14
 receipts and adapter evidence below supersede that snapshot.
 
-## Production witness extraction — 2026-09-12
+## Production witness extraction: 2026-09-12
 
 The simulator’s witness implementation is now shared from
 [`contract/src/witnesses.ts`](../contract/src/witnesses.ts), rather than living
@@ -261,7 +261,7 @@ passed the preceding issuer/browser commit’s full proving-key compile, 52 root
 tests, browser typecheck, and browser build. The follow-up witness implementation
 was included in the successful browser transaction validation in pipeline [#18](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/18).
 
-## Browser transaction boundary — 2026-09-12
+## Browser transaction boundary: 2026-09-12
 
 Completed locally:
 
@@ -305,7 +305,7 @@ Evidence:
 This historical section predates the 2026-09-14 counter and Thirdmark receipts
 recorded below.
 
-## Browser counter deployment batch — 2026-09-14
+## Browser counter deployment batch: 2026-09-14
 
 Completed locally:
 
@@ -330,7 +330,7 @@ Evidence:
 Comment draft status: the W1-P0 and W1-P2 drafts are updated and ready for the user
 to review and post.
 
-## Canonical example-counter Preprod receipt — 2026-09-14
+## Canonical example-counter Preprod receipt: 2026-09-14
 
 The owner supplied a 1AM wallet receipt after the browser path completed delegated
 proving, wallet balancing, signing, submission, and indexer confirmation:
@@ -346,7 +346,7 @@ validated with `npm run typecheck --workspace @thirdmark/web` and `git diff --ch
 The issuer URL and public key are now configured in the ignored browser environment;
 the deployment receipt is recorded below.
 
-## Thirdmark Preprod deployment receipt — 2026-09-14
+## Thirdmark Preprod deployment receipt: 2026-09-14
 
 The owner supplied a 1AM wallet receipt after the browser path deployed the actual
 Thirdmark contract with the single-issuer public key and threshold `3`:
@@ -362,7 +362,7 @@ and this public contract address. It contains no issuer scalar or wallet materia
 The next gate is an end-to-end filing, beginning with a real CAC adapter result and
 one browser-held filer state.
 
-## Initial replacement Thirdmark deployment and public demo stack — 2026-09-15
+## Initial replacement Thirdmark deployment and public demo stack: 2026-09-15
 
 The original issuer scalar for the 14 September contract could not be recovered
 from the local workspace or either available Lightsail host. Because the issuer
@@ -401,7 +401,7 @@ returned `access-control-allow-origin: https://thirdmark.vercel.app`, and the
 Vercel root served the rebuilt browser bundle. No filing, unlock, or dossier is
 claimed by these checks.
 
-## Superseded delegated-proving payload fix and deployment receipt — 2026-09-15
+## Superseded delegated-proving payload fix and deployment receipt: 2026-09-15
 
 The first replacement circuit still carried a 32-entry private filing history.
 1AM reached delegated proving but rejected the resulting payload as too large or
@@ -423,7 +423,7 @@ it serves the reduced circuit assets and uses the replacement contract recorded
 in the current deployment evidence. The three-filer filing and threshold unlock
 are recorded above; the dossier remains the next evidence gate.
 
-## CAC registry adapter — 2026-09-14
+## CAC registry adapter: 2026-09-14
 
 The official iCRP frontend request was verified against the live CAC service. The
 local adapter uses the source-backed request and filters results to registered
@@ -440,7 +440,7 @@ company name, RC number, and coarse status to the browser. It is a buildathon
 integration against CAC's public-search request path; production should migrate to
 an authorized CAC VAS integration when available.
 
-## Product presentation and safe synthetic-subject path — 2026-09-14
+## Product presentation and safe synthetic-subject path: 2026-09-14
 
 Completed:
 
@@ -448,7 +448,7 @@ Completed:
   public/private boundary, evidence links, and residual limits before entering the
   filing workspace.
 - Added a configuration-driven synthetic subject, labelled `Thirdmark Synthetic
-  Company — Synthetic Only` with deliberately invalid identifier `000000000`. It uses the
+  Company: Synthetic Only` with deliberately invalid identifier `000000000`. It uses the
   same subject canonicalization, OPRF, encryption, and contract path as a live lookup;
   it is not a CAC record and must not be replaced with one for a recording.
 - Replaced user-facing implementation language with product language where it crossed
@@ -461,7 +461,7 @@ Completed:
 Validation for this presentation pass is complete: the browser typecheck and
 production build pass. No new Preprod claim is made by this UI/documentation change.
 
-## Browser OPRF transport correction — 2026-09-14
+## Browser OPRF transport correction: 2026-09-14
 
 The first filing attempt stopped before wallet interaction at the blinded-slot
 derivation step. The browser reported `TypeError: Failed to fetch`; the issuer

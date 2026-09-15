@@ -46,7 +46,8 @@ export const createSyntheticCompany = (
   name: string,
   rcNumber: string,
 ): RegistrySearchResult => ({
-  name,
+  // Keep the public label typography-safe without changing the canonical subject key.
+  name: name.replace(/\u2014/gu, ":"),
   rcNumber,
   status: "unknown",
   source: "synthetic",

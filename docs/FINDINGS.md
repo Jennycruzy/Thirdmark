@@ -236,7 +236,7 @@ configuration state instead of pretending that a filing reached Midnight. The
 registry adapter contract is Thirdmark-owned and documented; the official CAC
 public-search page remains a human lookup page rather than an invented API.
 
-## Browser Midnight.js provider boundary — 2026-09-12
+## Browser Midnight.js provider boundary: 2026-09-12
 
 The browser transaction path now follows the source-backed Midnight.js 4.0.4
 pattern used by the checked-out Moonray and Hermes references. `web/src/midnight/contract.ts`
@@ -267,7 +267,7 @@ bundle. The provider passes the browser’s native `window.WebSocket` explicitly
 the indexer adapter. The warnings remain recorded rather than hidden; the build
 completes and no deployment claim is based on them.
 
-## Browser private state and finalized-transaction recovery — 2026-09-12
+## Browser private state and finalized-transaction recovery: 2026-09-12
 
 The browser private-state provider stores witness state as AES-GCM ciphertext in
 IndexedDB and keeps the non-extractable AES key in the same browser origin. This is
@@ -280,7 +280,7 @@ fails, the prior state is restored; after finalization, the staged OPRF material
 retained for the next filing. The current circuit has no evolving private history to
 advance, so a later indexer-read failure cannot create a stale-history opening.
 
-## Timestamp boundary correction — 2026-09-12
+## Timestamp boundary correction: 2026-09-12
 
 The selected Compact API exposes block-time predicates but the current Thirdmark
 contract does not store a filing timestamp ledger value. The public indexer’s
@@ -290,7 +290,7 @@ dossier export until that retrieval path and wallet-backed signing are implement
 it does not invent dates from client input or claim that a local decrypted record is
 already a complete dossier.
 
-## Managed browser validation — 2026-09-12
+## Managed browser validation: 2026-09-12
 
 CircleCI pipeline [#18](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark/18)
 for commit `9e6dd8b` succeeded. Job `compact-validation` with ID
@@ -301,7 +301,7 @@ root suite; and passed the browser typecheck and Vite build. This validates the
 repository’s managed build path. It remains separate from deployment evidence: no
 contract address, transaction hash, block, or Preprod filing was produced.
 
-## Browser deployment path — 2026-09-12
+## Browser deployment path: 2026-09-12
 
 The headless reference CLI is not the only deployment path. Thirdmark now exposes a
 real Lace-backed deployment action in the browser. It uses the same source-verified
@@ -322,7 +322,7 @@ artifacts are staged under `/counter/`. This is a wallet/fee/proof/submission sm
 test only; it is not deployment evidence until the user approves it in Lace and the
 resulting address, transaction, and block are recorded.
 
-## Local browser OPRF transport — 2026-09-14
+## Local browser OPRF transport: 2026-09-14
 
 The first browser filing attempt reached the OPRF stage but failed with a browser
 `TypeError: Failed to fetch`. The issuer itself was healthy: the local health

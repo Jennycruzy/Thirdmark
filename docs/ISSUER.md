@@ -8,11 +8,11 @@ CAC RC number, a slot key, a filer secret, a report, or a ciphertext.
 
 The service implemented in [`issuer/server.ts`](../issuer/server.ts) exposes:
 
-- `GET /health` — `{ "status": "ok" }`.
-- `GET /v1/oprf/public-key` — the issuer public point as decimal coordinate
+- `GET /health`: `{ "status": "ok" }`.
+- `GET /v1/oprf/public-key`: the issuer public point as decimal coordinate
   strings. The browser must compare this with the issuer key sealed in the
   deployed contract before a filing call.
-- `POST /v1/oprf/evaluate` — accepts
+- `POST /v1/oprf/evaluate`: accepts
   `{ "blindedPoint": { "x": "…", "y": "…" } }` and returns the evaluated
   point and DLEQ proof in the same decimal-coordinate representation.
 

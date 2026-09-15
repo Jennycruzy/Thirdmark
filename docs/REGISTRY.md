@@ -65,7 +65,7 @@ recording, fixture, or fabricated late-payment report. The browser therefore has
 separate synthetic-only path configured outside the repository:
 
 ```dotenv
-VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company — Synthetic Only
+VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company: Synthetic Only
 VITE_SYNTHETIC_SUBJECT_RC=000000000
 ```
 

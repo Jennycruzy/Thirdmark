@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Thirdmark</title>
+  <rect width="64" height="64" rx="14" fill="#172127"/>
+  <path d="M18 16 10 48" fill="none" stroke="#f7f3ea" stroke-width="6" stroke-linecap="square"/>
+  <path d="M32 16 24 48" fill="none" stroke="#bd432f" stroke-width="6" stroke-linecap="square"/>
+  <path d="M46 16 38 48" fill="none" stroke="#8db39c" stroke-width="6" stroke-linecap="square"/>
+</svg>

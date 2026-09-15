@@ -213,3 +213,465 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* Visual direction: split-studio editorial composition with an evidence-led product surface. */
+:root {
+  --ink: #172127;
+  --paper: #f7f3ea;
+  --paper-bright: #fffdf8;
+  --signal: #bd432f;
+  --quiet: #c9c2b5;
+  --confirmed: #2f6653;
+  --wash: #ebe5d8;
+  --night: #172127;
+  --line: rgba(23, 33, 39, .18);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.app-shell {
+  width: min(1320px, calc(100% - 56px));
+}
+
+.topbar {
+  min-height: 82px;
+  border-bottom-color: var(--line);
+  position: relative;
+}
+
+.wordmark {
+  font-size: 19px;
+  letter-spacing: -.045em;
+}
+
+.wordmark-mark {
+  font-size: 22px;
+  color: var(--signal);
+}
+
+.topbar-status {
+  gap: 10px;
+  color: #68716f;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.network-label {
+  color: var(--signal);
+}
+
+.quiet-button,
+.primary-button {
+  border-radius: 999px;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.quiet-button {
+  padding: 10px 15px;
+}
+
+.primary-button {
+  min-height: 48px;
+  padding: 14px 21px;
+  box-shadow: 0 7px 0 rgba(23, 33, 39, .08);
+}
+
+.primary-button:hover:not(:disabled),
+.primary-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 9px 0 rgba(23, 33, 39, .08);
+}
+
+h1,
+h2,
+.flow-cards h3,
+.synthetic-card h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+}
+
+h1 {
+  font-size: clamp(50px, 7.5vw, 96px);
+  line-height: .91;
+  letter-spacing: -.075em;
+}
+
+h2 {
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: .98;
+  letter-spacing: -.06em;
+}
+
+.eyebrow,
+.dossier-summary .label,
+.dossier-evidence > .label,
+.dossier-approvals > .label {
+  letter-spacing: .19em;
+}
+
+.intro-grid {
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 64px;
+  padding: 82px 0 70px;
+  border-bottom-color: var(--line);
+}
+
+.tally-panel {
+  align-self: stretch;
+  border: 0;
+  padding: 31px 28px 25px;
+  background: var(--night);
+  color: var(--paper);
+  position: relative;
+  overflow: hidden;
+}
+
+.tally-panel::before {
+  content: "THRESHOLD / 03";
+  display: block;
+  margin-bottom: 38px;
+  color: #d6a092;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: .16em;
+}
+
+.tally-panel::after {
+  content: "PRIVATE STATE";
+  position: absolute;
+  right: 28px;
+  top: 31px;
+  color: rgba(247, 243, 234, .55);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+}
+
+.tally-panel .tally {
+  height: 88px;
+  gap: 13px;
+  margin-bottom: 24px;
+}
+
+.tally-panel .tally i {
+  width: 16px;
+  height: 82px;
+  background: rgba(247, 243, 234, .24);
+}
+
+.tally-panel .tally i:last-child {
+  background: var(--signal);
+}
+
+.tally-panel .tally.confirmed i {
+  background: var(--confirmed);
+}
+
+.tally-panel .tally.confirmed i:last-child {
+  background: #8db39c;
+}
+
+.tally-panel p,
+.tally-panel strong {
+  color: var(--paper);
+}
+
+.tally-panel p {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.step-nav {
+  border-bottom-color: var(--line);
+}
+
+.step {
+  padding-top: 20px;
+  padding-bottom: 18px;
+  border-right-color: var(--line);
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  font-size: 11px;
+}
+
+.step[aria-current="step"] {
+  color: var(--signal);
+  position: relative;
+}
+
+.step[aria-current="step"]::after {
+  content: "";
+  position: absolute;
+  right: 24px;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  background: var(--signal);
+}
+
+.notice {
+  border-left-width: 4px;
+  border-left-color: var(--signal);
+  background: var(--wash);
+  border-radius: 0 4px 4px 0;
+}
+
+.content-grid {
+  gap: 32px;
+  padding-top: 40px;
+}
+
+.panel {
+  border-color: var(--line);
+  background: rgba(255, 253, 248, .68);
+  box-shadow: 0 18px 44px rgba(23, 33, 39, .045);
+}
+
+.flow-panel,
+.state-panel {
+  padding: clamp(28px, 4vw, 46px);
+}
+
+.selected-company,
+.state-placeholder,
+.dossier-summary,
+.evidence-row,
+.approval-row,
+.record-card,
+.inspector-group,
+.inspector-footnote {
+  border-color: var(--line);
+}
+
+input {
+  border-color: var(--line);
+  background: rgba(255, 253, 248, .72);
+  border-radius: 3px;
+}
+
+input:focus-visible {
+  border-color: var(--signal);
+}
+
+.synthetic-card {
+  border-color: var(--confirmed);
+  border-left-width: 4px;
+  background: rgba(47, 102, 83, .07);
+  border-radius: 0 6px 6px 0;
+}
+
+.synthetic-card h3 {
+  font-size: 24px;
+}
+
+.recovery-note {
+  border-color: var(--line);
+}
+
+.state-placeholder {
+  background: var(--wash);
+  padding: 0 22px;
+}
+
+.state-placeholder .tally i {
+  width: 14px;
+  height: 58px;
+}
+
+.record-card {
+  padding: 17px 18px 15px;
+  background: rgba(235, 229, 216, .4);
+  border: 1px solid var(--line);
+}
+
+.dossier-summary {
+  background: var(--wash);
+  padding: 21px 18px;
+}
+
+.evidence-row,
+.approval-row {
+  padding: 15px 14px;
+  background: rgba(255, 253, 248, .5);
+}
+
+.approval-row:hover {
+  background: var(--wash);
+}
+
+.inspector {
+  border-color: var(--night);
+  background: var(--night);
+  color: var(--paper);
+  box-shadow: 0 18px 44px rgba(23, 33, 39, .12);
+}
+
+.inspector h2,
+.inspector .inspector-label,
+.inspector .inspector-group ul,
+.inspector .inspector-footnote {
+  color: var(--paper);
+}
+
+.inspector .eyebrow {
+  color: #d6a092;
+}
+
+.inspector .live-mark {
+  color: #8db39c;
+}
+
+.inspector-group ul {
+  opacity: .86;
+}
+
+.inspector-footnote {
+  border-top-color: rgba(247, 243, 234, .2);
+  color: rgba(247, 243, 234, .65) !important;
+}
+
+.landing-hero {
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 72px;
+  padding: 88px 0 80px;
+  border-bottom-color: var(--line);
+}
+
+.landing-hero-copy {
+  padding-top: 12px;
+}
+
+.landing-lede {
+  max-width: 650px;
+  font-size: 19px;
+}
+
+.landing-threshold {
+  border: 0;
+  background: var(--night);
+  color: var(--paper);
+  padding: 32px;
+  min-height: 330px;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-threshold::before {
+  content: "THIRDMARK / WAVE 01";
+  display: block;
+  margin-bottom: 42px;
+  color: #d6a092;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: .16em;
+}
+
+.landing-threshold .eyebrow {
+  color: #d6a092;
+}
+
+.landing-threshold strong {
+  color: var(--paper);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: -.05em;
+}
+
+.landing-threshold span {
+  color: rgba(247, 243, 234, .65);
+}
+
+.threshold-marks {
+  gap: 13px;
+  height: 75px;
+  margin-bottom: 24px;
+}
+
+.threshold-marks i {
+  width: 16px;
+  height: 70px;
+  background: rgba(247, 243, 234, .24);
+}
+
+.threshold-marks i:last-child {
+  background: var(--signal);
+}
+
+.landing-section {
+  padding-top: clamp(72px, 9vw, 126px);
+  padding-bottom: clamp(72px, 9vw, 126px);
+  border-bottom-color: var(--line);
+}
+
+.flow-cards {
+  border-top-color: var(--line);
+}
+
+.flow-cards article {
+  border-right-color: var(--line);
+}
+
+.flow-cards article > span {
+  color: var(--signal);
+}
+
+.flow-cards h3 {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.boundary-card {
+  border-color: var(--line);
+  border-radius: 0;
+}
+
+.public-boundary {
+  background: var(--night);
+  color: var(--paper);
+  border-color: var(--night);
+}
+
+.public-boundary .eyebrow,
+.public-boundary ul {
+  color: #d6a092;
+}
+
+.public-boundary h2 {
+  color: var(--paper);
+}
+
+.private-boundary {
+  background: #e7eee7;
+  border-color: #9db6a5;
+}
+
+.private-boundary .eyebrow {
+  color: var(--confirmed);
+}
+
+.judge-links,
+.judge-links a {
+  border-color: var(--line);
+}
+
+.landing-caption {
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+@media (max-width: 800px) {
+  .app-shell { width: min(100% - 28px, 680px); }
+  .intro-grid, .content-grid, .landing-hero { gap: 28px; }
+  .tally-panel { border: 0; padding: 28px 24px 22px; }
+  .landing-threshold { min-height: 0; padding: 28px 24px; }
+  .landing-threshold::before { margin-bottom: 28px; }
+  .state-placeholder { padding: 0 14px; }
+}

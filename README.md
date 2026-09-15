@@ -14,14 +14,14 @@ Thirdmark makes corroboration possible without publishing a lone accusation. Thr
 
 ## Judge first: the important links
 
-- [Source repository](https://github.com/Jennycruzy/Thirdmark) — Compact contract, simulator, client cryptography, browser application, and evidence.
-- [Preprod deployment and progress evidence](docs/PROGRESS.md) — verified contract receipts, blocks, tests, and remaining gates.
-- [Threat model and architecture](docs/ARCHITECTURE.md) — state layout, OPRF derivation, filing guards, residual leaks, and dossier boundary.
-- [Safety rules](docs/ETHICS.md) — why the threshold is the safety property and why public recordings use synthetic subjects.
-- [Source findings](docs/FINDINGS.md) — version decisions, source corrections, and constraints discovered from Compact and Midnight tooling.
-- [Midnight documentation](https://docs.midnight.network/) — the platform and dual-ledger model used by Thirdmark.
-- [Nigeria CAC public search](https://icrp.cac.gov.ng/public-search/) — the official registry boundary used to resolve a company name to an RC number.
-- [CircleCI build evidence](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark) — managed full-proof compilation and browser checks.
+- [Source repository](https://github.com/Jennycruzy/Thirdmark): Compact contract, simulator, client cryptography, browser application, and evidence.
+- [Preprod deployment and progress evidence](docs/PROGRESS.md): verified contract receipts, blocks, tests, and remaining gates.
+- [Threat model and architecture](docs/ARCHITECTURE.md): state layout, OPRF derivation, filing guards, residual leaks, and dossier boundary.
+- [Safety rules](docs/ETHICS.md): why the threshold is the safety property and why public recordings use synthetic subjects.
+- [Source findings](docs/FINDINGS.md): version decisions, source corrections, and constraints discovered from Compact and Midnight tooling.
+- [Midnight documentation](https://docs.midnight.network/): the platform and dual-ledger model used by Thirdmark.
+- [Nigeria CAC public search](https://icrp.cac.gov.ng/public-search/): the official registry boundary used to resolve a company name to an RC number.
+- [CircleCI build evidence](https://app.circleci.com/pipelines/github/Jennycruzy/Thirdmark): managed full-proof compilation and browser checks.
 
 The current build has a real Thirdmark contract on Midnight Preprod and a public browser URL at `https://thirdmark.vercel.app`. The three-wallet filing cycle, threshold unlock, public indexer evidence, dossier approvals, export, and independent verification path are recorded in [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
@@ -29,13 +29,13 @@ The current build has a real Thirdmark contract on Midnight Preprod and a public
 
 The browser workspace follows five steps:
 
-1. **Find** — choose a company from the Nigeria CAC lookup, or choose the clearly labelled synthetic subject for a safe recording. The user does not type a registration number.
-2. **File** — enter amount overdue, days late, and invoice reference. The browser encrypts the report before preparing the contract call.
-3. **Sealed** — the report is finalized but no sub-threshold count is shown.
-4. **Unlocked** — the third independent filing makes the threshold true. Only the participating filers can decrypt their records locally.
-5. **Dossier** — the three attestations are assembled into a signed, independently checkable artifact using public ledger evidence.
+1. **Find**: choose a company from the Nigeria CAC lookup, or choose the clearly labelled synthetic subject for a safe recording. The user does not type a registration number.
+2. **File**: enter amount overdue, days late, and invoice reference. The browser encrypts the report before preparing the contract call.
+3. **Sealed**: the report is finalized but no sub-threshold count is shown.
+4. **Unlocked**: the third independent filing makes the threshold true. Only the participating filers can decrypt their records locally.
+5. **Dossier**: the three attestations are assembled into a signed, independently checkable artifact using public ledger evidence.
 
-For local testing and public recordings, use the synthetic subject named **“Thirdmark Synthetic Company — Synthetic Only”** with the deliberately invalid identifier `000000000`. It is test data, not a CAC company. Never use a live CAC result in screenshots, recordings, or fabricated allegations.
+For local testing and public recordings, use the synthetic subject named **“Thirdmark Synthetic Company: Synthetic Only”** with the deliberately invalid identifier `000000000`. It is test data, not a CAC company. Never use a live CAC result in screenshots, recordings, or fabricated allegations.
 
 ## What makes it private
 
@@ -197,7 +197,7 @@ VITE_ISSUER_PUBLIC_KEY_X=<issuer-public-x>
 VITE_ISSUER_PUBLIC_KEY_Y=<issuer-public-y>
 VITE_CONTRACT_ADDRESS=acda20c181cee5a84030a088de372949104b1ea894373e2cc9af4813e0ad5fbe
 VITE_REGISTRY_ADAPTER_URL=/__thirdmark_registry/v1/cac/search
-VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company — Synthetic Only
+VITE_SYNTHETIC_SUBJECT_NAME=Thirdmark Synthetic Company: Synthetic Only
 VITE_SYNTHETIC_SUBJECT_RC=000000000
 # Completed three-filer evidence used by the public dossier demo.
 VITE_DOSSIER_TRANSACTION_HASHES=6084a446c87573749aed73b7db74a67a727c6c54aeb4f687d179435c3216f2f6,2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb,1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904
@@ -230,15 +230,15 @@ No test is skipped or marked as a placeholder. The simulator does not pretend to
 
 ## Three-wave roadmap
 
-### Wave 1 — one complete vertical
+### Wave 1: one complete vertical
 
 Nigeria CAC company references, threshold `3`, one issuer, scoped opaque nullifiers, client-side encryption, real Preprod deployment, five screens, and a verifiable dossier.
 
-### Wave 2 — general threshold service
+### Wave 2: general threshold service
 
 Arbitrary `k`, distributed OPRF issuers, expiry windows, pre-threshold withdrawal, and the completed adversarial suite.
 
-### Wave 3 — operational deployment
+### Wave 3: operational deployment
 
 One narrow design-partner vertical, synthetic-but-plausible volume, an audit-style threat-model report, and a hardened deployment.
 

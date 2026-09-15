@@ -1,4 +1,4 @@
-// Thirdmark — threshold-gated corroboration on Midnight.
+// Thirdmark: threshold-gated corroboration on Midnight.
 //
 // Report contents never enter Compact. The contract authenticates an issuer
 // evaluated OPRF point, derives an anonymous slot from it, stores only the
