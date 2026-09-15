@@ -34,3 +34,4 @@ web/public/counter/zkir/
 .DS_Store
 .idea/
 .vscode/
+.vercel

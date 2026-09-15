@@ -240,8 +240,30 @@ function App() {
     }
   };
 
+  const recoverExistingThreshold = async (session: WalletSession, company: RegistrySearchResult): Promise<void> => {
+    const completed = await deriveCompanySlot(company.subject.registrationNumber);
+    const contract = await connectThirdmark(session, completed);
+    setWorkingStage("Reading the finalized threshold state");
+    const snapshot = await contract.readSlot(completed);
+    if (!snapshot.unlocked || !snapshot.records) {
+      throw new Error("the selected subject has not reached the threshold in this wallet");
+    }
+    setRecoveredSlotKey(completed.slotKey);
+    setSlotSnapshot(snapshot);
+    setPrepared(true);
+    setDossier(null);
+    setDossierEvidence([]);
+    setDossierSignatures([]);
+    setDossierVerification(null);
+    setUploadedVerification(null);
+    setStep("unlocked");
+    setNotice("Existing threshold state recovered locally. No new filing was submitted.");
+  };
+
   const handleRecoverUnlocked = async (): Promise<void> => {
-    if (!wallet || !selectedCompany) {
+    const session = wallet;
+    const company = selectedCompany;
+    if (!session || !company) {
       setNotice("Connect the wallet and select the synthetic subject before recovering the filing.");
       return;
     }
@@ -249,26 +271,33 @@ function App() {
     setWorking(true);
     setWorkingStage("Recovering the existing private filing state");
     try {
-      const completed = await deriveCompanySlot(selectedCompany.subject.registrationNumber);
-      const contract = await connectThirdmark(wallet, completed);
-      setWorkingStage("Reading the finalized threshold state");
-      const snapshot = await contract.readSlot(completed);
-      if (!snapshot.unlocked || !snapshot.records) {
-        throw new Error("the selected subject has not reached the threshold in this wallet");
-      }
-      setRecoveredSlotKey(completed.slotKey);
-      setSlotSnapshot(snapshot);
-      setPrepared(true);
-      setDossier(null);
-      setDossierEvidence([]);
-      setDossierSignatures([]);
-      setDossierVerification(null);
-      setUploadedVerification(null);
-      setStep("unlocked");
-      setNotice("Existing threshold state recovered locally. No new filing was submitted.");
+      await recoverExistingThreshold(session, company);
     } catch (error) {
       const diagnostic = diagnosticMessage(error);
       setNotice(`The existing filing could not be recovered.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
+    } finally {
+      setWorking(false);
+      setWorkingStage(null);
+    }
+  };
+
+  const handleRecoverSynthetic = async (): Promise<void> => {
+    const session = wallet;
+    const company = syntheticCompany;
+    if (!session || !company) {
+      setNotice("Connect the wallet before recovering the synthetic threshold filing.");
+      return;
+    }
+    setSelectedCompany(company);
+    setNotice(null);
+    setWorking(true);
+    setWorkingStage("Recovering the existing private filing state");
+    try {
+      await recoverExistingThreshold(session, company);
+    } catch (error) {
+      const diagnostic = diagnosticMessage(error);
+      setNotice(`The existing filing could not be recovered.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
+      setStep("find");
     } finally {
       setWorking(false);
       setWorkingStage(null);
@@ -615,6 +644,14 @@ function App() {
                   <button className="quiet-button" type="button" onClick={() => selectCompany(syntheticCompany)} disabled={working}>
                     Use the synthetic subject
                   </button>
+                  {wallet && (
+                    <>
+                      <button className="primary-button" type="button" onClick={() => void handleRecoverSynthetic()} disabled={working}>
+                        {working ? "Recovering existing filing…" : "Recover existing threshold filing"}
+                      </button>
+                      <p className="field-note">Already completed the three synthetic filings? Recover Step 04 here without submitting another report.</p>
+                    </>
+                  )}
                 </div>
               )}
               {searchResults.length > 0 && (
