@@ -57,6 +57,11 @@ were moved into Thirdmark-scoped user-level systemd services on the selected
 Lightsail host. The accountless Quick Tunnel URLs remain temporary; no other
 project, Nginx route, or host secret was changed.
 
+The Vercel production configuration now includes the public issuer URL and point,
+public registry adapter URL, synthetic-subject values, active contract address,
+and three filing hashes. It contains no issuer scalar, wallet seed, or private
+signing material.
+
 The three approvals are deliberately described as browser-held Ed25519 artifact
 signatures. They prove that three distinct keys approved the canonical dossier in
 the current browser and are independently verifiable, but they are not yet
