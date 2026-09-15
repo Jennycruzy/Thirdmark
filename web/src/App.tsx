@@ -239,8 +239,8 @@ function App() {
         lastStage = stage.toLowerCase();
         setWorkingStage(stage);
       });
-      setDeployment(receipt);
       rememberContractAddress(receipt.contractAddress);
+      setDeployment(receipt);
       setNotice("Deployment submitted through the connected Midnight wallet. Keep this receipt for the Preprod record.");
     } catch (error) {
       const diagnostic = diagnosticMessage(error);
@@ -352,8 +352,8 @@ function App() {
               <div><dt>Block</dt><dd>{counterDeployment.blockHeight ?? "pending indexer confirmation"}</dd></div>
             </dl>
           )}
-          <button className="primary-button" type="button" onClick={() => void handleDeploy()} disabled={working || !wallet || !hasIssuerConfiguration()}>
-            {working ? "Preparing deployment…" : "Deploy Thirdmark through wallet"}
+          <button className="primary-button" type="button" onClick={() => void handleDeploy()} disabled={working || !wallet || !hasIssuerConfiguration() || hasContractConfiguration()}>
+            {hasContractConfiguration() ? "Thirdmark contract connected" : working ? "Preparing deployment…" : "Deploy Thirdmark through wallet"}
           </button>
           {!wallet && <p className="field-note">Connect a Midnight wallet on Preprod first.</p>}
           {!hasIssuerConfiguration() && <p className="field-note">The deployment still needs the public issuer key configuration.</p>}
