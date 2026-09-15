@@ -12,7 +12,7 @@ Honesty note: this is the canonical example-counter smoke test, not a Thirdmark 
 
 ## W1-P2 — ready to post after owner review
 
-Thirdmark is deployed on Midnight Preprod with a sealed single-issuer key and a threshold of three. The current contract is `0c3bc3991fa7cd8e8f88e444f01925810db4eb6c15b102c767dc0ccc9093d85a`, deployment transaction ID `00b3588bdb549b2fbce08c66402d79483b5efa2c3c244d8a7a03b31dd6c6de04d1`, transaction hash `79a43b9220e636fc7f34afcc347e481306699dd53d5a52ae618475e180d127df`, block `2559681`.
+Thirdmark is deployed on Midnight Preprod with a sealed single-issuer key and a threshold of three. The current payload-compatible contract is `76df34103d6e2e0e0b1a561509366090c27eb392f6a07eb75b2d102fd646ef12`, deployment transaction ID `00a602aeba4fb9ffd0a9a04902da9f870c79a82ca03fae0d565d433b94d93525cb`, transaction hash `c5e7eddd73bc3463c55f05131d7b15563d2a0a4f460e9a5bca2db4f174b2135c`, block `2561298`.
 
 The browser deployment path uses 1AM delegated proving, wallet balancing, signing, and submission. The canonical example-counter smoke test completed first at block `2549975`. The public issuer endpoint exposes only the issuer public point and blinded OPRF evaluation; its scalar remains runtime-only.
 

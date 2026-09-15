@@ -64,10 +64,10 @@ This is inter-party private state, not self-attestation. A supplier is not provi
 
 The current Thirdmark deployment was submitted through the connected 1AM wallet on 15 September 2026 with a threshold of three:
 
-- Contract: `0c3bc3991fa7cd8e8f88e444f01925810db4eb6c15b102c767dc0ccc9093d85a`
-- Transaction ID: `00b3588bdb549b2fbce08c66402d79483b5efa2c3c244d8a7a03b31dd6c6de04d1`
-- Transaction hash: `79a43b9220e636fc7f34afcc347e481306699dd53d5a52ae618475e180d127df`
-- Block: `2559681`
+- Contract: `76df34103d6e2e0e0b1a561509366090c27eb392f6a07eb75b2d102fd646ef12`
+- Transaction ID: `00a602aeba4fb9ffd0a9a04902da9f870c79a82ca03fae0d565d433b94d93525cb`
+- Transaction hash: `c5e7eddd73bc3463c55f05131d7b15563d2a0a4f460e9a5bca2db4f174b2135c`
+- Block: `2561298`
 
 The canonical example-counter smoke test was deployed first through the same browser-wallet path:
 

@@ -267,7 +267,7 @@ and this public contract address. It contains no issuer scalar or wallet materia
 The next gate is an end-to-end filing, beginning with a real CAC adapter result and
 one browser-held filer state.
 
-## Replacement Thirdmark deployment and public demo stack — 2026-09-15
+## Initial replacement Thirdmark deployment and public demo stack — 2026-09-15
 
 The original issuer scalar for the 14 September contract could not be recovered
 from the local workspace or either available Lightsail host. Because the issuer
@@ -275,8 +275,9 @@ public point is sealed into the contract, generating a new scalar for that old
 contract would have made the browser path fail closed. The owner authorized a
 fresh Preprod deployment instead; the old receipt above remains historical.
 
-Replacement receipt supplied by the owner after the connected 1AM wallet path
-completed:
+Initial replacement receipt supplied by the owner after the connected 1AM wallet
+path completed; it was superseded by the payload-compatible deployment recorded
+below:
 
 - Contract address: `0c3bc3991fa7cd8e8f88e444f01925810db4eb6c15b102c767dc0ccc9093d85a`
 - Transaction ID: `00b3588bdb549b2fbce08c66402d79483b5efa2c3c244d8a7a03b31dd6c6de04d1`
@@ -304,6 +305,27 @@ Verification after deployment: both HTTPS health checks returned HTTP 200, both
 returned `access-control-allow-origin: https://thirdmark.vercel.app`, and the
 Vercel root served the rebuilt browser bundle. No filing, unlock, or dossier is
 claimed by these checks.
+
+## Delegated-proving payload fix and current deployment — 2026-09-15
+
+The first replacement circuit still carried a 32-entry private filing history.
+1AM reached delegated proving but rejected the resulting payload as too large or
+too deeply nested. The circuit now uses a four-entry Wave 1 history bound; this
+keeps the private-history commitment and replay checks while reducing the prover
+key from approximately 81 MiB to 41 MiB. CircleCI pipeline `#26` completed the
+full Compact proving-key compile and all simulator tests for the revised source.
+
+The owner then deployed the matching contract through 1AM:
+
+- Contract address: `76df34103d6e2e0e0b1a561509366090c27eb392f6a07eb75b2d102fd646ef12`
+- Transaction ID: `00a602aeba4fb9ffd0a9a04902da9f870c79a82ca03fae0d565d433b94d93525cb`
+- Transaction hash: `c5e7eddd73bc3463c55f05131d7b15563d2a0a4f460e9a5bca2db4f174b2135c`
+- Block: `2561298`
+
+The indexer state decodes with threshold `3` and the expected sealed issuer
+public point. The public build now pins this address and serves the matching
+prover/ZKIR assets. The three-filer filing, threshold unlock, and dossier remain
+the next evidence gates.
 
 ## CAC registry adapter — 2026-09-14
 
