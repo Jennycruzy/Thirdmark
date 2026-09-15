@@ -49,7 +49,7 @@ The transaction hashes in those receipts are, respectively,
 `2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb`, and
 `1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904`.
 
-The production frontend deployment is `dpl_589ZBvpR7z6b2rXRkDbRoSssjvUp` at
+The production frontend deployment is `dpl_8k29tKxoaHg49LC3P9Xxy4GCtYC3` at
 [`thirdmark.vercel.app`](https://thirdmark.vercel.app). Its live bundle was checked
 for the dossier builder, JSON export path, and active contract address. Both
 public adapter health endpoints returned HTTP 200 after the issuer and registry
@@ -67,6 +67,12 @@ signatures. They prove that three distinct keys approved the canonical dossier i
 the current browser and are independently verifiable, but they are not yet
 wallet-native 1AM signatures tied to supplier identity. That binding is the only
 material dossier hardening item left for a production identity model.
+
+The frontend also includes a safe recovery path for a stale tab: after a reload,
+the owner can select the synthetic subject, reconnect 1AM, and recover the
+already-unlocked threshold state from the encrypted local witness plus public
+contract state. Recovery does not submit another filing, preventing a duplicate
+third-filer attempt.
 
 Source correction recorded during local contract inspection: Compact circuits do not
 enumerate ledger state, but the generated public-state query wrapper exposes map/set

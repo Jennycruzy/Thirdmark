@@ -127,6 +127,7 @@ function App() {
   const [wallet, setWallet] = useState<WalletSession | null>(null);
   const [fileReceipt, setFileReceipt] = useState<FilingReceipt | null>(null);
   const [slotSnapshot, setSlotSnapshot] = useState<SlotSnapshot | null>(null);
+  const [recoveredSlotKey, setRecoveredSlotKey] = useState<Uint8Array | null>(null);
   const [prepared, setPrepared] = useState(false);
   const [working, setWorking] = useState(false);
   const [workingStage, setWorkingStage] = useState<string | null>(null);
@@ -222,6 +223,7 @@ function App() {
       const receipt = await contract.file(completed, ciphertext);
       filingFinalized = true;
       setFileReceipt(receipt);
+      setRecoveredSlotKey(receipt.slotKey);
       setPrepared(true);
       reportStage("Reading the finalized public state");
       const snapshot = await contract.readSlot(completed);
@@ -238,8 +240,44 @@ function App() {
     }
   };
 
+  const handleRecoverUnlocked = async (): Promise<void> => {
+    if (!wallet || !selectedCompany) {
+      setNotice("Connect the wallet and select the synthetic subject before recovering the filing.");
+      return;
+    }
+    setNotice(null);
+    setWorking(true);
+    setWorkingStage("Recovering the existing private filing state");
+    try {
+      const completed = await deriveCompanySlot(selectedCompany.subject.registrationNumber);
+      const contract = await connectThirdmark(wallet, completed);
+      setWorkingStage("Reading the finalized threshold state");
+      const snapshot = await contract.readSlot(completed);
+      if (!snapshot.unlocked || !snapshot.records) {
+        throw new Error("the selected subject has not reached the threshold in this wallet");
+      }
+      setRecoveredSlotKey(completed.slotKey);
+      setSlotSnapshot(snapshot);
+      setPrepared(true);
+      setDossier(null);
+      setDossierEvidence([]);
+      setDossierSignatures([]);
+      setDossierVerification(null);
+      setUploadedVerification(null);
+      setStep("unlocked");
+      setNotice("Existing threshold state recovered locally. No new filing was submitted.");
+    } catch (error) {
+      const diagnostic = diagnosticMessage(error);
+      setNotice(`The existing filing could not be recovered.${diagnostic ? ` Diagnostic: ${diagnostic}.` : ""}`);
+    } finally {
+      setWorking(false);
+      setWorkingStage(null);
+    }
+  };
+
   const handleBuildDossier = async (): Promise<void> => {
-    if (!wallet || !fileReceipt || !slotSnapshot?.unlocked || !slotSnapshot.records) {
+    const slotKey = fileReceipt?.slotKey ?? recoveredSlotKey;
+    if (!wallet || !slotKey || !slotSnapshot?.unlocked || !slotSnapshot.records) {
       setNotice("The dossier requires a finalized threshold filing in this browser.");
       return;
     }
@@ -267,7 +305,7 @@ function App() {
       if (!unlockedAt) throw new Error("the indexer returned no unlock timestamp");
       const built = createDossier({
         contractAddress: getContractAddress(),
-        slotKey: fileReceipt.slotKey,
+        slotKey,
         threshold: slotSnapshot.threshold,
         unlockedAt,
         records,
@@ -628,6 +666,14 @@ function App() {
                 <span>Transaction {shortValue(fileReceipt.txId)} · block {fileReceipt.blockHeight}</span>
                 <span>Only the encrypted envelope and threshold protections crossed the boundary.</span>
               </div>}
+              {wallet && selectedCompany.source === "synthetic" && (
+                <div className="recovery-note">
+                  <p className="field-note">Already completed this synthetic filing in this browser? Recover its threshold state after a reload without submitting again.</p>
+                  <button className="quiet-button" type="button" onClick={() => void handleRecoverUnlocked()} disabled={working}>
+                    {working ? "Recovering existing filing…" : "Recover existing threshold filing"}
+                  </button>
+                </div>
+              )}
             </section>
           )}
 
