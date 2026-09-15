@@ -49,11 +49,13 @@ The transaction hashes in those receipts are, respectively,
 `2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb`, and
 `1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904`.
 
-The production frontend deployment is `dpl_Gu6dwLWJ32wcJcoDSGvpYaCDJCCV` at
+The production frontend deployment is `dpl_gZ3ftUZmKpk29DDtgyrm3pXhS3gZ` at
 [`thirdmark.vercel.app`](https://thirdmark.vercel.app). Its live bundle was checked
 for the dossier builder, JSON export path, recovery action, and active contract address. The
 Vercel project is configured to run `npm run web:build` and publish `web/dist`, so
-future Git deployments keep the same application output. Both
+manual production promotions keep the same application output. The Vercel Git hook
+was disconnected after repeated Git-triggered builds emitted an empty output; no
+other project or repository was changed. Both
 public adapter health endpoints returned HTTP 200 after the issuer and registry
 were moved into Thirdmark-scoped user-level systemd services on the selected
 Lightsail host. The accountless Quick Tunnel URLs remain temporary; no other
