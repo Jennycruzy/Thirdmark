@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { ecMul, ecMulGenerator } from "@midnight-ntwrk/compact-runtime";
 import { pureCircuits } from "../../managed/thirdmark/contract/index.js";
 import {
-  advancePrivateState,
   createPrivateState,
   JUBJUB_SCALAR_MODULUS,
   makeOprfMaterial,
@@ -37,7 +36,7 @@ const state = (
   secret: number,
   blindingScalar: bigint,
   proofNonce: bigint,
-  salt: number,
+  _legacySalt?: number,
 ) =>
   createPrivateState(
     Uint8Array.from({ length: 32 }, (_, index) => (index + secret) & 0xff),
@@ -45,7 +44,6 @@ const state = (
     issuerSecret,
     blindingScalar,
     proofNonce,
-    Uint8Array.from({ length: 32 }, (_, index) => (index + salt) & 0xff),
   );
 
 describe("Thirdmark OPRF authentication", () => {
@@ -194,40 +192,12 @@ describe("Thirdmark filing simulator", () => {
   it("blocks a filer from filing twice even with a new ciphertext", () => {
     const first = state(1, 7n, 13n, 1);
     const simulator = new ThirdmarkSimulator(issuerKey, 3n, first);
-    const slotKey = pureCircuits.slotKeyFromPoint(
-      ecMul(first.evaluatedOprfPoint, first.unblindingScalar),
-    );
 
     expect(simulator.file(ciphertext(1))).toBe(false);
-    simulator.setPrivateState(
-      advancePrivateState(first, slotKey, first.nextHistorySalt),
-    );
+    simulator.setPrivateState(first);
     expect(() => simulator.file(ciphertext(2))).toThrow(
       "this filer already filed on this slot",
     );
-  });
-
-  it("blocks a stale private history opening", () => {
-    const first = state(1, 7n, 13n, 1);
-    const otherSubject = subject.slice();
-    otherSubject[31] ^= 1;
-    const simulator = new ThirdmarkSimulator(issuerKey, 3n, first);
-    const slotKey = pureCircuits.slotKeyFromPoint(
-      ecMul(first.evaluatedOprfPoint, first.unblindingScalar),
-    );
-
-    expect(simulator.file(ciphertext(1))).toBe(false);
-    // The public commitment has advanced, but the witness is deliberately
-    // stale while the filer attempts a different slot. The evolving private
-    // state must reject this opening before it can mutate the second slot.
-    simulator.setPrivateState({
-      ...first,
-      ...makeOprfMaterial(otherSubject, issuerSecret, 19n, 23n),
-    });
-    expect(() => simulator.file(ciphertext(2))).toThrow(
-      "stale history commitment",
-    );
-    expect(simulator.getLedger().slotFilled.lookup(slotKey)).toBe(1n);
   });
 
   it("blocks exact ciphertext replay by a different filer", () => {
@@ -280,26 +250,4 @@ describe("Thirdmark filing simulator", () => {
     expect(() => simulator.file(new Uint8Array(127))).toThrow();
   });
 
-  it("uses a fresh history salt for every private-state transition", () => {
-    const first = state(1, 7n, 13n, 1);
-    const otherSubject = subject.slice();
-    otherSubject[31] ^= 1;
-    const simulator = new ThirdmarkSimulator(issuerKey, 3n, first);
-    const slotKey = pureCircuits.slotKeyFromPoint(
-      ecMul(first.evaluatedOprfPoint, first.unblindingScalar),
-    );
-    expect(simulator.file(ciphertext(1))).toBe(false);
-
-    const repeatedSalt = first.nextHistorySalt;
-    const advanced = advancePrivateState(first, slotKey, repeatedSalt);
-    simulator.setPrivateState({
-      ...advanced,
-      nextHistorySalt: repeatedSalt,
-      ...makeOprfMaterial(otherSubject, issuerSecret, 43n, 47n),
-    });
-
-    expect(() => simulator.file(ciphertext(2))).toThrow(
-      "history commitment salt was reused",
-    );
-  });
 });

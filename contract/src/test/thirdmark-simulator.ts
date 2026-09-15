@@ -13,7 +13,6 @@ import {
   Contract,
   ledger,
   pureCircuits,
-  type FilingHistory,
   type Ledger,
 } from "../../managed/thirdmark/contract/index.js";
 import {
@@ -23,22 +22,12 @@ import {
 
 import {
   witnesses,
-  advancePrivateState,
-  emptyFilingHistory,
   type ThirdmarkPrivateState,
   type ThirdmarkWitnesses,
 } from "../witnesses.js";
 
-export { JUBJUB_SCALAR_MODULUS, modInverse, witnesses, advancePrivateState };
+export { JUBJUB_SCALAR_MODULUS, modInverse, witnesses };
 export type { ThirdmarkPrivateState, ThirdmarkWitnesses };
-
-export const emptyHistory = emptyFilingHistory;
-
-const bytes32 = (value: number): Uint8Array => {
-  const result = new Uint8Array(32);
-  result[31] = value;
-  return result;
-};
 
 export const makeOprfMaterial = (
   subject: Uint8Array,
@@ -91,12 +80,8 @@ export const createPrivateState = (
   issuerSecret: bigint,
   blindingScalar: bigint,
   proofNonce: bigint,
-  nextHistorySalt = bytes32(1),
 ): ThirdmarkPrivateState => ({
   filerSecret,
-  history: emptyHistory(),
-  previousHistorySalt: new Uint8Array(32),
-  nextHistorySalt,
   ...makeOprfMaterial(subject, issuerSecret, blindingScalar, proofNonce),
 });
 

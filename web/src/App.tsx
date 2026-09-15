@@ -133,8 +133,8 @@ function App() {
   const publicState = useMemo(
     () => [
       "one encrypted report envelope",
-      "one repeat-submission guard",
-      "one private-history commitment",
+      "one opaque filer nullifier",
+      "one ciphertext replay guard",
       "one threshold result",
     ],
     [],
@@ -542,8 +542,8 @@ function LandingPage({ onOpenWorkspace }: { readonly onOpenWorkspace: () => void
       </section>
 
       <section className="landing-section boundary-section">
-        <div className="boundary-card public-boundary"><p className="eyebrow">Visible to the ledger</p><h2>Opaque state</h2><ul><li>Encrypted report envelope</li><li>Repeat-submission guard</li><li>Private-history commitment</li><li>Threshold result</li></ul></div>
-        <div className="boundary-card private-boundary"><p className="eyebrow">Kept in the browser</p><h2>Report details</h2><ul><li>Company reference</li><li>Amount and days late</li><li>Invoice reference</li><li>Filing history and slot secret</li></ul></div>
+        <div className="boundary-card public-boundary"><p className="eyebrow">Visible to the ledger</p><h2>Opaque state</h2><ul><li>Encrypted report envelope</li><li>Opaque filer nullifier</li><li>Ciphertext replay guard</li><li>Threshold result</li></ul></div>
+        <div className="boundary-card private-boundary"><p className="eyebrow">Kept in the browser</p><h2>Report details</h2><ul><li>Company reference</li><li>Amount and days late</li><li>Invoice reference</li><li>Slot secret and filer secret</li></ul></div>
       </section>
 
       <section className="landing-section landing-links">
@@ -577,11 +577,11 @@ function PrivacyInspector({ publicState, prepared, receipt }: { readonly publicS
       <h2>What crosses the boundary</h2>
       <div className="inspector-group public-group">
         <span className="inspector-label">Visible to the ledger</span>
-        <ul>{publicState.map((item) => <li key={item}>{item}</li>)}{receipt && <li>private-history proof {shortValue(Array.from(receipt.historyCommitment, (byte) => byte.toString(16).padStart(2, "0")).join(""))}</li>}</ul>
+        <ul>{publicState.map((item) => <li key={item}>{item}</li>)}{receipt && <li>filing nullifier {shortValue(Array.from(receipt.nullifier, (byte) => byte.toString(16).padStart(2, "0")).join(""))}</li>}</ul>
       </div>
       <div className="inspector-group private-group">
         <span className="inspector-label">Kept in this browser</span>
-        <ul><li>company reference</li><li>report details</li><li>slot secret</li><li>filing history</li></ul>
+        <ul><li>company reference</li><li>report details</li><li>slot secret</li><li>filer secret</li></ul>
       </div>
       <p className="inspector-footnote">The ledger sees opaque occupancy. Without the private company reference, it cannot label that state with a company.</p>
     </aside>

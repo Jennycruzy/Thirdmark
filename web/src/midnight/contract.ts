@@ -34,7 +34,6 @@ import {
   Contract as ExampleCounterContract,
 } from "../../../verification/example-counter/managed/counter/contract/index.js";
 import {
-  advancePrivateState,
   createInitialPrivateState,
   stageOprfPrivateState,
   witnesses,
@@ -270,7 +269,6 @@ export type FilingReceipt = {
   readonly unlocked: boolean;
   readonly ciphertextId: Uint8Array;
   readonly nullifier: Uint8Array;
-  readonly historyCommitment: Uint8Array;
   readonly slotKey: Uint8Array;
 };
 
@@ -370,7 +368,7 @@ export class ThirdmarkClient {
     providers.privateStateProvider.setContractAddress(address);
 
     const existing = await providers.privateStateProvider.get(PRIVATE_STATE_ID);
-    const initial = existing ?? createInitialPrivateState(randomBytes32(), initialOprf, randomBytes32());
+    const initial = existing ?? createInitialPrivateState(randomBytes32(), initialOprf);
     await providers.privateStateProvider.set(PRIVATE_STATE_ID, initial);
     const current = await stateFromPublicData(providers, address);
     if (current.threshold < 2n) throw new Error("The deployed contract has an invalid threshold.");
@@ -393,7 +391,7 @@ export class ThirdmarkClient {
   async file(completed: CompletedOprf, ciphertext: Uint8Array): Promise<FilingReceipt> {
     if (ciphertext.length !== 128) throw new Error("the filing envelope must be exactly 128 bytes");
     const previous = await this.privateState();
-    const staged = stageOprfPrivateState(previous, completed, randomBytes32());
+    const staged = stageOprfPrivateState(previous, completed);
     await this.providers.privateStateProvider.set(PRIVATE_STATE_ID, staged);
     let transactionFinalized = false;
 
@@ -401,17 +399,8 @@ export class ThirdmarkClient {
       if (!this.deployed) throw new Error("The deployed Thirdmark contract is not ready.");
       const result = await this.deployed.callTx.file(ciphertext);
       transactionFinalized = true;
-      const next = await this.privateState();
-      await this.providers.privateStateProvider.set(
-        PRIVATE_STATE_ID,
-        advancePrivateState(next, completed.slotKey, staged.nextHistorySalt),
-      );
-
-      const current = await stateFromPublicData(this.providers, this.address);
-      const filerId = pureCircuits.filerIdFromSecret(staged.filerSecret);
       const ciphertextId = pureCircuits.ciphertextId(ciphertext);
       const nullifier = pureCircuits.filerNullifier(staged.filerSecret, completed.slotKey);
-      const historyCommitment = current.history.lookup(filerId);
       return {
         txId: result.public.txId,
         txHash: result.public.txHash,
@@ -419,7 +408,6 @@ export class ThirdmarkClient {
         unlocked: result.private.result,
         ciphertextId,
         nullifier,
-        historyCommitment,
         slotKey: completed.slotKey,
       };
     } catch (error) {

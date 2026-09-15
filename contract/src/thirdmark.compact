@@ -8,17 +8,6 @@ pragma language_version 0.22;
 
 import CompactStandardLibrary;
 
-// A bounded witness is used because Compact 0.30.0 exposes List as a ledger
-// ADT, not as a private witness collection. Four entries are enough for the
-// Wave 1 browser journey while keeping delegated 1AM proving within the
-// connector's payload/depth limits. This is a circuit bound, not an assertion
-// that a production filer history should be capped here.
-export struct FilingHistory {
-  slots: Vector<4, Bytes<32>>;
-  commitmentSalts: Vector<4, Bytes<32>>;
-  length: Uint<8>;
-}
-
 // Chaum–Pedersen/DLEQ proof that the issuer used the same scalar for the
 // issuer public key and the blinded OPRF evaluation. This is implemented from
 // the ledger-v8 primitive set (ecAdd, ecMul, ecMulGenerator, transientHash),
@@ -56,11 +45,6 @@ struct NullifierInput {
   slotKey: Bytes<32>;
 }
 
-struct FilerIdInput {
-  domain: Bytes<32>;
-  filerSecret: Bytes<32>;
-}
-
 struct CiphertextIdInput {
   domain: Bytes<32>;
   ciphertext: Bytes<128>;
@@ -85,7 +69,6 @@ export ledger ciphertextsUsed: Set<Bytes<32>>;
 export ledger entries: Map<Bytes<32>, Bytes<128>>;
 export ledger slotFilled: Map<Bytes<32>, Uint<8>>;
 export ledger unlocked: Set<Bytes<32>>;
-export ledger history: Map<Bytes<32>, Bytes<32>>;
 
 constructor(configIssuerKeyX: Field, configIssuerKeyY: Field, configThreshold: Uint<8>) {
   assert(configThreshold >= 2 as Uint<8>, "threshold must be at least two");
@@ -96,9 +79,6 @@ constructor(configIssuerKeyX: Field, configIssuerKeyY: Field, configThreshold: U
 
 // Private inputs are supplied by the wallet witness implementation.
 witness filerSecret(): Bytes<32>;
-witness filingHistory(): FilingHistory;
-witness previousHistorySalt(): Bytes<32>;
-witness nextHistorySalt(): Bytes<32>;
 witness blindedOprfPoint(): JubjubPoint;
 witness evaluatedOprfPoint(): JubjubPoint;
 witness unblindingScalar(): Field;
@@ -109,13 +89,6 @@ export pure circuit slotKeyFromPoint(point: JubjubPoint): Bytes<32> {
     domain: pad(32, "thirdmark:slot:v1"),
     pointX: jubjubPointX(point),
     pointY: jubjubPointY(point)
-  });
-}
-
-export pure circuit filerIdFromSecret(secret: Bytes<32>): Bytes<32> {
-  return persistentHash<FilerIdInput>(FilerIdInput {
-    domain: pad(32, "thirdmark:filer:v1"),
-    filerSecret: secret
   });
 }
 
@@ -203,40 +176,10 @@ export pure circuit verifyDleq(
     pointCoordinatesEqual(blindedLeft, blindedRight);
 }
 
-export pure circuit nextFilingHistory(
-  current: FilingHistory,
-  slotKey: Bytes<32>,
-  nextSalt: Bytes<32>
-): FilingHistory {
-  return FilingHistory {
-    slots: [
-      current.length == 0 ? slotKey : current.slots[0],
-      current.length == 1 ? slotKey : current.slots[1],
-      current.length == 2 ? slotKey : current.slots[2],
-      current.length == 3 ? slotKey : current.slots[3]
-    ],
-    commitmentSalts: [
-      current.length == 0 ? nextSalt : current.commitmentSalts[0],
-      current.length == 1 ? nextSalt : current.commitmentSalts[1],
-      current.length == 2 ? nextSalt : current.commitmentSalts[2],
-      current.length == 3 ? nextSalt : current.commitmentSalts[3]
-    ],
-    length: (current.length + 1) as Uint<8>
-  };
-}
-
-pure circuit latestHistorySalt(current: FilingHistory): Bytes<32> {
-  return current.length == 1 ? current.commitmentSalts[0]
-    : current.length == 2 ? current.commitmentSalts[1]
-    : current.length == 3 ? current.commitmentSalts[2]
-    : current.commitmentSalts[3];
-}
-
 export circuit file(
   ciphertext: Bytes<128>
 ): Boolean {
   const secret = filerSecret();
-  const currentHistory = filingHistory();
   const blinded = blindedOprfPoint();
   const evaluated = evaluatedOprfPoint();
   const proof = issuerDleqProof();
@@ -247,36 +190,10 @@ export circuit file(
   const slotPoint = ecMul(evaluated, unblindingScalar());
   const slotKey = slotKeyFromPoint(slotPoint);
   const nullifier = filerNullifier(secret, slotKey);
-  const filerId = filerIdFromSecret(secret);
   const cipherId = ciphertextId(ciphertext);
 
   assert(!filed.member(disclose(nullifier)), "this filer already filed on this slot");
   assert(!ciphertextsUsed.member(disclose(cipherId)), "ciphertext has already been filed");
-  assert(currentHistory.length < 4 as Uint<8>, "private filing history is full");
-
-  const openedHistory = persistentCommit<FilingHistory>(
-    currentHistory,
-    previousHistorySalt()
-  );
-  if (history.member(disclose(filerId))) {
-    assert(history.lookup(disclose(filerId)) == openedHistory, "stale history commitment");
-    assert(
-      previousHistorySalt() == latestHistorySalt(currentHistory),
-      "history opening salt does not match the latest state"
-    );
-  } else {
-    assert(currentHistory.length == 0 as Uint<8>, "history must start empty");
-  }
-
-  for (const i of 0..4) {
-    assert(currentHistory.length <= i || currentHistory.slots[i] != slotKey,
-      "slot already exists in private filing history");
-    assert(currentHistory.length <= i || currentHistory.commitmentSalts[i] != nextHistorySalt(),
-      "history commitment salt was reused");
-  }
-
-  const nextHistory = nextFilingHistory(currentHistory, slotKey, nextHistorySalt());
-  const nextCommitment = persistentCommit<FilingHistory>(nextHistory, nextHistorySalt());
 
   const priorCount = slotFilled.member(disclose(slotKey))
     ? slotFilled.lookup(disclose(slotKey))
@@ -291,7 +208,6 @@ export circuit file(
   ciphertextsUsed.insert(disclose(cipherId));
   entries.insert(disclose(newEntryKey), disclose(ciphertext));
   slotFilled.insert(disclose(slotKey), disclose(nextCount));
-  history.insert(disclose(filerId), disclose(nextCommitment));
 
   if (reachedThreshold) {
     unlocked.insert(disclose(slotKey));
