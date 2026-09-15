@@ -49,7 +49,7 @@ The transaction hashes in those receipts are, respectively,
 `2770f966f0f6d08418e84a88e1996d461eb30dc3bf5666230140dc70a39e8fbb`, and
 `1b48e2cc49c4f78fba5b402763bd0560f4c52219fd232ae57fa4a636fbe30904`.
 
-The production frontend deployment is `dpl_8k29tKxoaHg49LC3P9Xxy4GCtYC3` at
+The production frontend deployment is `dpl_5B6mraCoTqnTPjQH7zDuAPGZbcid` at
 [`thirdmark.vercel.app`](https://thirdmark.vercel.app). Its live bundle was checked
 for the dossier builder, JSON export path, and active contract address. Both
 public adapter health endpoints returned HTTP 200 after the issuer and registry
